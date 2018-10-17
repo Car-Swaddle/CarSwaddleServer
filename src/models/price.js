@@ -10,12 +10,11 @@ const price = function (sequelize, DataTypes) {
     });
 
     Price.associate = models => {
-        Price.belongsTo(models.AutoService, { as: 'autoService' });
-        Price.hasMany(models.PricePart, { as: 'priceParts' });
+        Price.belongsTo(models.AutoService, { foreignKey: 'priceID' });
+        Price.hasMany(models.PricePart, { foreignKey: 'pricePartID' });
     };
 
     return Price;
 };
-
 
 module.exports = price;

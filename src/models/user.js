@@ -26,14 +26,14 @@ const user = function (sequelize, DataTypes) {
             type: DataTypes.STRING,
         }
     },
-        {
-            freezeTableName: true,
-        });
+    {
+        freezeTableName: true,
+    });
 
     User.associate = models => {
-        User.hasMany(models.AutoService, { as: 'requestServices' });
-        User.hasMany(models.AutoService, { as: 'performServices' });
-        User.hasMany(models.Vehicle, { as: 'vehicles' });
+        User.hasMany(models.AutoService, { foreignKey: 'autoServiceID' });
+        User.hasOne(models.Mechanic, { foreignKey: 'mechanicID' });
+        User.hasMany(models.Vehicle, { foreignKey: 'vehicleID' });
     };
 
     User.generateHash = function (password) {

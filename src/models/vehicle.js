@@ -18,16 +18,16 @@ const vehicle = function (sequelize, DataTypes) {
             allowNull: true
         }
     },
-        {
-            freezeTableName: true,
-        });
+    {
+        freezeTableName: true,
+    });
 
     Vehicle.associate = models => {
-        Vehicle.belongsTo(models.User, { as: 'vehicles' });
+        Vehicle.belongsTo(models.User, { foreignKey: 'vehicleID' });
+        Vehicle.hasOne(models.VehicleDescription, { foreignKey: 'vehicleDescriptionID'});
     };
 
     return Vehicle;
 };
-
 
 module.exports = vehicle;

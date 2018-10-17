@@ -23,7 +23,7 @@ const vehicleDescription = function (sequelize, DataTypes) {
         });
 
     VehicleDescription.associate = models => {
-        VehicleDescription.belongsTo(models.User, { as: 'vehicle' });
+        VehicleDescription.belongsTo(models.Vehicle, { foreignKey: 'vehicleDescriptionID' });
     };
 
     return VehicleDescription;

@@ -9,12 +9,12 @@ const oilChange = function (sequelize, DataTypes) {
             type: DataTypes.STRING,
         }
     },
-        {
-            freezeTableName: true,
-        });
+    {
+        freezeTableName: true,
+    });
     
     OilChange.associate = models => {
-        OilChange.belongsTo(models.AutoService, { as: 'oilChange' });
+        OilChange.belongsTo(models.AutoService, { foreignKey: 'oilChangeID' });
     };
 
     return OilChange;

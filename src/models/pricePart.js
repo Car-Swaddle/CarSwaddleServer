@@ -12,12 +12,12 @@ const pricePart = function (sequelize, DataTypes) {
             type: DataTypes.DECIMAL,
         }
     },
-        {
-            freezeTableNames: true
-        });
+    {
+        freezeTableNames: true
+    });
 
     PricePart.associate = models => {
-        PricePart.belongsTo(models.Price, { as: 'part' });
+        PricePart.belongsTo(models.Price, { foreignKey: 'pricePartID' });
     };
 
     return PricePart;

@@ -13,6 +13,8 @@ const models = {
   PricePart: sequelize.import('./pricePart'),
   Vehicle: sequelize.import('./vehicle'),
   VehicleDescription: sequelize.import('./vehicleDescription'),
+  Mechanic: sequelize.import('./mechanic'),
+  TemplateTimeSpan: sequelize.import('./templateTimeSpan'),
 };
 
 Object.keys(models).forEach(key => {

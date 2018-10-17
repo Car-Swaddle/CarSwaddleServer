@@ -19,14 +19,15 @@ const autoService = function (sequelize, DataTypes) {
       allowNull: true
     },
   },
-    {
-      freezeTableName: true,
-    });
+  {
+    freezeTableName: true,
+  });
 
   AutoService.associate = models => {
-    AutoService.belongsTo(models.User, { as: 'performServices' });
-    AutoService.belongsTo(models.User, { as: 'requestServices' });
-    AutoService.hasOne(models.Location, { as: 'location' });
+    AutoService.belongsTo(models.User, { foreignKey: 'autoServiceID' });
+    AutoService.belongsTo(models.Mechanic, { foreignKey: 'autoServiceID' });
+    AutoService.hasOne(models.Location, { foreignKey: 'locationID' });
+    AutoService.hasOne(models.Price, { foreignKey: 'priceID'})
   };
 
   AutoService.STATUS = {

@@ -11,12 +11,13 @@ const location = function (sequelize, DataTypes) {
         streetAddress: {
             type: DataTypes.STRING
         }
-    }, {
-            freezeTableName: true,
-        });
+    },
+    {
+        freezeTableName: true,
+    });
 
     Location.associate = models => {
-        Location.belongsTo(models.AutoService, { as: 'location' });
+        Location.belongsTo(models.AutoService, { foreignID: 'locationID' });
     };
     return Location;
 };
