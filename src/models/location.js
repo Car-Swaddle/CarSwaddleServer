@@ -17,7 +17,7 @@ const location = function (sequelize, DataTypes) {
     });
 
     Location.associate = models => {
-        Location.belongsTo(models.AutoService, { foreignID: 'locationID' });
+        Location.belongsTo(models.AutoService, { foreignKey: 'locationID' });
     };
     return Location;
 };
