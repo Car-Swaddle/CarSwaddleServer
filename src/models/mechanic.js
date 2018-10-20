@@ -15,9 +15,22 @@ const mechanic = function (sequelize, DataTypes) {
     });
 
     Mechanic.associate = models => {
-        Mechanic.hasMany(models.AutoService, { foreignKey: 'autoServiceID' });
-        Mechanic.hasMany(models.TemplateTimeSpan, { foreignKey: 'templateTimeSpanID' });
-        Mechanic.belongsTo(models.User, { foreignKey: 'mechanicID' });
+        Mechanic.hasMany(models.AutoService, { foreignKey: {
+            name: 'autoServiceID',
+            allowNull: true
+          }
+        });
+        Mechanic.hasMany(models.TemplateTimeSpan, { foreignKey: {
+            name: 'templateTimeSpanID',
+            allowNull: true
+          }
+        });
+        Mechanic.belongsTo(models.User, { 
+            foreignKey: {
+            name: 'mechanicID',
+            allowNull: true
+          },
+        });
     };
 
     return Mechanic;

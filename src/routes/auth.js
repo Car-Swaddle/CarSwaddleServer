@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const uuidV1 = require('uuid/v1');
 
 
 module.exports = function (app, models, passport) {
@@ -18,11 +19,13 @@ module.exports = function (app, models, passport) {
 
                 const token = jwt.sign(user.dataValues, 'your_jwt_secret');
 
-                if (req.isMechanic == true) {
-                    Mechanic.findOrCreate({ where: { user: user }, defaults: { isActive: true }})
+                if (req.query.isMechanic == "true") {
+                    models.Mechanic.findOrCreate({ where: { mechanicID: user.id }, defaults: { isActive: true, id: uuidV1() }})
                     .spread( function(mechanic, created) {
-                        return res.json({user, mechanic, token })
-                    })
+                        user.setMechanic(mechanic).then( function() {
+                            return res.json({ user, mechanic, token });
+                        });
+                    });
                 } else {
                     return res.json({ user, token });
                 }   
@@ -51,11 +54,13 @@ module.exports = function (app, models, passport) {
 
                 const token = jwt.sign(user.dataValues, 'your_jwt_secret');
 
-                if (req.isMechanic == true) {
-                    Mechanic.findOrCreate({ where: { user: user }, defaults: { isActive: true }})
+                if (req.query.isMechanic == "true") {
+                    models.Mechanic.findOrCreate({ where: { mechanicID: user.id }, defaults: { isActive: true, id: uuidV1() }})
                     .spread( function(mechanic, created) {
-                        return res.json({user, mechanic, token })
-                    })
+                        user.setMechanic(mechanic).then( function() {
+                            return res.json({ user, mechanic, token });
+                        });
+                    });
                 } else {
                     return res.json({ user, token });
                 }   
