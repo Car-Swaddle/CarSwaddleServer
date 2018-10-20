@@ -18,7 +18,14 @@ module.exports = function (app, models, passport) {
 
                 const token = jwt.sign(user.dataValues, 'your_jwt_secret');
 
-                return res.json({ user, token });
+                if (req.isMechanic == true) {
+                    Mechanic.findOrCreate({ where: { user: user }, defaults: { isActive: true }})
+                    .spread( function(mechanic, created) {
+                        return res.json({user, mechanic, token })
+                    })
+                } else {
+                    return res.json({ user, token });
+                }   
             });
         })
             (req, res);
@@ -44,7 +51,14 @@ module.exports = function (app, models, passport) {
 
                 const token = jwt.sign(user.dataValues, 'your_jwt_secret');
 
-                return res.json({ user, token });
+                if (req.isMechanic == true) {
+                    Mechanic.findOrCreate({ where: { user: user }, defaults: { isActive: true }})
+                    .spread( function(mechanic, created) {
+                        return res.json({user, mechanic, token })
+                    })
+                } else {
+                    return res.json({ user, token });
+                }   
             });
         })
             (req, res);
