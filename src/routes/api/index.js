@@ -5,6 +5,9 @@ module.exports = function (app, models) {
     const router = express.Router();
 
     require('./autoService.js')(router, models);
+    require('./mechanic.js')(router, models);
+    require('./templateTimeSpan.js')(router, models);
+    require('./autoService.js')(router, models);
     require('./user.js')(router, models);
 
     return router;
