@@ -14,6 +14,7 @@ const models = {
   Vehicle: sequelize.import('./vehicle'),
   VehicleDescription: sequelize.import('./vehicleDescription'),
   Mechanic: sequelize.import('./mechanic'),
+  Region: sequelize.import('./region'),
   TemplateTimeSpan: sequelize.import('./templateTimeSpan'),
 };
 
@@ -21,6 +22,11 @@ Object.keys(models).forEach(key => {
   if ('associate' in models[key]) {
     models[key].associate(models);
   }
+});
+
+// {force: true}
+sequelize.sync().then( function() {
+  console.log("synced")
 });
 
 models.sequelize = sequelize;

@@ -31,6 +31,12 @@ const mechanic = function (sequelize, DataTypes) {
             allowNull: true
           },
         });
+        Mechanic.hasOne(models.Region, { 
+            foreignKey: {
+            name: 'regionID',
+            allowNull: true
+          },
+        });
     };
 
     return Mechanic;

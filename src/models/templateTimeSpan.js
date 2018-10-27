@@ -1,5 +1,10 @@
 const templateTimeSpan = function (sequelize, DataTypes) {
     const TemplateTimeSpan = sequelize.define('templateTimeSpan', {
+        id: {
+            type: DataTypes.STRING,
+            primaryKey: true,
+            unique: true,
+        },
         // The minute of the day 
         startTime: {
             type: DataTypes.TIME,
@@ -7,7 +12,7 @@ const templateTimeSpan = function (sequelize, DataTypes) {
         },
         /// Sunday = 0
         weekDay: {
-            type: DataTypes.TINYINT,
+            type: DataTypes.SMALLINT,
             allowNull: false,
         },
         // number of seconds
@@ -21,7 +26,12 @@ const templateTimeSpan = function (sequelize, DataTypes) {
     });
 
     TemplateTimeSpan.associate = models => {
-        TemplateTimeSpan.belongsTo(models.Mechanic, { foreignKey: 'templateTimeSpanID' });
+        TemplateTimeSpan.belongsTo(models.Mechanic, { 
+            foreignKey: {
+                name: 'templateTimeSpanID',
+                allowNull: true
+            }
+        });
     };
 
     TemplateTimeSpan.getStartTimeDate = function(seconds) {
@@ -30,6 +40,14 @@ const templateTimeSpan = function (sequelize, DataTypes) {
         var second = seconds%60;
         var date = new Date(0, 1, 1, hour, minute, second);
         return date;
+    }
+
+    TemplateTimeSpan.prototype.toJSON = function () {
+        var values = Object.assign({}, this.get());
+        var mechanicID = values.templateTimeSpanID;
+        delete values.templateTimeSpanID;
+        values.mechanicID = mechanicID;
+        return values;
     }
 
     return TemplateTimeSpan;

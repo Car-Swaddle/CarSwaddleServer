@@ -14,10 +14,6 @@ app.use(express.static(__dirname + '/www'));
 app.listen('3000');
 console.log('working on 3000');
 
-models.sequelize.sync(function () {
-    console.log('Synced sequelize.');
-});
-
 
 // const auth = require('./src/routes/auth');
 // const user = require('./src/routes/user');
