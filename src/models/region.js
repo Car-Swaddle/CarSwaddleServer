@@ -29,6 +29,10 @@ const region = function (sequelize, DataTypes) {
 
         values.latitude = latitude;
         values.longitude = longitude;
+        
+        values.mechanicID = values.regionID;
+
+        delete values.regionID;
 
         return values;
     }
