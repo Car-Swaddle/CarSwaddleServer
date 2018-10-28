@@ -9,6 +9,7 @@ module.exports = function (app, models) {
     require('./templateTimeSpan.js')(router, models);
     require('./autoService.js')(router, models);
     require('./user.js')(router, models);
+    require('./region.js')(router, models);
 
     return router;
 }

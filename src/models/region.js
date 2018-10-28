@@ -4,6 +4,12 @@ const region = function (sequelize, DataTypes) {
             type: DataTypes.STRING,
             primaryKey: true,
             unique: true,
+        },
+        origin: {
+            type: DataTypes.GEOMETRY('POINT'),
+        },
+        radius: {
+            type: DataTypes.DOUBLE,
         }
     }, {
         freezeTableNames: true,
@@ -11,8 +17,31 @@ const region = function (sequelize, DataTypes) {
 
     Region.associate = models => {
         Region.belongsTo(models.Mechanic, { foreignKey: 'regionID' });
-        Region.hasMany(models.PricePart, { foreignKey: 'pricePartID' });
     };
+
+    Region.prototype.toJSON = function () {
+        var values = Object.assign({}, this.get());
+
+        var latitude = values.origin.coordinates[0];
+        var longitude = values.origin.coordinates[1];
+
+        delete values.origin;
+
+        values.latitude = latitude;
+        values.longitude = longitude;
+
+        return values;
+    }
+    
+    /*
+    origin =     {
+        coordinates =         (
+            "11.909",
+            "-11.7898"
+        );
+        type = Point;
+    };
+    */
 
     return Region;
 };

@@ -30,6 +30,8 @@ const autoService = function (sequelize, DataTypes) {
     AutoService.hasOne(models.Price, { foreignKey: 'priceID'})
   };
 
+
+  
   AutoService.STATUS = {
     scheduled: 'scheduled',
     inProgress: 'inProgress',
