@@ -10,6 +10,7 @@ module.exports = function (app, models) {
     require('./autoService.js')(router, models);
     require('./user.js')(router, models);
     require('./region.js')(router, models);
+    require('./mechanic.js')(router, models);
 
     return router;
 }

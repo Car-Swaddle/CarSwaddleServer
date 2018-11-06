@@ -5,15 +5,19 @@ const vehicleDescription = function (sequelize, DataTypes) {
             primaryKey: true,
             unique: true
         },
-        licensePlate: {
-            type: DataTypes.STRING,
-            allowNull: true
+        make: {
+            type: DataTypes.STRING
         },
-        name: {
-            type: DataTypes.STRING,
-            allowNull: true
+        model: {
+            type: DataTypes.STRING
         },
-        vin: {
+        style: {
+            type: DataTypes.STRING
+        },
+        trime: {
+            type: DataTypes.STRING
+        },
+        year: {
             type: DataTypes.STRING,
             allowNull: true
         }

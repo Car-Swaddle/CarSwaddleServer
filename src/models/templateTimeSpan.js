@@ -5,7 +5,7 @@ const templateTimeSpan = function (sequelize, DataTypes) {
             primaryKey: true,
             unique: true,
         },
-        // The minute of the day 
+        // The second of the day 
         startTime: {
             type: DataTypes.TIME,
             allowNull: false,
@@ -38,7 +38,7 @@ const templateTimeSpan = function (sequelize, DataTypes) {
         var hour = Math.floor(seconds / (60*60));
         var minute = Math.floor((seconds%(60*60))/60);
         var second = seconds%60;
-        var date = new Date(0, 1, 1, hour, minute, second);
+        var date = new Date(Date.UTC(0, 1, 1, hour, minute, second));
         return date;
     }
 

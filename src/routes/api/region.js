@@ -36,6 +36,16 @@ module.exports = function (router, models) {
         });
     });
 
+    router.get('/region', function (req, res) {
+        console.log('region GET');
+        req.user.getMechanic().then( mechanic => {
+            return mechanic.getRegion();
+        }).then( region => {
+            return res.json(region);
+        })
+    });
+
+
     return router;
 };
 

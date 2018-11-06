@@ -36,16 +36,6 @@ const region = function (sequelize, DataTypes) {
 
         return values;
     }
-    
-    /*
-    origin =     {
-        coordinates =         (
-            "11.909",
-            "-11.7898"
-        );
-        type = Point;
-    };
-    */
 
     return Region;
 };

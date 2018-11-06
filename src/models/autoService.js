@@ -5,9 +5,6 @@ const autoService = function (sequelize, DataTypes) {
       primaryKey: true,
       unique: true
     },
-    type: {
-      type: DataTypes.ENUM('oilChange')
-    },
     scheduledDate: {
       type: DataTypes.DATE,
     },
@@ -28,9 +25,8 @@ const autoService = function (sequelize, DataTypes) {
     AutoService.belongsTo(models.Mechanic, { foreignKey: 'autoServiceID' });
     AutoService.hasOne(models.Location, { foreignKey: 'locationID' });
     AutoService.hasOne(models.Price, { foreignKey: 'priceID'})
+    AutoService.hasMany(models.ServiceEntity, { foreignKey: 'serviceEntityID'})
   };
-
-
   
   AutoService.STATUS = {
     scheduled: 'scheduled',
@@ -64,7 +60,5 @@ const autoService = function (sequelize, DataTypes) {
 
   return AutoService;
 };
-
-
 
 module.exports = autoService;

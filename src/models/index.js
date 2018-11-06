@@ -16,6 +16,7 @@ const models = {
   Mechanic: sequelize.import('./mechanic'),
   Region: sequelize.import('./region'),
   TemplateTimeSpan: sequelize.import('./templateTimeSpan'),
+  ServiceEntity: sequelize.import('./serviceEntity'),
 };
 
 Object.keys(models).forEach(key => {

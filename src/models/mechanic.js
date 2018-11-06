@@ -41,18 +41,7 @@ const mechanic = function (sequelize, DataTypes) {
 
     Mechanic.prototype.toJSON = function () {
         var values = Object.assign({}, this.get());
-
-        // if (values.region != null) {
-        //     var latitude = values.region.origin.coordinates[0];
-        //     var longitude = values.region.origin.coordinates[1];
-
-        //     delete values.region.origin;
-        //     delete values.region.regionID;
-
-        //     values.region.latitude = latitude;
-        //     values.region.longitude = longitude;
-        // }
-
+        
         return values;
     }
 
