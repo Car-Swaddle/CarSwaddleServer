@@ -22,16 +22,15 @@ const region = function (sequelize, DataTypes) {
     Region.prototype.toJSON = function () {
         var values = Object.assign({}, this.get());
 
-        var latitude = values.origin.coordinates[0];
-        var longitude = values.origin.coordinates[1];
+        // var longitude = values.origin.coordinates[0];
+        // var latitude = values.origin.coordinates[1];
 
-        delete values.origin;
-
-        values.latitude = latitude;
-        values.longitude = longitude;
+        values.latitude = values.origin.coordinates[1];
+        values.longitude = values.origin.coordinates[0];
         
         values.mechanicID = values.regionID;
 
+        delete values.origin;
         delete values.regionID;
 
         return values;

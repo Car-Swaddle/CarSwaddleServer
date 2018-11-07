@@ -21,7 +21,7 @@ module.exports = function (router, models) {
         // var mechanic = models.User.findByPrimary
 
 
-        var point = { type: 'Point', coordinates: [body.location.latitude, body.location.longitude] };
+        var point = { type: 'Point', coordinates: [body.location.longitude, body.location.latitude] };
         models.Location.create({
             point: point,
             streetAddress: body.location.streetAddress,

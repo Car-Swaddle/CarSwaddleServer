@@ -17,7 +17,7 @@ module.exports = function (router, models) {
                     return previousRegion.destroy();
                 }
             }).then(() => {
-                var point = { type: 'Point', coordinates: [latitude,longitude] };
+                var point = { type: 'Point', coordinates: [longitude,latitude] };
                 return models.Region.create({ id: uuidV1(), origin: point, radius: radius });
             }).then( region => {
                 mechanic.setRegion(region).then( region => {
