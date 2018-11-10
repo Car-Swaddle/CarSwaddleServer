@@ -1,11 +1,7 @@
 const uuidV1 = require('uuid/v1');
 
 module.exports = function (router, models) {
-  console.log('User routes');
-
-  // const express = require('express');
-  // const router = express.Router();
-
+  
   router.get('/', function (req, res, next) {
     res.send('respond with a resource');
   });
@@ -13,6 +9,31 @@ module.exports = function (router, models) {
   /* GET user profile. */
   router.get('/current-user', function (req, res, next) {
     res.send(req.user);
+  });
+
+  router.patch('/update-user', function (req, res) {
+    const body = req.body;
+    var user = req.user;
+    var didChangeUser = false;
+    if (body.firstName != null) {
+      user.firstName = body.firstName;
+      didChangeUser = true;
+    }
+    if (body.lastName != null) {
+      user.lastName = body.lastName;
+      didChangeUser = true;
+    }
+    if (body.phoneNumber != null) {
+      user.phoneNumber = body.phoneNumber;
+      didChangeUser = true;
+    }
+    if (didChangeUser == true) {
+      user.save().then( user => {
+        res.send(user);
+      });
+    } else {
+      res.send(user);
+    }
   });
 
   // router.post('/user', function (req, res) {

@@ -48,6 +48,19 @@ const user = function (sequelize, DataTypes) {
         var values = Object.assign({}, this.get());
 
         delete values.password;
+
+        if (values.origin != null) {
+            values.latitude = values.origin.coordinates[1];
+            values.longitude = values.origin.coordinates[0];
+        
+            // values.mechanicID = values.regionID;
+
+            delete values.origin;
+            // delete values.regionID;
+            delete values.mechanicID;
+            delete values.email;
+        }
+
         return values;
     }
 
