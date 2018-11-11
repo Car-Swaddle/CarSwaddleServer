@@ -28,8 +28,8 @@ module.exports = function (router, models) {
       didChangeUser = true;
     }
     if (didChangeUser == true) {
-      user.save().then( user => {
-        res.send(user);
+      user.save().then( savedUser => {
+        res.send(savedUser);
       });
     } else {
       res.send(user);
