@@ -16,7 +16,7 @@ const region = function (sequelize, DataTypes) {
     });
 
     Region.associate = models => {
-        Region.belongsTo(models.Mechanic, { foreignKey: 'regionID' });
+        Region.belongsTo(models.Mechanic, { foreignKey: 'mechanicID' });
     };
 
     Region.prototype.toJSON = function () {

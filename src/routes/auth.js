@@ -20,7 +20,7 @@ module.exports = function (app, models, passport) {
                 const token = jwt.sign(user.dataValues, 'your_jwt_secret');
 
                 if (req.query.isMechanic == "true") {
-                    models.Mechanic.findOrCreate({ where: { mechanicID: user.id }, defaults: { isActive: true, id: uuidV1() }})
+                    models.Mechanic.findOrCreate({ where: { userID: user.id }, defaults: { isActive: true, id: uuidV1() }})
                     .spread( function(mechanic, created) {
                         user.setMechanic(mechanic).then( function() {
                             return res.json({ user, mechanic, token });
@@ -55,7 +55,7 @@ module.exports = function (app, models, passport) {
                 const token = jwt.sign(user.dataValues, 'your_jwt_secret');
 
                 if (req.query.isMechanic == "true") {
-                    models.Mechanic.findOrCreate({ where: { mechanicID: user.id }, defaults: { isActive: true, id: uuidV1() }})
+                    models.Mechanic.findOrCreate({ where: { userID: user.id }, defaults: { isActive: true, id: uuidV1() }})
                     .spread( function(mechanic, created) {
                         user.setMechanic(mechanic).then( function() {
                             return res.json({ user, mechanic, token });

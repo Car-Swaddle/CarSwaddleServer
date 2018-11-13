@@ -68,10 +68,10 @@ module.exports = function (router, models) {
     }
 
     models.User.findById(req.query.id).then(user => {
-      var json = JSON.stringify({
-        'user': user.toJSON(),
-      });
-      res.json(json);
+      // var json = JSON.stringify({
+      //   'user': user.toJSON(),
+      // });
+      res.json(user);
     }).catch(error => {
       res.status(403).send('resource not found');
     });

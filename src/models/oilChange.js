@@ -14,7 +14,7 @@ const oilChange = function (sequelize, DataTypes) {
     });
     
     OilChange.associate = models => {
-        OilChange.belongsTo(models.AutoService, { foreignKey: 'oilChangeID' });
+        OilChange.belongsTo(models.AutoService, { foreignKey: 'autoServiceID' });
     };
 
     return OilChange;

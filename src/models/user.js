@@ -31,9 +31,9 @@ const user = function (sequelize, DataTypes) {
     });
 
     User.associate = models => {
-        User.hasMany(models.AutoService, { foreignKey: 'autoServiceID' });
-        User.hasOne(models.Mechanic, { foreignKey: 'mechanicID' });
-        User.hasMany(models.Vehicle, { foreignKey: 'vehicleID' });
+        User.hasMany(models.AutoService, { foreignKey: 'userID' });
+        User.hasOne(models.Mechanic, { foreignKey: 'userID' });
+        User.hasMany(models.Vehicle, { foreignKey: 'userID' });
     };
 
     User.generateHash = function (password) {

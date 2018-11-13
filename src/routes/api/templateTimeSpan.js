@@ -4,15 +4,28 @@ const uuidV1 = require('uuid/v1');
 module.exports = function (router, models) {
 
     router.get('/availability', function (req, res) {
-        req.user.getMechanic().then( function(mechanic) {
+
+        var mechanicID = req.query.mechanicID;
+
+        if (mechanicID == null) {
+            req.user.getMechanic().then( function(mechanic) {
+                models.TemplateTimeSpan.findAll({
+                    where: {
+                        mechanicID: mechanic.id
+                    }
+                }).then( timeSpans => {
+                    return res.json(timeSpans);
+                });
+            });
+        } else {
             models.TemplateTimeSpan.findAll({
                 where: {
-                    templateTimeSpanID: mechanic.id
+                    mechanicID: mechanicID
                 }
             }).then( timeSpans => {
                 return res.json(timeSpans);
-            })
-        });
+            });
+        }
     });
 
     router.post('/availability', function (req, res) {
@@ -25,7 +38,7 @@ module.exports = function (router, models) {
         }
 
         req.user.getMechanic().then( function(mechanic) {
-            models.TemplateTimeSpan.destroy({where: { templateTimeSpanID: mechanic.id }}).then(function () {
+            models.TemplateTimeSpan.destroy({where: { mechanicID: mechanic.id }}).then(function () {
                 for (i = 0; i < spans.length; i++) { 
                     var val = spans[i];
                     val.id = uuidV1();
@@ -35,7 +48,7 @@ module.exports = function (router, models) {
                     var promises = []
                     for (i = 0; i < newSpans.length; i++) { 
                         var newSpan = newSpans[i];
-                        newSpan.templateTimeSpanID = mechanic.id;
+                        newSpan.mechanicID = mechanic.id;
                         var promise = newSpan.setMechanic(mechanic);
                         promises.push(promise);
                     }

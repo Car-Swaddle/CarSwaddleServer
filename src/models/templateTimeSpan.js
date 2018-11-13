@@ -28,7 +28,7 @@ const templateTimeSpan = function (sequelize, DataTypes) {
     TemplateTimeSpan.associate = models => {
         TemplateTimeSpan.belongsTo(models.Mechanic, { 
             foreignKey: {
-                name: 'templateTimeSpanID',
+                name: 'mechanicID',
                 allowNull: true
             }
         });
@@ -44,9 +44,9 @@ const templateTimeSpan = function (sequelize, DataTypes) {
 
     TemplateTimeSpan.prototype.toJSON = function () {
         var values = Object.assign({}, this.get());
-        var mechanicID = values.templateTimeSpanID;
-        delete values.templateTimeSpanID;
-        values.mechanicID = mechanicID;
+        // var mechanicID = values.templateTimeSpanID;
+        // delete values.templateTimeSpanID;
+        // values.mechanicID = mechanicID;
         return values;
     }
 

@@ -17,7 +17,7 @@ const pricePart = function (sequelize, DataTypes) {
     });
 
     PricePart.associate = models => {
-        PricePart.belongsTo(models.Price, { foreignKey: 'pricePartID' });
+        PricePart.belongsTo(models.Price, { foreignKey: 'priceID' });
     };
 
     return PricePart;

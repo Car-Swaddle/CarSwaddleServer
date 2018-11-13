@@ -16,24 +16,24 @@ const mechanic = function (sequelize, DataTypes) {
 
     Mechanic.associate = models => {
         Mechanic.hasMany(models.AutoService, { foreignKey: {
-            name: 'autoServiceID',
+            name: 'mechanicID',
             allowNull: true
           }
         });
         Mechanic.hasMany(models.TemplateTimeSpan, { foreignKey: {
-            name: 'templateTimeSpanID',
+            name: 'mechanicID',
             allowNull: true
           }
         });
         Mechanic.belongsTo(models.User, { 
             foreignKey: {
-            name: 'mechanicID',
+            name: 'userID',
             allowNull: true
           },
         });
         Mechanic.hasOne(models.Region, { 
             foreignKey: {
-            name: 'regionID',
+            name: 'mechanicID',
             allowNull: true
           },
         });

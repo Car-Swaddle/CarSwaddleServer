@@ -16,7 +16,7 @@ const serviceEntity = function (sequelize, DataTypes) {
     });
 
     ServiceEntity.associate = models => {
-        ServiceEntity.belongsTo(models.AutoService, { foreignKey: 'serviceEntityID' });
+        ServiceEntity.belongsTo(models.AutoService, { foreignKey: 'autoServiceID' });
     };
 
     return ServiceEntity;
