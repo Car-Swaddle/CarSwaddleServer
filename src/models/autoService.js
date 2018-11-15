@@ -24,6 +24,7 @@ const autoService = function (sequelize, DataTypes) {
     AutoService.belongsTo(models.User, { foreignKey: 'userID' });
     AutoService.belongsTo(models.Mechanic, { foreignKey: 'mechanicID' });
     AutoService.hasOne(models.Location, { foreignKey: 'autoServiceID' });
+    AutoService.hasOne(models.Vehicle, { foreignKey: 'autoServiceID' });
     AutoService.hasOne(models.Price, { foreignKey: 'autoServiceID'})
     AutoService.hasMany(models.ServiceEntity, { foreignKey: 'autoServiceID'})
   };
