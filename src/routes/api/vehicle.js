@@ -82,7 +82,7 @@ module.exports = function (router, models) {
         })
     });
 
-    router.delete('/vehicle', function (req, res, next) {
+    router.delete('/vehicle', function (req, res) {
         models.Vehicle.destroy({where: { id: req.query.id } }).then( deletedRows => {
             if (deletedRows > 0) {
                 return res.send(''+deletedRows);

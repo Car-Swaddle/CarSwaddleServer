@@ -9,8 +9,7 @@ const mechanic = function (sequelize, DataTypes) {
             type: DataTypes.BOOLEAN,
             allowNull: true
         }
-    },
-    {
+    }, {
         freezeTableName: true,
     });
 

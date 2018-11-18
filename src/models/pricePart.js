@@ -11,9 +11,8 @@ const pricePart = function (sequelize, DataTypes) {
         value: {
             type: DataTypes.DECIMAL,
         }
-    },
-    {
-        freezeTableNames: true
+    }, {
+        freezeTableName: true
     });
 
     PricePart.associate = models => {

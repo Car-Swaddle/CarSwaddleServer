@@ -6,7 +6,7 @@ const price = function (sequelize, DataTypes) {
             unique: true,
         }
     }, {
-        freezeTableNames: true,
+        freezeTableName: true,
     });
 
     Price.associate = models => {

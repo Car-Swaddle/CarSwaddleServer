@@ -5,18 +5,30 @@ const serviceEntity = function (sequelize, DataTypes) {
             primaryKey: true,
             unique: true,
         },
-        type: {
+        // OILCHANGE
+        entityType: {
             type: DataTypes.STRING,
-        },
-        entityID: {
-            type: DataTypes.DOUBLE,
+            allowNull: false,
         }
     }, {
-        freezeTableNames: true,
+        freezeTableName: true,
     });
 
     ServiceEntity.associate = models => {
         ServiceEntity.belongsTo(models.AutoService, { foreignKey: 'autoServiceID' });
+        ServiceEntity.belongsTo(models.OilChange, { foreignKey: 'oilChangeID', allowNull: true });
+    };
+
+    ServiceEntity.ENTITY_TYPE = {
+        oilChange: 'OILCHANGE',
+    };
+    
+    ServiceEntity.isValidType = function (entityType) {
+        if (ServiceEntity.ENTITY_TYPE.oilChange == entityType) {
+          return true;
+        } else {
+          return false;
+        }
     };
 
     return ServiceEntity;

@@ -12,7 +12,7 @@ const region = function (sequelize, DataTypes) {
             type: DataTypes.DOUBLE,
         }
     }, {
-        freezeTableNames: true,
+        freezeTableName: true,
     });
 
     Region.associate = models => {

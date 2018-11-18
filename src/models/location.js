@@ -11,8 +11,7 @@ const location = function (sequelize, DataTypes) {
         streetAddress: {
             type: DataTypes.STRING
         }
-    },
-    {
+    }, {
         freezeTableName: true,
     });
 

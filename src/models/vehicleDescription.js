@@ -21,10 +21,9 @@ const vehicleDescription = function (sequelize, DataTypes) {
             type: DataTypes.STRING,
             allowNull: true
         }
-    },
-        {
-            freezeTableName: true,
-        });
+    }, {
+        freezeTableName: true,
+    });
 
     VehicleDescription.associate = models => {
         VehicleDescription.belongsTo(models.Vehicle, { foreignKey: 'vehicleID' });

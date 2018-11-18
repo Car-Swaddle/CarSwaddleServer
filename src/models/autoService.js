@@ -15,8 +15,7 @@ const autoService = function (sequelize, DataTypes) {
       type: DataTypes.STRING,
       allowNull: true
     },
-  },
-  {
+  }, {
     freezeTableName: true,
   });
 
@@ -37,22 +36,10 @@ const autoService = function (sequelize, DataTypes) {
   };
 
   AutoService.isValidStatus = function (status) {
-    if (AutoService.Status.scheduled == status ||
-    AutoService.Status.inProgress == status ||
-    AutoService.Status.finished == status ||
-    AutoService.Status.canceled == status) {
-      return true;
-    } else {
-      return false;
-    }
-  };
-
-  AutoService.TYPE = {
-    oilChange: 'oilChange',
-  };
-
-  AutoService.isValidType = function (type) {
-    if (AutoService.TYPE.oilChange == type) {
+    if ('scheduled' == status ||
+    'inProgress' == status ||
+    'finished' == status ||
+    'canceled' == status) {
       return true;
     } else {
       return false;

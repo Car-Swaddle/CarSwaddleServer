@@ -1,4 +1,5 @@
 const express = require('express');
+const uuidV1 = require('uuid/v1');
 
 module.exports = function (router, models) {
 
@@ -9,38 +10,111 @@ module.exports = function (router, models) {
 
         var status = body.status
         if (models.AutoService.isValidStatus(status) == false) {
-            res.status(422).json({ error: 'Invalid status:' + status })
+            return res.status(422).json({ error: 'Invalid status:' + status });
         }
 
-        var type = body.type
-        if (models.AutoService.isValidType(type) == false) {
-            res.status(422).json({ error: 'Invalid type:' + type })
+        const scheduledDate = body.scheduledDate;
+        if (scheduledDate == null) {
+            return res.status(422);
         }
 
-        // var user = models.User.findById
-        // var mechanic = models.User.findByPrimary
+        if (body.vehicleID == null) {
+            return res.status(422);
+        }
 
+        const serviceEntities = body.serviceEntities;
 
-        var point = { type: 'Point', coordinates: [body.location.longitude, body.location.latitude] };
-        models.Location.create({
-            point: point,
-            streetAddress: body.location.streetAddress,
-            id: uuidV1(),
-        }).then((location) => {
-            models.AutoService.create({
+        if (serviceEntities.length <= 0) {
+            // Must have at least one service entity
+            return res.status(422);
+        }
+
+        var locationPromise = null;
+
+        const location = body.location;
+        if (body.locationID != null) {
+            locationPromise = models.Location.findById(body.locationID);
+        } else if (location != null && location.latitude != null && location.longitude != null) {
+            var point = { type: 'Point', coordinates: [body.location.longitude, body.location.latitude] };
+            locationPromise = models.Location.create({
+                point: point,
+                streetAddress: body.location.streetAddress,
                 id: uuidV1(),
-                type: type,
-                status: status,
-                notes: body.notes,
-                scheduledDate: body.date,
-                location: location,
-            }).then((autoService) => {
-                var json = JSON.stringify({
-                    'autoService': autoService.toJSON(),
-                });
-                res.json(json);
-            }).catch((error) => {
-                // Delete created Location
+            })
+        } else {
+            return res.status(422);
+        }
+
+        locationPromise.then( location => {
+            req.user.getMechanic().then( mechanic => {
+                models.Vehicle.findById(body.vehicleID).then( vehicle => {
+                    models.AutoService.create({
+                        id: uuidV1(),
+                        status: status,
+                        notes: body.notes,
+                        scheduledDate: scheduledDate,
+                    }).then( autoService => {
+                        autoService.setMechanic(mechanic);
+                        autoService.setUser(req.user);
+                        autoService.setVehicle(vehicle);
+                        autoService.setLocation(location);
+                        autoService.save().then( updatedAutoService => {
+                            var entityTypeToSpecificEntities = {};
+                
+                            for (i = 0; i < serviceEntities.length; i++) { 
+                                var val = serviceEntities[i];
+                                const entityType = val.entityType;
+                                if (entityTypeToSpecificEntities[entityType] == null) {
+                                    entityTypeToSpecificEntities[entityType] = []
+                                }
+                                entityTypeToSpecificEntities[entityType].push(val.specificService);
+                            }
+                
+                            var serviceEntityPromises = [];
+                            var keys = Object.keys(entityTypeToSpecificEntities)
+                            for(i = 0; i < keys.length; i++) {
+                                const key = keys[i];
+                                var specificServices = entityTypeToSpecificEntities[key];
+                                for(j = 0; j < specificServices.length; j++) {
+                                    if (key == 'OIL_CHANGE') {
+                                        const specificService = specificServices[j];
+                                        const p = models.OilChange.create({
+                                            id: uuidV1(),
+                                            oilType: specificService.oilType
+                                        }).then( oilChange => {
+                                            return models.ServiceEntity.create({
+                                                id: uuidV1(),
+                                                entityType: key,
+                                                autoService: updatedAutoService,
+                                                oilChange: oilChange
+                                            }).then( serviceEntity => {
+                                                serviceEntity.setOilChange(oilChange);
+                                                serviceEntity.setAutoService(updatedAutoService);
+                                                return serviceEntity.save();
+                                            });
+                                        });
+                                        serviceEntityPromises.push(p);
+                                    }
+                                }
+                            }
+            
+                            Promise.all(serviceEntityPromises).then( values => {
+                                models.AutoService.find({where:
+                                    { id: autoService.id },
+                                    include: [models.Location, 
+                                        {
+                                            model: models.ServiceEntity,
+                                            include: [models.OilChange]
+                                        }, models.Vehicle],
+                                }).then( newAutoService => {
+                                    return res.json(newAutoService);
+                                });
+                            });
+                        }).catch((error) => {
+                            // Delete created Location
+                        });
+                    });
+                })
             });
         });
     });
