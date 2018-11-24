@@ -3,6 +3,37 @@ const uuidV1 = require('uuid/v1');
 
 module.exports = function (router, models) {
 
+    const Op = models.Sequelize.Op;
+
+    router.get('/auto-service', function (req, res) {
+        if (req.query.autoServiceID != null) {
+            models.AutoService.findById(req.query.autoServiceID).then( autoService => {
+                return res.json(autoService);
+            });
+        } else if (req.query.startDate != null && req.query.endDate != null && req.query.mechanicID != null) {
+            var status = req.query.status;
+            models.AutoService.findAll({
+                where: {
+                    scheduledDate: {
+                        "$between": [req.query.startDate,req.query.endDate]
+                    },
+                    mechanicID: req.query.mechanicID,
+                    status: {
+                        [Op.or]: status,
+                      }
+                }
+            }).then( autoServices => {
+                return res.json(autoServices);
+            });
+        }
+    });
+
+    router.get('/auto-service', function (req, res) {
+        models.AutoService.findById(req.query.autoServiceID).then( autoService => {
+            return res.json(autoService);
+        });
+    });
+
     router.post('/auto-service', function (req, res) {
         console.log('auto-service POST');
 
