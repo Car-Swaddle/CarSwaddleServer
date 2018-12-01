@@ -9,7 +9,7 @@ const autoService = function (sequelize, DataTypes) {
       type: DataTypes.DATE,
     },
     status: {
-      type: DataTypes.ENUM('scheduled', 'inProgress', 'finished', 'canceled'),
+      type: DataTypes.STRING // ENUM('scheduled', 'inProgress', 'completed', 'canceled'),
     },
     notes: {
       type: DataTypes.STRING,
@@ -31,15 +31,14 @@ const autoService = function (sequelize, DataTypes) {
   AutoService.STATUS = {
     scheduled: 'scheduled',
     inProgress: 'inProgress',
-    finished: 'finished',
-    canceld: 'canceled',
+    completed: 'completed',
+    canceled: 'canceled',
   };
 
+  AutoService.allStatus = ['scheduled', 'inProgress', 'completed', 'canceled'];
+
   AutoService.isValidStatus = function (status) {
-    if ('scheduled' == status ||
-    'inProgress' == status ||
-    'finished' == status ||
-    'canceled' == status) {
+    if (AutoService.allStatus.includes(status) == true) {
       return true;
     } else {
       return false;

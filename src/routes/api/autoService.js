@@ -11,7 +11,7 @@ module.exports = function (router, models) {
                 return res.json(autoService);
             });
         } else if (req.query.startDate != null && req.query.endDate != null && req.query.mechanicID != null) {
-            var status = req.query.status;
+            var status = req.query.status || models.AutoService.allStatus;
             models.AutoService.findAll({
                 where: {
                     scheduledDate: {
@@ -20,19 +20,137 @@ module.exports = function (router, models) {
                     mechanicID: req.query.mechanicID,
                     status: {
                         [Op.or]: status,
-                      }
+                    }
                 }
             }).then( autoServices => {
                 return res.json(autoServices);
             });
+        } else {
+            const offset = req.query.offset || 0;
+            const limit = req.query.limit || 50;
+            var status = req.query.status || models.AutoService.allStatus;
+
+            var statusAreValid = true;
+
+            for (i = 0; i<status.length; i++) {
+                var currentStatus = status[i];
+                if (models.AutoService.allStatus.includes(currentStatus) == false) {
+                    statusAreValid = false;
+                }
+            }
+
+            if (statusAreValid == false) {
+                return res.status(422);
+            }
+
+            var queryString = 'SELECT * FROM "autoService" ORDER BY case ';
+            var lastIndex = 0
+            for (i = 0; i<status.length; i++) {
+                queryString += `WHEN status = '` + status[i] + `' THEN ` + i + ` `;
+                lastIndex = i;
+            }
+            lastIndex += 1;
+            queryString += 'ELSE ' + lastIndex + ' END ASC LIMIT ? OFFSET ?';
+
+            models.sequelize.query(queryString, {
+                replacements: [limit, offset],
+                type: models.sequelize.QueryTypes.SELECT,
+                model: models.AutoService,
+            }).then( autoServices => {
+                return res.json(autoServices);
+            })
         }
     });
 
-    router.get('/auto-service', function (req, res) {
-        models.AutoService.findById(req.query.autoServiceID).then( autoService => {
-            return res.json(autoService);
+    router.patch('/auto-service', function (req, res) {
+
+        const autoServiceID = req.query.autoServiceID;
+        const body = req.body;
+
+        if (autoServiceID == null) {
+            return res.status(422);
+        }
+
+        if (body.status == null) {
+            return res.status(422).json({ error: 'Invalid status:' + status });
+        }
+
+        if (models.AutoService.isValidStatus(body.status) == false) {
+            return res.status(422).json({ error: 'Invalid status: ' + body.status });
+        }
+
+
+        models.AutoService.findOne({ where: { 
+            userID: req.user.id,
+            id: autoServiceID,
+        }
+        }).then( autoService => {
+
+            if (autoService == null) {
+                return res.status(404);
+            }
+
+            var promises = []
+            if (body.status != null) {
+                autoService.status = body.status
+                const p = autoService.save();
+                promises.push(p);
+            }
+
+            if (body.vehicleID != null) {
+                const p = models.Vehicle.findById(body.vehicleID).then( vehicle => {
+                    return autoService.setVehicle(vehicle)
+                });
+                promises.push(p);
+            }
+
+            if (body.mechanicID != null) {
+                const p = models.Vehicle.findById(body.mechanicID).then( mechanic => {
+                    return autoService.setMechanic(mechanic)
+                });
+                promises.push(p);
+            }
+
+            if (body.locationID != null) {
+                const p = models.Location.findById(body.locationID).then( location => {
+                    return autoService.setLocation(location)
+                });
+                promises.push(p);
+            }
+
+            if (body.location != null && body.location.longitude != null && body.location.latitude != null) {
+                var point = { type: 'Point', coordinates: [body.location.longitude, body.location.latitude] };
+                const p = models.Location.create({
+                    point: point,
+                    streetAddress: body.location.streetAddress,
+                    id: uuidV1(),
+                }).then ( location => {
+                    return autoService.setLocation(location)
+                })
+                promises.push(p);
+            }
+
+            if (body.scheduledDate != null) {
+                autoService.scheduledDate = body.scheduledDate
+                const p = autoService.save();
+                promises.push(p);
+            }
+
+            Promise.all(promises).then( values => {
+                models.AutoService.find({where:
+                    { id: autoService.id },
+                    include: [models.Location, 
+                        {
+                            model: models.ServiceEntity,
+                            include: [models.OilChange]
+                        }, models.Vehicle],
+                }).then( newAutoService => {
+                    return res.json(newAutoService);
+                });
+            });
         });
     });
+
 
     router.post('/auto-service', function (req, res) {
         console.log('auto-service POST');
@@ -76,8 +194,12 @@ module.exports = function (router, models) {
             return res.status(422);
         }
 
+        if (body.mechanicID == null) {
+            return res.status(422);
+        }
+
         locationPromise.then( location => {
-            req.user.getMechanic().then( mechanic => {
+            models.Mechanic.findById(body.mechanicID).then( mechanic => {
                 models.Vehicle.findById(body.vehicleID).then( vehicle => {
                     models.AutoService.create({
                         id: uuidV1(),
