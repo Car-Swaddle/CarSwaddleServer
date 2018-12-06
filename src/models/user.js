@@ -61,7 +61,9 @@ const user = function (sequelize, DataTypes) {
         }
 
         return values;
-    }
+    };
+
+    User.defaultAttributes = ['firstName', 'lastName', 'id'];
 
     return User;
 };
