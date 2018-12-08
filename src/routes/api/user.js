@@ -15,6 +15,9 @@ module.exports = function (router, models) {
     const body = req.body;
     var user = req.user;
     var didChangeUser = false;
+
+    var promises = [];
+
     if (body.firstName != null) {
       user.firstName = body.firstName;
       didChangeUser = true;
@@ -27,32 +30,39 @@ module.exports = function (router, models) {
       user.phoneNumber = body.phoneNumber;
       didChangeUser = true;
     }
+    if (body.token != null) {
+      var promise = models.DeviceToken.findOne({
+        where: {
+          token: body.token,
+          userID: user.id
+        }
+      }).then( deviceToken => {
+        if (deviceToken == null) {
+          return models.DeviceToken.create({
+            id: uuidV1(),
+            token: body.token
+          }).then( deviceToken => {
+            user.addDeviceToken(deviceToken);
+            return user.save();
+          });
+        } else {
+          return null;
+        }
+      });
+
+      promises.push(promise);
+      didChangeUser = true;
+    }
     if (didChangeUser == true) {
-      user.save().then( savedUser => {
-        res.send(savedUser);
+      Promise.all(promises).then( values => {
+        user.save().then( savedUser => {
+          return res.send(savedUser);
+        });
       });
     } else {
-      res.send(user);
+      return res.send(user);
     }
   });
-
-  // router.post('/user', function (req, res) {
-  //   console.log('Hit /user post.');
-
-  //   models.User.create({
-  //     id: uuidV1(),
-  //     firstName: req.body.firstName,
-  //     lastName: req.body.lastName,
-  //     email: req.body.email,
-  //     phoneNumber: req.body.phoneNumber,
-  //   }).then((user) => {
-  //     console.log('Hit then.');
-  //     var json = JSON.stringify({
-  //       'user': user.toJSON(),
-  //     });
-  //     res.json(json);
-  //   });
-  // });
 
   router.get('/users', function (req, res) {
     models.User.findAll({ offset: req.query.offset, limit: Math.min(req.query.limit, 100) }).then(users => {

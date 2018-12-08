@@ -33,6 +33,7 @@ const user = function (sequelize, DataTypes) {
         User.hasMany(models.AutoService, { foreignKey: 'userID' });
         User.hasOne(models.Mechanic, { foreignKey: 'userID' });
         User.hasMany(models.Vehicle, { foreignKey: 'userID' });
+        User.hasMany(models.DeviceToken, { foreignKey: 'userID' });
     };
 
     User.generateHash = function (password) {

@@ -1,5 +1,6 @@
 const express = require('express');
 const uuidV1 = require('uuid/v1');
+const apn = require('../../notifications/pushNotifications.js');
 
 module.exports = function (router, models) {
 
@@ -25,13 +26,12 @@ module.exports = function (router, models) {
 
     router.get('/auto-service', function (req, res) {
         if (req.query.autoServiceID != null) {
-            models.AutoService.findOne (
-                {
-                    where: {
-                        id: req.query.autoServiceID,
-                        userID: req.user.id 
-                    },
-                    include: includeDict,
+            models.AutoService.findOne ({
+                where: {
+                    id: req.query.autoServiceID,
+                    userID: req.user.id 
+                },
+                include: includeDict,
             }).then( autoService => {
                 return res.json(autoService);
             });
@@ -78,14 +78,12 @@ module.exports = function (router, models) {
 
             var queryString = 'case ';
 
-            // var queryString = `SELECT * FROM "autoService" WHERE "autoService"."userID" = ? ORDER BY case `;
-            // var lastIndex = 0
             for (i = 0; i<status.length; i++) {
                 queryString += `WHEN status = '` + status[i] + `' THEN ` + i + ` `;
                 lastIndex = i;
             }
             lastIndex += 1;
-            queryString += 'ELSE ' + lastIndex + ' END'; // ASC LIMIT ? OFFSET ?';
+            queryString += 'ELSE ' + lastIndex + ' END';
 
             models.AutoService.findAll({
                 where: {
@@ -96,25 +94,9 @@ module.exports = function (router, models) {
                 offset: offset,
                 include: includeDict,
             }).then( autoServices => {
+
                 return res.json(autoServices);
             })
-
-            // models.sequelize.query(queryString, {
-            //     replacements: [req.user.id, limit, offset],
-            //     type: models.sequelize.QueryTypes.SELECT,
-            //     model: models.AutoService,
-            //     include: [
-            //         models.Location, 
-            //         {
-            //             model: models.ServiceEntity,
-            //             include: [models.OilChange]
-            //         }, 
-            //     models.Vehicle],
-            // }).then( autoServices => {
-            //     return res.json(autoServices);
-            // }).catch ( error => {
-            //     return res.status(400);
-            // })
         }
     });
 

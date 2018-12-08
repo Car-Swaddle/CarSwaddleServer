@@ -17,6 +17,7 @@ const models = {
   Region: sequelize.import('./region'),
   TemplateTimeSpan: sequelize.import('./templateTimeSpan'),
   ServiceEntity: sequelize.import('./serviceEntity'),
+  DeviceToken: sequelize.import('./deviceToken'),
 };
 
 Object.keys(models).forEach(key => {

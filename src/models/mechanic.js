@@ -36,6 +36,7 @@ const mechanic = function (sequelize, DataTypes) {
             allowNull: true
           },
         });
+        Mechanic.hasMany(models.DeviceToken, { foreignKey: 'mechanicID' });
     };
 
     Mechanic.prototype.toJSON = function () {

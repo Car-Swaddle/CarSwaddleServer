@@ -1,4 +1,5 @@
 const uuidV1 = require('uuid/v1');
+const pushService = require('../../notifications/pushNotifications.js');
 
 module.exports = function (router, models) {
 
@@ -78,6 +79,8 @@ module.exports = function (router, models) {
 
         vehicle.setUser(req.user, { save: false });
         vehicle.save().then( vehicle => {
+            const payload = {'someMessage': 'Here is your new fancy car!'};
+            pushService.sendNotification(req.user, 'A new vehicle was created', payload);
             return res.json(vehicle);
         })
     });
