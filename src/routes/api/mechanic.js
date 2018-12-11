@@ -3,6 +3,12 @@ const uuidV1 = require('uuid/v1');
 
 module.exports = function (router, models) {
 
+    router.get('/current-mechanic', function (req, res) {
+        req.user.getMechanic().then( mechanic => {
+            return res.json(mechanic);
+        });
+    });
+
     router.get('/nearest-mechanics', function (req, res) {
         console.log('nearest-mechanics GET');
         var query = req.query;

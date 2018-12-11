@@ -16,18 +16,18 @@ const autoService = function (sequelize, DataTypes) {
       allowNull: true
     },
   }, {
-    freezeTableName: true,
-  });
+      freezeTableName: true,
+    });
 
   AutoService.associate = models => {
     AutoService.belongsTo(models.User, { foreignKey: 'userID' });
     AutoService.belongsTo(models.Mechanic, { foreignKey: 'mechanicID' });
     AutoService.hasOne(models.Location, { foreignKey: 'autoServiceID' });
     AutoService.hasOne(models.Vehicle, { foreignKey: 'autoServiceID' });
-    AutoService.hasOne(models.Price, { foreignKey: 'autoServiceID'})
-    AutoService.hasMany(models.ServiceEntity, { foreignKey: 'autoServiceID'})
+    AutoService.hasOne(models.Price, { foreignKey: 'autoServiceID' })
+    AutoService.hasMany(models.ServiceEntity, { foreignKey: 'autoServiceID' })
   };
-  
+
   AutoService.STATUS = {
     scheduled: 'scheduled',
     inProgress: 'inProgress',
@@ -44,6 +44,43 @@ const autoService = function (sequelize, DataTypes) {
       return false;
     }
   };
+
+  AutoService.areValidStatuses = function (sortStatus) {
+    if (Array.isArray(sortStatus) == false) {
+      sortStatus = [sortStatus];
+    }
+    var difference = AutoService.allStatus.filter(x => !sortStatus.includes(x));
+    sortStatus = sortStatus.concat(difference);
+
+    var statusAreValid = true;
+
+    for (i = 0; i < sortStatus.length; i++) {
+      var currentStatus = sortStatus[i];
+      if (AutoService.allStatus.includes(currentStatus) == false) {
+        statusAreValid = false;
+      }
+    }
+    return statusAreValid;
+  }
+
+  AutoService.rawStatusQueryString = function (sortStatus) {
+    var sortStatus = sortStatus || AutoService.allStatus;
+
+    if (Array.isArray(sortStatus) == false) {
+      sortStatus = [sortStatus];
+    }
+
+    var queryString = 'case ';
+
+    for (i = 0; i < sortStatus.length; i++) {
+      queryString += `WHEN status = '` + sortStatus[i] + `' THEN ` + i + ` `;
+      lastIndex = i;
+    }
+    lastIndex += 1;
+    queryString += 'ELSE ' + lastIndex + ' END';
+
+    return queryString;
+  }
 
   return AutoService;
 };
