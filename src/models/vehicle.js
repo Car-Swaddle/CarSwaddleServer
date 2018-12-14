@@ -23,7 +23,8 @@ const vehicle = function (sequelize, DataTypes) {
 
     Vehicle.associate = models => {
         Vehicle.belongsTo(models.User, { foreignKey: 'userID', allowNull: false });
-        Vehicle.belongsToMany(models.AutoService, { through: 'VehicleAutoService', foreignKey: 'autoServiceID', allowNull: true});
+        // Vehicle.belongsToMany(models.AutoService, { through: 'VehicleAutoService', foreignKey: 'autoServiceID', allowNull: true});
+        Vehicle.hasMany(models.AutoService, { foreignKey: 'vehicleID', allowNull: true });
         Vehicle.hasOne(models.VehicleDescription, { foreignKey: 'vehicleID', allowNull: true});
     };
 

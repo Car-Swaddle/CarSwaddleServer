@@ -51,7 +51,7 @@ module.exports = function (router, models) {
         }
 
         if (autoServiceID != null) {
-            whereDict.autoServiceID = autoServiceID
+            whereDict.id = autoServiceID
         }
 
         return whereDict;
@@ -104,18 +104,8 @@ module.exports = function (router, models) {
             return res.status(422);
         }
 
-        if (body.status == null) {
-            return res.status(422).json({ error: 'Invalid status:' + status });
-        }
-
-        if (models.AutoService.isValidStatus(body.status) == false) {
-            return res.status(422).json({ error: 'Invalid status: ' + body.status });
-        }
-
-
         models.AutoService.findOne({
             where: {
-                userID: req.user.id,
                 id: autoServiceID,
             }
         }).then(autoService => {
@@ -124,63 +114,94 @@ module.exports = function (router, models) {
                 return res.status(404);
             }
 
-            var promises = []
-            if (body.status != null) {
-                autoService.status = body.status
-                const p = autoService.save();
-                promises.push(p);
-            }
+            req.user.getMechanic().then(mechanic => {
+                if (mechanic == null) {
+                    return res.status(404);
+                }
 
-            if (body.vehicleID != null) {
-                const p = models.Vehicle.findById(body.vehicleID).then(vehicle => {
-                    return autoService.setVehicle(vehicle)
-                });
-                promises.push(p);
-            }
+                var changedByUser = false;
+                var changedByMechanic = false;
 
-            if (body.mechanicID != null) {
-                const p = models.Vehicle.findById(body.mechanicID).then(mechanic => {
-                    return autoService.setMechanic(mechanic)
-                });
-                promises.push(p);
-            }
+                var shouldSave = false;
 
-            if (body.locationID != null) {
-                const p = models.Location.findById(body.locationID).then(location => {
-                    return autoService.setLocation(location)
-                });
-                promises.push(p);
-            }
+                if (autoService.userID == req.user.id) {
+                    changedByUser = true;
+                }
 
-            if (body.location != null && body.location.longitude != null && body.location.latitude != null) {
-                var point = { type: 'Point', coordinates: [body.location.longitude, body.location.latitude] };
-                const p = models.Location.create({
-                    point: point,
-                    streetAddress: body.location.streetAddress,
-                    id: uuidV1(),
-                }).then(location => {
-                    return autoService.setLocation(location)
-                })
-                promises.push(p);
-            }
+                if (autoService.mechanicID != mechanic.id) {
+                    changedByMechanic = true;
+                }
 
-            if (body.scheduledDate != null) {
-                autoService.scheduledDate = body.scheduledDate
-                const p = autoService.save();
-                promises.push(p);
-            }
+                if (changedByUser == false && changedByMechanic == false) {
+                    return res.status(404);
+                }
 
-            Promise.all(promises).then(values => {
-                models.AutoService.find({
-                    where:
-                        { id: autoService.id },
-                    include: [models.Location,
-                    {
-                        model: models.ServiceEntity,
-                        include: [models.OilChange]
-                    }, models.Vehicle],
-                }).then(newAutoService => {
-                    return res.json(newAutoService);
+                var promises = []
+                if (body.status != null && models.AutoService.isValidStatus(body.status) == true && body.status != autoService.status) {
+                    autoService.status = body.status
+                    shouldSave = true;
+                }
+
+                if (body.vehicleID != null && body.vehicleID != autoService.vehicleID) {
+                    const p = models.Vehicle.findOne({
+                        where: {
+                            userID: req.user.id,
+                            id: body.vehicleID,
+                        }
+                    }).then(newVehicle => {
+                        return autoService.setVehicle(newVehicle);
+                    });
+                    promises.push(p);
+                }
+
+                if (body.mechanicID != null && body.mechanicID != autoService.mechanicID) {
+                    const p = models.Mechanic.findById(body.mechanicID).then(mechanic => {
+                        return autoService.setMechanic(mechanic);
+                    });
+                    promises.push(p);
+                }
+
+                if (body.locationID != null && body.locationID != autoService.locationID) {
+                    const p = models.Location.findById(body.locationID).then(location => {
+                        return autoService.setLocation(location);
+                    });
+                    promises.push(p);
+                }
+
+                if (body.location != null && body.location.longitude != null && body.location.latitude != null) {
+                    var point = { type: 'Point', coordinates: [body.location.longitude, body.location.latitude] };
+                    const p = models.Location.create({
+                        point: point,
+                        streetAddress: body.location.streetAddress,
+                        id: uuidV1(),
+                    }).then(location => {
+                        return autoService.setLocation(location);
+                    })
+                    promises.push(p);
+                }
+
+                if (body.scheduledDate != null && body.scheduledDate != autoService.scheduledDate) {
+                    autoService.scheduledDate = body.scheduledDate;
+                    shouldSave = true;
+                }
+
+                if (body.notes != null && body.notes != autoService.notes) {
+                    autoService.notes = body.notes;
+                    shouldSave = true;
+                }
+
+                if (shouldSave == true) {
+                    const p = autoService.save();
+                    promises.push(p);
+                }
+
+                Promise.all(promises).then(values => {
+                    models.AutoService.find({
+                        where: { id: autoService.id },
+                        include: includeDict,
+                    }).then(newAutoService => {
+                        return res.json(newAutoService);
+                    });
                 });
             });
         });
@@ -242,10 +263,10 @@ module.exports = function (router, models) {
                         notes: body.notes,
                         scheduledDate: scheduledDate,
                     }).then(autoService => {
-                        autoService.setMechanic(mechanic);
-                        autoService.setUser(req.user);
-                        autoService.setVehicle(vehicle);
-                        autoService.setLocation(location);
+                        autoService.setMechanic(mechanic, { save: false });
+                        autoService.setUser(req.user, { save: false });
+                        autoService.setVehicle(vehicle, { save: false });
+                        autoService.setLocation(location, { save: false });
                         autoService.save().then(updatedAutoService => {
                             var entityTypeToSpecificEntities = {};
 
@@ -287,14 +308,9 @@ module.exports = function (router, models) {
                             }
 
                             Promise.all(serviceEntityPromises).then(values => {
-                                models.AutoService.find({
-                                    where:
-                                        { id: autoService.id },
-                                    include: [models.Location,
-                                    {
-                                        model: models.ServiceEntity,
-                                        include: [models.OilChange]
-                                    }, models.Vehicle],
+                                models.AutoService.findOne({
+                                    where: { id: autoService.id },
+                                    include: includeDict,
                                 }).then(newAutoService => {
                                     // const payload = { 'someMessage': 'Here is your new fancy car!' };
                                     const displayName = req.user.displayName();
