@@ -48,6 +48,7 @@ module.exports = function (router, models) {
 
     router.post('/stripe-webhook', function (req, res) {
         const eventJSON = JSON.parse(req.body);
+        console.log(eventJSON);
         return res.send(200);
     });
 
