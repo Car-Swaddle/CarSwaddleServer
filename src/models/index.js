@@ -1,11 +1,11 @@
 const Sequelize = require('sequelize');
 
 var sequelize = null;
-console.log('process.env.DATABASE: ' + process.env.DATABASE);
+console.log('process.env.DATABASE: ' + process.env.DATABASE_URL);
 console.log('process.env: ' + process.env);
-if (process.env.DATABASE) {
+if (process.env.DATABASE_URL) {
   // the application is executed on Heroku
-  sequelize = new Sequelize(process.env.DATABASE, {
+  sequelize = new Sequelize(process.env.DATABASE_URL, {
     dialect:  'postgres',
     protocol: 'postgres',
     logging:  true // false
