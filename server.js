@@ -17,7 +17,6 @@ if (port == null || port == "") {
 }
 app.listen(port);
 
-app.listen(process.env.PORT);
 console.log('working on ' + process.env.PORT);
 
 const passport = require('./passport')(models);
