@@ -46,12 +46,6 @@ module.exports = function (router, models) {
         });
     });
 
-    router.post('/stripe-webhook', function (req, res) {
-        const eventJSON = JSON.parse(req.body);
-        console.log(eventJSON);
-        return res.send(200);
-    });
-
     router.get('/stripe/verification', function (req, res) {
         req.user.getMechanic().then(mechanic => {
             if (mechanic == null) {
