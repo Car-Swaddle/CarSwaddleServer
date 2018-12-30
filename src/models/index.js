@@ -35,13 +35,15 @@ const models = {
 };
 
 Object.keys(models).forEach(key => {
+  console.log(key);
   if ('associate' in models[key]) {
     models[key].associate(models);
+    console.log('associated ' + key);
   }
 });
 
 // {force: true}
-sequelize.sync().then( function() {
+sequelize.sync({force: true}).then( function() {
   console.log("synced")
 });
 
