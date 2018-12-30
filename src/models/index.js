@@ -1,13 +1,11 @@
 const Sequelize = require('sequelize');
 
 var sequelize = null;
-if (process.env.HEROKU_POSTGRESQL_CHARCOAL_URL) {
+if (process.env.DATABASE) {
   // the application is executed on Heroku
-  sequelize = new Sequelize(process.env.HEROKU_POSTGRESQL_CHARCOAL_URL, {
+  sequelize = new Sequelize(process.env.DATABASE, {
     dialect:  'postgres',
     protocol: 'postgres',
-    // port:     match[4],
-    // host:     match[3],
     logging:  true // false
   });
 } else {
