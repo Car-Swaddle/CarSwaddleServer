@@ -10,7 +10,7 @@ module.exports = function (app, models) {
         if (req.body == null) {
             return res.status(422);
         }
-        const eventJSON = JSON.parse(req.body);
+        const eventJSON = req.body;
         console.log(eventJSON);
         return res.send(200);
     });
