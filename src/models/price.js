@@ -4,13 +4,16 @@ const price = function (sequelize, DataTypes) {
             type: DataTypes.STRING,
             primaryKey: true,
             unique: true,
+        },
+        totalPrice: {
+            type: DataTypes.DECIMAL,
         }
     }, {
         freezeTableName: true,
     });
 
     Price.associate = models => {
-        Price.belongsTo(models.AutoService, { foreignKey: 'autoServiceID' });
+        Price.belongsTo(models.AutoService, { foreignKey: 'autoServiceID', allowNull: true });
         Price.hasMany(models.PricePart, { foreignKey: 'priceID' });
     };
 

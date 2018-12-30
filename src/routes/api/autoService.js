@@ -114,10 +114,10 @@ module.exports = function (router, models) {
                 return res.status(404);
             }
 
-            req.user.getMechanic().then(mechanic => {
-                if (mechanic == null) {
-                    return res.status(404);
-                }
+            req.user.getMechanic().then(currentUserMechanic => {
+                // if (currentUserMechanic == null) {
+                //     return res.status(404);
+                // }
 
                 var changedByUser = false;
                 var changedByMechanic = false;
@@ -128,7 +128,7 @@ module.exports = function (router, models) {
                     changedByUser = true;
                 }
 
-                if (autoService.mechanicID != mechanic.id) {
+                if (currentUserMechanic != null && autoService.mechanicID == currentUserMechanic.id) {
                     changedByMechanic = true;
                 }
 
@@ -136,10 +136,12 @@ module.exports = function (router, models) {
                     return res.status(404);
                 }
 
+                var didChangeStatus = false
                 var promises = []
                 if (body.status != null && models.AutoService.isValidStatus(body.status) == true && body.status != autoService.status) {
                     autoService.status = body.status
                     shouldSave = true;
+                    didChangeStatus = true;
                 }
 
                 if (body.vehicleID != null && body.vehicleID != autoService.vehicleID) {
@@ -155,8 +157,8 @@ module.exports = function (router, models) {
                 }
 
                 if (body.mechanicID != null && body.mechanicID != autoService.mechanicID) {
-                    const p = models.Mechanic.findById(body.mechanicID).then(mechanic => {
-                        return autoService.setMechanic(mechanic);
+                    const p = models.Mechanic.findById(body.mechanicID).then(queriedMechanic => {
+                        return autoService.setMechanic(queriedMechanic);
                     });
                     promises.push(p);
                 }
@@ -200,6 +202,27 @@ module.exports = function (router, models) {
                         where: { id: autoService.id },
                         include: includeDict,
                     }).then(newAutoService => {
+
+                        if (changedByMechanic == true) {
+                            // (user, alert, payload, badge)
+                            newAutoService.getUser().then(user => {
+                                if (didChangeStatus) {
+                                    const alert = 'Your mechanic changed the status of your oil change to ' + body.status + '.';
+                                    pushService.sendUserNotification(user, alert, null, null);
+                                } else {
+                                    const alert = 'Your mechanic made a change to your oil change.';
+                                    pushService.sendUserNotification(user, alert, null, null);
+                                }
+                            });
+                        }
+
+                        if (changedByUser == true) {
+                            newAutoService.getMechanic().then(mechanic => {
+                                const alert = req.user.displayName() + ' changed one of your scheduled auto services.';
+                                pushService.sendMechanicNotification(mechanic, alert, null, null);
+                            });
+                        }
+
                         return res.json(newAutoService);
                     });
                 });

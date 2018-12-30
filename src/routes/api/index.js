@@ -12,6 +12,8 @@ module.exports = function (app, models) {
     require('./region.js')(router, models);
     require('./mechanic.js')(router, models);
     require('./vehicle.js')(router, models);
+    require('./price.js')(router, models);
+    require('./stripe.js')(router, models);
 
     return router;
 }

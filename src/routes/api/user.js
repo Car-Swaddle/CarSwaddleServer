@@ -1,7 +1,9 @@
 const uuidV1 = require('uuid/v1');
+const constants = require('../constants');
+const stripe = require('stripe')(constants.STRIPE_SECRET_KEY);
 
 module.exports = function (router, models) {
-  
+
   router.get('/', function (req, res, next) {
     res.send('respond with a resource');
   });
@@ -19,15 +21,60 @@ module.exports = function (router, models) {
     var promises = [];
 
     if (body.firstName != null) {
-      user.firstName = body.firstName;
+      const promise = user.getMechanic().then(mechanic => {
+        if (mechanic == null) {
+          return;
+        }
+        return stripe.accounts.update(mechanic.stripeAccountID, {
+          legal_entity: {
+            first_name: body.firstName,
+          }
+        }).then(stripeAccount => {
+          if (stripeAccount == null) {
+            return;
+          }
+          user.firstName = body.firstName;
+        });
+      });
+      promises.push(promise);
       didChangeUser = true;
     }
     if (body.lastName != null) {
-      user.lastName = body.lastName;
+      const promise = user.getMechanic().then(mechanic => {
+        if (mechanic == null) {
+          return;
+        }
+        return stripe.accounts.update(mechanic.stripeAccountID, {
+          legal_entity: {
+            last_name: body.lastName,
+          }
+        }).then(stripeAccount => {
+          if (stripeAccount == null) {
+            return;
+          }
+          user.lastName = body.lastName;
+        });
+      });
+      promises.push(promise);
       didChangeUser = true;
     }
     if (body.phoneNumber != null) {
-      user.phoneNumber = body.phoneNumber;
+      const promise = user.getMechanic().then(mechanic => {
+        if (mechanic == null) {
+          return;
+        }
+        return stripe.accounts.update(mechanic.stripeAccountID, {
+          legal_entity: {
+            phone_number: body.phoneNumber,
+          }
+        }).then(stripeAccount => {
+          if (stripeAccount == null) {
+            return;
+          }
+          user.phoneNumber = body.phoneNumber;
+        });
+      });
+      promises.push(promise);
       didChangeUser = true;
     }
     if (body.token != null) {
@@ -36,12 +83,12 @@ module.exports = function (router, models) {
           token: body.token,
           userID: user.id
         }
-      }).then( deviceToken => {
+      }).then(deviceToken => {
         if (deviceToken == null) {
           return models.DeviceToken.create({
             id: uuidV1(),
             token: body.token
-          }).then( deviceToken => {
+          }).then(deviceToken => {
             user.addDeviceToken(deviceToken);
             return user.save();
           });
@@ -54,8 +101,8 @@ module.exports = function (router, models) {
       didChangeUser = true;
     }
     if (didChangeUser == true) {
-      Promise.all(promises).then( values => {
-        user.save().then( savedUser => {
+      Promise.all(promises).then(values => {
+        user.save().then(savedUser => {
           return res.send(savedUser);
         });
       });
@@ -78,9 +125,6 @@ module.exports = function (router, models) {
     }
 
     models.User.findById(req.query.id).then(user => {
-      // var json = JSON.stringify({
-      //   'user': user.toJSON(),
-      // });
       res.json(user);
     }).catch(error => {
       res.status(403).send('resource not found');

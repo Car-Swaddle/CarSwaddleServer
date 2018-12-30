@@ -24,6 +24,10 @@ const user = function (sequelize, DataTypes) {
         },
         password: {
             type: DataTypes.STRING,
+        }, 
+        stripeCustomerID: {
+            type: DataTypes.STRING,
+            allowNull: true,
         }
     }, {
         freezeTableName: true,
