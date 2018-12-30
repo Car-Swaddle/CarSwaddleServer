@@ -11,7 +11,7 @@ app.use(bodyParser.json({ type: 'application/x-www-form-urlencoded' }))
 
 app.use(express.static(__dirname + '/www'));
 
-const port = process.env.PORT;
+var port = process.env.PORT;
 if (port == null || port == "") {
     port = 3000;
 }

@@ -1,8 +1,21 @@
 const Sequelize = require('sequelize');
 
-const sequelize = new Sequelize('carswaddle', 'kylekendall', 'password', {
-  dialect: 'postgres',
-});
+var sequelize = null;
+if (process.env.HEROKU_POSTGRESQL_BRONZE_URL) {
+  // the application is executed on Heroku
+  sequelize = new Sequelize(process.env.HEROKU_POSTGRESQL_CHARCOAL_URL, {
+    dialect:  'postgres',
+    protocol: 'postgres',
+    port:     match[4],
+    host:     match[3],
+    logging:  true // false
+  });
+} else {
+  // the application is executed on the local machine
+  sequelize = new Sequelize('carswaddle', 'kylekendall', 'password', {
+    dialect: 'postgres',
+  });
+}
 
 const models = {
   User: sequelize.import('./user'),
