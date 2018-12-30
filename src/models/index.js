@@ -2,6 +2,7 @@ const Sequelize = require('sequelize');
 
 var sequelize = null;
 console.log('process.env.DATABASE: ' + process.env.DATABASE);
+console.log('process.env: ' + process.env);
 if (process.env.DATABASE) {
   // the application is executed on Heroku
   sequelize = new Sequelize(process.env.DATABASE, {
