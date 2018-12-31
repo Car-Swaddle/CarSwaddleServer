@@ -22,12 +22,25 @@ module.exports = function (app, models, passport) {
                 const token = jwt.sign(user.dataValues, 'your_jwt_secret');
 
                 if (req.query.isMechanic == "true") {
-                    models.Mechanic.findOrCreate({ where: { userID: user.id }, defaults: { isActive: true, id: uuidV1() } })
-                        .spread(function (mechanic, created) {
+                    models.Mechanic.findOrCreate({
+                        where: { userID: user.id },
+                        defaults: { isActive: true, id: uuidV1() }
+                    }).spread(function (mechanic, created) {
+                        if (created == true) {
+                            stripe.accounts.create(stripeCreateDict(req.connection.remoteAddress)).then(stripeAccount => {
+                                user.setMechanic(mechanic).then(function () {
+                                    mechanic.stripeAccountID = stripeAccount.id;
+                                    mechanic.save().then(finalMechanic => {
+                                        return res.json({ user, finalMechanic, token });
+                                    });
+                                });
+                            });
+                        } else {
                             user.setMechanic(mechanic).then(function () {
                                 return res.json({ user, mechanic, token });
                             });
-                        });
+                        }
+                    });
                 } else {
                     return res.json({ user, token });
                 }
@@ -64,29 +77,26 @@ module.exports = function (app, models, passport) {
                         const token = jwt.sign(user.dataValues, 'your_jwt_secret');
 
                         if (req.query.isMechanic == "true") {
-                            stripe.accounts.create({
-                                country: 'US',
-                                type: 'custom',
-                                tos_acceptance: {
-                                    date: Math.floor(Date.now() / 1000),
-                                    ip: req.connection.remoteAddress
-                                },
-                                legal_entity: {
-                                    type: 'individual',
-                                }
-                            }).then(account => {
-                                models.Mechanic.findOrCreate({
-                                    where: {
-                                        userID: user.id,
-                                        stripeAccountID: account.id
-                                    },
-                                    defaults: { isActive: true, id: uuidV1() }
-                                }).spread(function (mechanic, created) {
+                            models.Mechanic.findOrCreate({
+                                where: { userID: user.id },
+                                defaults: { isActive: true, id: uuidV1() }
+                            }).spread(function (mechanic, created) {
+                                if (created == true) {
+                                    stripe.accounts.create(stripeCreateDict(req.connection.remoteAddress)).then(stripeAccount => {
+                                        user.setMechanic(mechanic).then(function () {
+                                            mechanic.stripeAccountID = stripeAccount.id;
+                                            mechanic.save().then(finalMechanic => {
+                                                return res.json({ user, finalMechanic, token });
+                                            });
+                                        });
+                                    });
+                                } else {
                                     user.setMechanic(mechanic).then(function () {
                                         return res.json({ user, mechanic, token });
                                     });
-                                });
+                                }
                             });
+
                         } else {
                             return res.json({ user, token });
                         }
@@ -97,6 +107,21 @@ module.exports = function (app, models, passport) {
             (req, res);
 
     });
+
+    function stripeCreateDict(ip) {
+        return {
+            country: 'US',
+            type: 'custom',
+            tos_acceptance: {
+                date: Math.floor(Date.now() / 1000),
+                ip: ip
+            },
+            legal_entity: {
+                type: 'individual',
+            }
+        }
+    }
+
 
 };
 

@@ -17,6 +17,9 @@ const quartsPerOilChange = 5.5;
 const metersToMilesConstant = 1609.344;
 const haversineR = 6371e3;
 
+// Covers Stripe charge fee %3 and the connect payout volume %0.25 fee 
+const processingPercentage = 0.0325;
+
 module.exports = function (router, models) {
 
     router.post('/price', function (req, res) {
@@ -109,7 +112,7 @@ module.exports = function (router, models) {
                     });
                     totalPrices.push(bookingFeePricePromise);
                     var processingFeePricePromise = models.PricePart.create({
-                        key: 'processingFee', value: ((subtotal + constants.BOOKING_FEE) * 0.03), id: uuidV1()
+                        key: 'processingFee', value: ((subtotal + constants.BOOKING_FEE) * processingPercentage), id: uuidV1()
                     });
                     totalPrices.push(processingFeePricePromise);
 

@@ -23,28 +23,49 @@ module.exports = function (router, models) {
 
     router.post('/create-charge', async (req, res) => {
 
-        const { sourceID, priceID, mechanicID } = req.body;
+        const { sourceID, priceID, mechanicID, autoServiceID } = req.body;
 
-        if (sourceID == null || priceID == null || mechanicID == null) {
+        if (sourceID == null || priceID == null || mechanicID == null || autoServiceID == null) {
             return res.status(422);
         }
 
         var price = await models.Price.findById(priceID);
+        var priceParts = await price.getPriceParts();
         var mechanic = await models.Mechanic.findById(mechanicID);
+        var autoService = await models.AutoService.findById(autoServiceID);
+
+        if (price == null || priceParts == null || mechanic == null || autoService == null) {
+            return res.status(422);
+        }
+
+        const destinationAmount = generateDestinationAmount();
 
         stripe.charges.create({
             amount: price.totalPrice,
             currency: "usd",
             source: sourceID,
-            description: "Charge for oil change " + req.user.displayName(),
-            application_fee: constants.BOOKING_FEE,
+            description: "Oil Change from Car Swaddle",
+            statement_descriptor: "Car Swaddle Oil Change",
             destination: {
                 account: mechanic.stripeCustomerID,
+                amount: destinationAmount,
             },
+            receipt_email: req.user.email,
+            metadata: {
+                mechanicID: mechanicID,
+                userID: req.user.id,
+                priceID: price.id,
+                autoServiceID: autoServiceID,
+            }
         }, function (err, charge) {
             console.log(charge);
         });
     });
+
+    function generateDestinationAmount(priceParts, price) {
+        const subtotalPricePart = priceParts.find(x => x.key === 'subtotal')[0];
+        return subtotalPricePart.value
+    }
 
     router.get('/stripe/verification', function (req, res) {
         req.user.getMechanic().then(mechanic => {
