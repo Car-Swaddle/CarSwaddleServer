@@ -11,7 +11,7 @@ const mechanic = function (sequelize, DataTypes) {
         },
         stripeAccountID: {
             type: DataTypes.STRING,
-            allowNull: false
+            allowNull: true
         },
         dateOfBirth: {
             type: DataTypes.DATE,
