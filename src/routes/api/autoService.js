@@ -272,8 +272,6 @@ module.exports = function (router, models) {
                 return res.json(newAutoService);
             });
         });
-        // });
-        // });
     });
 
 
@@ -397,5 +395,22 @@ module.exports = function (router, models) {
         });
     });
 
+    function numberOfAutoServicesProvided(id) {
+        return models.sequelize.query('SELECT COUNT(object) as count FROM (SELECT FROM "autoService" as r WHERE "mechanicID" = ? AND "status" = "completed") as object', {
+            replacements: [id],
+            type: models.sequelize.QueryTypes.SELECT
+        });
+    }
+
     return router;
 };
+
+
+// module.exports = function () {
+//     function numberOfAutoServicesProvided(id)  {
+//         return models.sequelize.query('SELECT COUNT(object) as count FROM (SELECT FROM "autoService" as r WHERE "mechanicID" = ? AND "status" = "completed") as object', {
+//             replacements: [id],
+//             type: models.sequelize.QueryTypes.SELECT
+//         });
+//     }
+// };

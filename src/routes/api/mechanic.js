@@ -2,12 +2,44 @@ const express = require('express');
 const uuidV1 = require('uuid/v1');
 const constants = require('../constants');
 const stripe = require('stripe')(constants.STRIPE_SECRET_KEY);
+const reviewAPI = require('./review.js');
+const autoServiceAPI = require('./autoService.js');
 
 module.exports = function (router, models) {
+
+    require('../stats.js')(models);
 
     router.get('/current-mechanic', async function (req, res) {
         const mechanic = await req.user.getMechanic();
         return res.json(mechanic);
+    });
+
+    router.get('/stats', async function (req, res) {
+        if (req.query.mechanic == null) {
+            return res.status(422).send('invalid parameters');
+        }
+        const mechanicID = req.query.mechanic;
+        const averageRating = await averageReceivedRating(mechanicID);
+        const numberOfRatings = await numberOfRatingsReceived(mechanicID);
+        const autoServicesProvided = await numberOfAutoServicesProvided(mechanicID);
+
+        const avg = averageRating[0].rating;
+        const count = parseInt(numberOfRatings[0].count);
+        const services = parseInt(autoServicesProvided[0].count);
+
+        if (avg == null || count == null || services == null) {
+            return res.status(404).send();
+        }
+
+        var json = {}
+        json[mechanicID] = {
+            averageRating: avg,
+            numberOfRatings: count,
+            autoServicesProvided: services
+        }
+
+
+        return res.json(json);
     });
 
     router.get('/nearest-mechanics', function (req, res) {

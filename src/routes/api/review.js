@@ -3,29 +3,40 @@ const constants = require('../constants');
 
 module.exports = function (router, models) {
 
-    router.get('/ratings-received', function (req, res) {
+    require('../stats.js')(models);
+
+    router.get('/average-rating-received', function (req, res) {
+        var id = null;
         if (req.query.mechanic != null) {
-            averageMechanicReceivedRating(req.query.mechanic).then(averageRating => {
-                if (averageRating[0] == null) {
-                    return res.status(404).send();
-                }
-                return res.json(averageRating[0]);
-            });
+            id = req.query.mechanic;
         } else if (req.query.user != null) {
-            averageUserReceivedRating(req.query.user).then(averageRating => {
-                if (averageRating[0] == null) {
-                    return res.status(404).send();
-                }
-                return res.json(averageRating[0]);
-            });
+            id = req.query.user;
         } else {
-            averageUserReceivedRating(req.user.id).then(averageRating => {
-                if (averageRating[0] == null) {
-                    return res.status(404).send();
-                }
-                return res.json(averageRating[0]);
-            });
+            id = req.user.id;
         }
+        averageReceivedRating(id).then(averageRating => {
+            if (averageRating[0] == null) {
+                return res.status(404).send();
+            }
+            return res.json(averageRating[0]);
+        });
+    });
+
+    router.get('/ratings-count', function (req, res) {
+        var id = null;
+        if (req.query.mechanic != null) {
+            id = req.query.mechanic;
+        } else if (req.query.user != null) {
+            id = req.query.user;
+        } else {
+            id = req.user.id;
+        }
+        numberOfRatingsReceived(id).then(count => {
+            if (count[0] == null) {
+                return res.status(404).send();
+            }
+            return res.json(count[0]);
+        });
     });
 
     router.get('/reviews', function (req, res) {
@@ -59,20 +70,6 @@ module.exports = function (router, models) {
             limit: Math.min(req.query.limit || 100, 100),
         }).then(reviews => {
             return res.json({ reviewsGivenToMechanic: reviews });
-        });
-    }
-
-    function averageUserReceivedRating(userID) {
-        return models.sequelize.query('SELECT AVG(object.rating) as rating FROM (SELECT r.rating as rating FROM review as r WHERE "revieweeID" = ?) as object', {
-            replacements: [userID],
-            type: models.sequelize.QueryTypes.SELECT
-        });
-    }
-
-    function averageMechanicReceivedRating(mechanicID) {
-        return models.sequelize.query('SELECT AVG(object.rating) as rating FROM (SELECT r.rating as rating FROM review as r WHERE "revieweeID" = ?) as object', {
-            replacements: [mechanicID],
-            type: models.sequelize.QueryTypes.SELECT
         });
     }
 
