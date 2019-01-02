@@ -8,9 +8,6 @@ module.exports = function (router, models) {
     router.get('/current-mechanic', async function (req, res) {
         const mechanic = await req.user.getMechanic();
         return res.json(mechanic);
-        // req.user.getMechanic().then( mechanic => {
-        //     return res.json(mechanic);
-        // });
     });
 
     router.get('/nearest-mechanics', function (req, res) {
@@ -38,7 +35,7 @@ module.exports = function (router, models) {
 
         user.getMechanic().then(mechanic => {
             if (mechanic == null) {
-                return res.status(400);
+                return res.status(400).send();
             }
             var promises = [];
             if (body.isActive != null) {
@@ -71,7 +68,7 @@ module.exports = function (router, models) {
                 didChangeMechanic = true;
                 var address = body.address;
                 if (address.line1 == null || address.city == null || address.postalCode == null || address.state == null) {
-                    return res.status(422);
+                    return res.status(422).send();
                 }
                 if (address.country == null) {
                     address.country = 'US';

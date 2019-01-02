@@ -14,6 +14,7 @@ module.exports = function (app, models) {
     require('./vehicle.js')(router, models);
     require('./price.js')(router, models);
     require('./stripe.js')(router, models);
+    require('./review.js')(router, models);
 
     return router;
 }

@@ -8,7 +8,7 @@ module.exports = function (app, models) {
 
     app.post('/stripe-webhook', function (req, res) {
         if (req.body == null) {
-            return res.status(422);
+            return res.status(422).send();
         }
         const eventJSON = req.body;
         console.log(eventJSON);

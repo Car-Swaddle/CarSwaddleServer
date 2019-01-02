@@ -8,26 +8,34 @@ module.exports = function (router, models) {
     const Op = models.Sequelize.Op;
 
     const includeDict = [
-        {
-            model: models.User,
-            attributes: models.User.defaultAttributes,
-        },
+        { model: models.User, attributes: models.User.defaultAttributes, },
         models.Location,
-        {
-            model: models.ServiceEntity,
-            include: [models.OilChange]
-        },
+        { model: models.ServiceEntity, include: [models.OilChange] },
         models.Vehicle,
         {
             model: models.Mechanic,
             include: [
                 {
                     model: models.User,
-                    attributes: models.User.defaultAttributes,
+                    attributes: ['id'],
                 }
             ],
-        }
+        },
+        reviewIncludeDict('reviewFromUser'),
+        reviewIncludeDict('reviewFromMechanic'),
     ];
+
+    function reviewIncludeDict(as) {
+        return {
+            model: models.Review,
+            attributes: ['id', 'rating', 'text', 'reviewerID', 'revieweeID'],
+            as: as,
+            include: [
+                { model: models.User, attributes: ['id'] },
+                { model: models.Mechanic, attributes: ['id'] }
+            ],
+        }
+    }
 
     function autoServiceWhereDict(mechanicID, userID, status, startDate, endDate, autoServiceID) {
         var whereDict = {
@@ -76,7 +84,7 @@ module.exports = function (router, models) {
         var order;
         if (sortStatus == null && sortStatus.length != 0) {
             if (models.AutoService.areValidStatuses(sortStatus) == false) {
-                return res.status(422);
+                return res.status(422).send();
             }
             var queryString = models.AutoService.rawStatusQueryString(sortStatus);
             order = [[models.sequelize.literal(queryString)], ['scheduledDate', 'DESC']]
@@ -95,139 +103,177 @@ module.exports = function (router, models) {
         })
     });
 
-    router.patch('/auto-service', function (req, res) {
+    router.patch('/auto-service', async function (req, res) {
 
         const autoServiceID = req.query.autoServiceID;
         const body = req.body;
 
         if (autoServiceID == null) {
-            return res.status(422);
+            return res.status(422).send('invalid parameters');
         }
 
-        models.AutoService.findOne({
-            where: {
-                id: autoServiceID,
+        const autoService = await models.AutoService.findOne({ where: { id: autoServiceID } });
+        if (autoService == null) {
+            return res.status(404).send('invalid parameters');
+        }
+
+        const autoServiceUser = await models.User.findById(autoService.userID);
+        const autoServiceMechanic = await models.Mechanic.findById(autoService.mechanicID);
+        const currentMechanic = await req.user.getMechanic();
+
+        if (autoServiceUser == null || autoServiceMechanic == null) {
+            return res.status(404).send('invalid auto service state');
+        }
+
+        if (autoServiceUser.id != req.user.id && autoServiceMechanic.id != currentMechanic.id) {
+            return res.status(404).send('Unauthorized access to auto service');
+        }
+
+        var changedByUser = false;
+        var changedByMechanic = false;
+
+        var shouldSave = false;
+
+        if (autoService.userID == req.user.id) {
+            changedByUser = true;
+        }
+
+        if (currentMechanic.id == autoServiceMechanic.id) {
+            changedByMechanic = true;
+        }
+
+        if (changedByUser == false && changedByMechanic == false) {
+            return res.status(404).send();
+        }
+
+        var didChangeStatus = false
+        var promises = []
+        if (body.status != null && models.AutoService.isValidStatus(body.status) == true && body.status != autoService.status) {
+            autoService.status = body.status
+            shouldSave = true;
+            didChangeStatus = true;
+        }
+
+        if (body.vehicleID != null && body.vehicleID != autoService.vehicleID && autoServiceUser.id == req.user.id) {
+            const p = models.Vehicle.findOne({
+                where: {
+                    userID: req.user.id,
+                    id: body.vehicleID,
+                }
+            }).then(newVehicle => {
+                return autoService.setVehicle(newVehicle);
+            });
+            promises.push(p);
+        }
+
+        if (body.mechanicID != null && body.mechanicID != autoService.mechanicID) {
+            const p = models.Mechanic.findById(body.mechanicID).then(queriedMechanic => {
+                return autoService.setMechanic(queriedMechanic);
+            });
+            promises.push(p);
+        }
+
+        if (body.locationID != null && body.locationID != autoService.locationID && autoServiceUser.id == req.user.id) {
+            const p = models.Location.findById(body.locationID).then(location => {
+                return autoService.setLocation(location);
+            });
+            promises.push(p);
+        }
+
+        if (body.location != null && body.location.longitude != null && body.location.latitude != null && autoServiceUser.id == req.user.id) {
+            var point = { type: 'Point', coordinates: [body.location.longitude, body.location.latitude] };
+            const p = models.Location.create({
+                point: point,
+                streetAddress: body.location.streetAddress,
+                id: uuidV1(),
+            }).then(location => {
+                return autoService.setLocation(location);
+            })
+            promises.push(p);
+        }
+
+        if (body.scheduledDate != null && body.scheduledDate != autoService.scheduledDate && autoServiceUser.id == req.user.id) {
+            autoService.scheduledDate = body.scheduledDate;
+            shouldSave = true;
+        }
+
+        if (body.notes != null && body.notes != autoService.notes && autoServiceUser.id == req.user.id) {
+            autoService.notes = body.notes;
+            shouldSave = true;
+        }
+
+        if (body.review != null && body.review.rating != null && body.review.text != null) {
+            const rating = body.review.rating;
+            const text = body.review.text;
+
+            var autoServicePromise = null;
+            if (changedByUser) {
+                autoServicePromise = autoService.getReviewFromUser();
+            } else {
+                autoServicePromise = autoService.getReviewFromMechanic();
             }
-        }).then(autoService => {
 
-            if (autoService == null) {
-                return res.status(404);
-            }
-
-            req.user.getMechanic().then(currentUserMechanic => {
-                // if (currentUserMechanic == null) {
-                //     return res.status(404);
-                // }
-
-                var changedByUser = false;
-                var changedByMechanic = false;
-
-                var shouldSave = false;
-
-                if (autoService.userID == req.user.id) {
-                    changedByUser = true;
+            const promise = autoServicePromise.then(async review => {
+                if (review == null) {
+                    review = await models.Review.create({ id: uuidV1(), rating: rating, text: text });
                 }
+                review.rating = rating;
+                review.text = text
+                review.setMechanic(autoServiceMechanic, { save: false });
+                review.setUser(autoServiceUser, { save: false });
 
-                if (currentUserMechanic != null && autoService.mechanicID == currentUserMechanic.id) {
-                    changedByMechanic = true;
+                if (changedByUser == true) {
+                    review.reviewerID = autoServiceUser.id;
+                    review.revieweeID = autoServiceMechanic.id;
+                    review.setAutoServiceFromUser(autoService, { save: false });
                 }
-
-                if (changedByUser == false && changedByMechanic == false) {
-                    return res.status(404);
+                if (changedByMechanic == true) {
+                    review.reviewerID = autoServiceMechanic.id;
+                    review.revieweeID = autoServiceUser.id;
+                    review.setAutoServiceFromMechanic(autoService, { save: false });
                 }
+                return review.save();
 
-                var didChangeStatus = false
-                var promises = []
-                if (body.status != null && models.AutoService.isValidStatus(body.status) == true && body.status != autoService.status) {
-                    autoService.status = body.status
-                    shouldSave = true;
-                    didChangeStatus = true;
-                }
+            });
+            promises.push(promise);
+        }
 
-                if (body.vehicleID != null && body.vehicleID != autoService.vehicleID) {
-                    const p = models.Vehicle.findOne({
-                        where: {
-                            userID: req.user.id,
-                            id: body.vehicleID,
+        if (shouldSave == true) {
+            const p = autoService.save();
+            promises.push(p);
+        }
+
+        Promise.all(promises).then(values => {
+            models.AutoService.find({
+                where: { id: autoService.id },
+                include: includeDict,
+            }).then(newAutoService => {
+
+                if (changedByMechanic == true) {
+                    // (user, alert, payload, badge)
+                    newAutoService.getUser().then(user => {
+                        if (didChangeStatus) {
+                            const alert = 'Your mechanic changed the status of your oil change to ' + body.status + '.';
+                            pushService.sendUserNotification(user, alert, null, null);
+                        } else {
+                            const alert = 'Your mechanic made a change to your oil change.';
+                            pushService.sendUserNotification(user, alert, null, null);
                         }
-                    }).then(newVehicle => {
-                        return autoService.setVehicle(newVehicle);
                     });
-                    promises.push(p);
                 }
 
-                if (body.mechanicID != null && body.mechanicID != autoService.mechanicID) {
-                    const p = models.Mechanic.findById(body.mechanicID).then(queriedMechanic => {
-                        return autoService.setMechanic(queriedMechanic);
+                if (changedByUser == true) {
+                    newAutoService.getMechanic().then(mechanic => {
+                        const alert = req.user.displayName() + ' changed one of your scheduled auto services.';
+                        pushService.sendMechanicNotification(mechanic, alert, null, null);
                     });
-                    promises.push(p);
                 }
 
-                if (body.locationID != null && body.locationID != autoService.locationID) {
-                    const p = models.Location.findById(body.locationID).then(location => {
-                        return autoService.setLocation(location);
-                    });
-                    promises.push(p);
-                }
-
-                if (body.location != null && body.location.longitude != null && body.location.latitude != null) {
-                    var point = { type: 'Point', coordinates: [body.location.longitude, body.location.latitude] };
-                    const p = models.Location.create({
-                        point: point,
-                        streetAddress: body.location.streetAddress,
-                        id: uuidV1(),
-                    }).then(location => {
-                        return autoService.setLocation(location);
-                    })
-                    promises.push(p);
-                }
-
-                if (body.scheduledDate != null && body.scheduledDate != autoService.scheduledDate) {
-                    autoService.scheduledDate = body.scheduledDate;
-                    shouldSave = true;
-                }
-
-                if (body.notes != null && body.notes != autoService.notes) {
-                    autoService.notes = body.notes;
-                    shouldSave = true;
-                }
-
-                if (shouldSave == true) {
-                    const p = autoService.save();
-                    promises.push(p);
-                }
-
-                Promise.all(promises).then(values => {
-                    models.AutoService.find({
-                        where: { id: autoService.id },
-                        include: includeDict,
-                    }).then(newAutoService => {
-
-                        if (changedByMechanic == true) {
-                            // (user, alert, payload, badge)
-                            newAutoService.getUser().then(user => {
-                                if (didChangeStatus) {
-                                    const alert = 'Your mechanic changed the status of your oil change to ' + body.status + '.';
-                                    pushService.sendUserNotification(user, alert, null, null);
-                                } else {
-                                    const alert = 'Your mechanic made a change to your oil change.';
-                                    pushService.sendUserNotification(user, alert, null, null);
-                                }
-                            });
-                        }
-
-                        if (changedByUser == true) {
-                            newAutoService.getMechanic().then(mechanic => {
-                                const alert = req.user.displayName() + ' changed one of your scheduled auto services.';
-                                pushService.sendMechanicNotification(mechanic, alert, null, null);
-                            });
-                        }
-
-                        return res.json(newAutoService);
-                    });
-                });
+                return res.json(newAutoService);
             });
         });
+        // });
+        // });
     });
 
 
@@ -243,18 +289,18 @@ module.exports = function (router, models) {
 
         const scheduledDate = body.scheduledDate;
         if (scheduledDate == null) {
-            return res.status(422);
+            return res.status(422).send();
         }
 
         if (body.vehicleID == null) {
-            return res.status(422);
+            return res.status(422).send();
         }
 
         const serviceEntities = body.serviceEntities;
 
         if (serviceEntities.length <= 0) {
             // Must have at least one service entity
-            return res.status(422);
+            return res.status(422).send();
         }
 
         var locationPromise = null;
@@ -270,11 +316,11 @@ module.exports = function (router, models) {
                 id: uuidV1(),
             })
         } else {
-            return res.status(422);
+            return res.status(422).send();
         }
 
         if (body.mechanicID == null) {
-            return res.status(422);
+            return res.status(422).send();
         }
 
         locationPromise.then(location => {

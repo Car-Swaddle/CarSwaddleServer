@@ -30,8 +30,8 @@ module.exports = function (app, models, passport) {
                             stripe.accounts.create(stripeCreateDict(req.connection.remoteAddress)).then(stripeAccount => {
                                 user.setMechanic(mechanic).then(function () {
                                     mechanic.stripeAccountID = stripeAccount.id;
-                                    mechanic.save().then(finalMechanic => {
-                                        return res.json({ user, finalMechanic, token });
+                                    mechanic.save().then(mechanic => {
+                                        return res.json({ user, mechanic, token });
                                     });
                                 });
                             });
@@ -64,7 +64,7 @@ module.exports = function (app, models, passport) {
             }, function (err, customer) {
 
                 if (customer == null || err != null) {
-                    return res.status(422);
+                    return res.status(422).send();
                 }
 
                 user.stripeCustomerID = customer.id;
@@ -85,8 +85,8 @@ module.exports = function (app, models, passport) {
                                     stripe.accounts.create(stripeCreateDict(req.connection.remoteAddress)).then(stripeAccount => {
                                         user.setMechanic(mechanic).then(function () {
                                             mechanic.stripeAccountID = stripeAccount.id;
-                                            mechanic.save().then(finalMechanic => {
-                                                return res.json({ user, finalMechanic, token });
+                                            mechanic.save().then(mechanic => {
+                                                return res.json({ user, mechanic, token });
                                             });
                                         });
                                     });
@@ -96,7 +96,6 @@ module.exports = function (app, models, passport) {
                                     });
                                 }
                             });
-
                         } else {
                             return res.json({ user, token });
                         }

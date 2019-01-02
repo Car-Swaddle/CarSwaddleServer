@@ -26,7 +26,7 @@ module.exports = function (router, models) {
         const { sourceID, priceID, mechanicID, autoServiceID } = req.body;
 
         if (sourceID == null || priceID == null || mechanicID == null || autoServiceID == null) {
-            return res.status(422);
+            return res.status(422).send();
         }
 
         var price = await models.Price.findById(priceID);
@@ -35,7 +35,7 @@ module.exports = function (router, models) {
         var autoService = await models.AutoService.findById(autoServiceID);
 
         if (price == null || priceParts == null || mechanic == null || autoService == null) {
-            return res.status(422);
+            return res.status(422).send();
         }
 
         const destinationAmount = generateDestinationAmount();
@@ -70,14 +70,14 @@ module.exports = function (router, models) {
     router.get('/stripe/verification', function (req, res) {
         req.user.getMechanic().then(mechanic => {
             if (mechanic == null) {
-                return res.status(400);
+                return res.status(400).send();
             }
             stripe.accounts.retrieve(mechanic.stripeAccountID, (err, account) => {
                 if (err != null || account == null) {
-                    return res.status(400);
+                    return res.status(400).send();
                 }
                 if (account.verification == null) {
-                    return res.status(400);
+                    return res.status(400).send();
                 }
                 // if (account.verification.fields_needed == null) {
                 //     return res.status(400);

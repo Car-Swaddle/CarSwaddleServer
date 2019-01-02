@@ -31,7 +31,7 @@ module.exports = function (router, models) {
         const body = req.body;
 
         if (body.oilType == null || body.mechanicID == null || centsForOilType(body.oilType) == null) {
-            return res.status(422);
+            return res.status(422).send();
         }
 
         const oilType = body.oilType;
@@ -51,7 +51,7 @@ module.exports = function (router, models) {
             });
             promises.push(locationPromise);
         } else {
-            return res.status(422);
+            return res.status(422).send();
         }
 
         var mechanicPromise = models.Mechanic.findById(mechanicID);
@@ -63,7 +63,7 @@ module.exports = function (router, models) {
             const mechanic = values[1];
 
             if (location == null || mechanic == null) {
-                return res.status(422);
+                return res.status(422).send();
             }
 
             mechanic.getRegion().then(region => {
