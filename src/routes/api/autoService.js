@@ -17,7 +17,7 @@ module.exports = function (router, models) {
             include: [
                 {
                     model: models.User,
-                    attributes: ['id'],
+                    attributes: ['id', 'firstName', 'lastName'],
                 }
             ],
         },
