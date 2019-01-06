@@ -1,17 +1,106 @@
 const uuidV1 = require('uuid/v1');
 const constants = require('../constants');
 const stripe = require('stripe')(constants.STRIPE_SECRET_KEY);
+const fs = require('fs');
+const fileStore = require('../../data/file-store.js');
+const bodyparser = require('body-parser');
+
+const aws = require('aws-sdk');
+
+const accessKeyID = 'AKIAJE4T6M2KIBNLNKRA'
+const secretAccessKey = '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';
+const bucketName = 'car-swaddle';
+
+const s3 = new aws.S3({ accessKeyId: accessKeyID, secretAccessKey: secretAccessKey });
+
 
 module.exports = function (router, models) {
 
   router.get('/', function (req, res, next) {
-    res.send('respond with a resource');
+    return res.send('respond with a resource');
   });
 
   /* GET user profile. */
   router.get('/current-user', function (req, res, next) {
-    res.send(req.user);
+    return res.send(req.user);
   });
+
+  router.post('/data/profile-picture', function (req, res) {
+    if (req.files == null) {
+      return res.status(400).send('No files were uploaded.');
+    }
+    if (Object.keys(req.files).length == 0) {
+      return res.status(400).send('No files were uploaded.');
+    }
+    let file = req.files.image;
+    fileStore.uploadImage(file.data, file.fileName).then(name => {
+      console.log(name);
+      if (name != null) {
+        req.user.profileImageID = name;
+        req.user.save().then(user => {
+          return res.status(200).json({ 'profileImageID': name });
+        }).catch(error => {
+          return res.status(400).send('Unable to upload image to user');
+        });
+      } else {
+        return res.status(400).send('Unable to upload image');
+      }
+    });
+  });
+
+  router.get('/data/image/:name', function (req, res) {
+    const fileName = req.params.name;
+    if (fileName == null) {
+      return res.status(422).send('invalid parameters');
+    }
+    fileStore.getImage(fileName).then(data => {
+      if (data == null) {
+        console.log(err);
+        res.status(404).send();
+      }
+      res.writeHead(200, { 'Content-Type': 'image/*' });
+      res.write(data.Body, 'binary');
+      res.end(null, 'binary');
+    }).catch(error => {
+      return res.status(400).send('unable to fetch profile image');
+    });
+  });
+
+  router.get('/data/profile-picture/:userID', function (req, res) {
+    const userID = req.params.userID;
+    if (userID == null) {
+      return res.status(422).send('invalid parameters');
+    }
+    models.User.findById(userID).then(user => {
+      fileStore.getImage(user.profileImageID).then(data => {
+        if (data == null) {
+          console.log(err);
+          res.status(404).send();
+        }
+        res.writeHead(200, { 'Content-Type': 'image/*' });
+        res.write(data.Body, 'binary');
+        res.end(null, 'binary');
+      }).catch(error => {
+        return res.status(400).send('unable to fetch profile image');
+      });
+    }).catch(error => {
+      return res.status(400).send('unable to fetch profile image');
+    });
+  });
+
+  // function uploadImage(image) {
+  //   const newUUID = uuidV1();
+  //   const imageName = newUUID + '.png';
+  //   const params = {
+  //     Bucket: bucketName,
+  //     Key: 'profile/' + imageName,
+  //     Body: image,
+  //   };
+  //   return s3.putObject(params).promise().then(data => {
+  //     console.log('came back ' + imageName);
+  //     return imageName;
+  //   });
+  // };
 
   router.patch('/update-user', function (req, res) {
     const body = req.body;

@@ -1,17 +1,3 @@
-// var dto = {
-// 	timestamp: function() {
-// 		console.log('Current Time in Unix Timestamp: ' + Math.floor(Date.now() / 1000));
-// 	},
-// 	currentDate: function() {
-// 		console.log('Current Date is: ' + new Date().toISOString().slice(0, 10));
-//     },
-//     numberOfAutoServicesProvided: function(id)  {
-//         return models.sequelize.query('SELECT COUNT(object) as count FROM (SELECT FROM "autoService" as r WHERE "mechanicID" = ? AND "status" = "completed") as object', {
-//             replacements: [id],
-//             type: models.sequelize.QueryTypes.SELECT
-//         });
-//     }
-// };
 
 var methods = function(models) {
     
@@ -27,14 +13,14 @@ var methods = function(models) {
             replacements: [id],
             type: models.sequelize.QueryTypes.SELECT
         });
-    }
+    };
 
     this.numberOfRatingsReceived = function (id) {
         return models.sequelize.query('SELECT COUNT(object) as count FROM (SELECT FROM review as r WHERE "revieweeID" = ?) as object', {
             replacements: [id],
             type: models.sequelize.QueryTypes.SELECT
         });
-    }
+    };
 
 };
 

@@ -28,6 +28,10 @@ const user = function (sequelize, DataTypes) {
         stripeCustomerID: {
             type: DataTypes.STRING,
             allowNull: true,
+        },
+        profileImageID: {
+            type: DataTypes.STRING,
+            allowNull: true,
         }
     }, {
         freezeTableName: true,
@@ -73,7 +77,7 @@ const user = function (sequelize, DataTypes) {
         return values;
     };
 
-    User.defaultAttributes = ['firstName', 'lastName', 'id'];
+    User.defaultAttributes = ['firstName', 'lastName', 'id', 'profileImageID'];
 
     return User;
 };
