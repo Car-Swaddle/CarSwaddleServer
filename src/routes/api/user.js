@@ -33,7 +33,7 @@ module.exports = function (router, models) {
       return res.status(400).send('No files were uploaded.');
     }
     let file = req.files.image;
-    fileStore.uploadImage(file.data, file.fileName).then(name => {
+    fileStore.uploadImage(file.data, req.user.profileImageID).then(name => {
       console.log(name);
       if (name != null) {
         req.user.profileImageID = name;

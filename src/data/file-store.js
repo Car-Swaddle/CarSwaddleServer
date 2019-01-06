@@ -11,9 +11,8 @@ const s3 = new aws.S3({ accessKeyId: accessKeyID, secretAccessKey: secretAccessK
 const keyDirectory = "profile";
 
 module.exports = {
-    uploadImage: function (image) {
-        const newUUID = uuidV1();
-        const name = newUUID;
+    uploadImage: function (image, previousFileName) {
+        const name = previousFileName || uuidV1();
         const params = {
             Bucket: bucketName,
             Key: keyDirectory + '/' + name,
