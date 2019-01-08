@@ -2,8 +2,9 @@ const express = require('express');
 const uuidV1 = require('uuid/v1');
 const pushService = require('../../notifications/pushNotifications.js');
 
-
 module.exports = function (router, models) {
+
+    require('../../stripe-methods/stripe-charge.js')(models);
 
     const Op = models.Sequelize.Op;
 
@@ -275,14 +276,23 @@ module.exports = function (router, models) {
     });
 
 
-    router.post('/auto-service', function (req, res) {
+    router.post('/auto-service', async function (req, res) {
         console.log('auto-service POST')
 
         var body = req.body;
 
-        var status = body.status
+        var status = body.status;
         if (models.AutoService.isValidStatus(status) == false) {
             return res.status(422).json({ error: 'Invalid status:' + status });
+        }
+
+        const priceID = body.priceID;
+        if (priceID == null) {
+            return res.status(422).send('invalid parameters');
+        }
+        const price = await models.Price.findById(priceID);
+        if (price == null) {
+            return res.status(422).send('invalid parameters');
         }
 
         const scheduledDate = body.scheduledDate;
@@ -292,6 +302,11 @@ module.exports = function (router, models) {
 
         if (body.vehicleID == null) {
             return res.status(422).send();
+        }
+
+        const sourceID = req.body.sourceID;
+        if (sourceID == null) {
+            return res.status(422).send('invalid parameters');
         }
 
         const serviceEntities = body.serviceEntities;
@@ -334,6 +349,7 @@ module.exports = function (router, models) {
                         autoService.setUser(req.user, { save: false });
                         autoService.setVehicle(vehicle, { save: false });
                         autoService.setLocation(location, { save: false });
+                        autoService.setPrice(price, { save: false });
                         autoService.save().then(updatedAutoService => {
                             var entityTypeToSpecificEntities = {};
 
@@ -379,11 +395,15 @@ module.exports = function (router, models) {
                                     where: { id: autoService.id },
                                     include: includeDict,
                                 }).then(newAutoService => {
-                                    // const payload = { 'someMessage': 'Here is your new fancy car!' };
                                     const displayName = req.user.displayName();
                                     const alert = displayName + ' scheduled an appointment';
                                     pushService.sendMechanicNotification(mechanic, alert);
-                                    return res.json(newAutoService);
+                                    // return res.json(newAutoService);
+                                    createCharge(sourceID, autoService.id, req.user).then(charge => {
+                                        return res.json(newAutoService);
+                                    }).catch(error => {
+                                        return res.status(400).send('something went wrong');
+                                    });
                                 });
                             });
                         }).catch((error) => {
