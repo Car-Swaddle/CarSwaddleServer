@@ -2,8 +2,7 @@ const express = require('express');
 const uuidV1 = require('uuid/v1');
 const constants = require('../constants');
 const stripe = require('stripe')(constants.STRIPE_SECRET_KEY);
-const reviewAPI = require('./review.js');
-const autoServiceAPI = require('./autoService.js');
+const fileStore = require('../../data/file-store.js');
 
 module.exports = function (router, models) {
 
@@ -37,7 +36,6 @@ module.exports = function (router, models) {
             numberOfRatings: count,
             autoServicesProvided: services
         }
-
 
         return res.json(json);
     });
@@ -201,6 +199,57 @@ module.exports = function (router, models) {
             } else {
                 return res.send(mechanic);
             }
+        });
+    });
+
+    router.post('/data/mechanic/profile-picture', async function (req, res) {
+        if (req.files == null) {
+            return res.status(400).send('No files were uploaded.');
+        }
+        if (Object.keys(req.files).length == 0) {
+            return res.status(400).send('No files were uploaded.');
+        }
+        var mechanic = await req.user.getMechanic();
+
+        if (mechanic == null) {
+            return res.status(400).send('No mechanic');
+        }
+
+        let file = req.files.image;
+        fileStore.uploadImage(file.data, mechanic.profileImageID).then(name => {
+            console.log(name);
+            if (name != null) {
+                mechanic.profileImageID = name;
+                mechanic.save().then(mechanic => {
+                    return res.status(200).json({ 'profileImageID': name });
+                }).catch(error => {
+                    return res.status(400).send('Unable to upload image to user');
+                });
+            } else {
+                return res.status(400).send('Unable to upload image');
+            }
+        });
+    });
+
+    router.get('/data/mechanic/profile-picture/:mechanicID', function (req, res) {
+        const mechanicID = req.params.mechanicID;
+        if (mechanicID == null) {
+            return res.status(422).send('invalid parameters');
+        }
+        models.Mechanic.findById(mechanicID).then(mechanic => {
+            fileStore.getImage(mechanic.profileImageID).then(data => {
+                if (data == null) {
+                    console.log(err);
+                    res.status(404).send();
+                }
+                res.writeHead(200, { 'Content-Type': 'image/*' });
+                res.write(data.Body, 'binary');
+                res.end(null, 'binary');
+            }).catch(error => {
+                return res.status(400).send('unable to fetch profile image');
+            });
+        }).catch(error => {
+            return res.status(400).send('unable to fetch profile image');
         });
     });
 

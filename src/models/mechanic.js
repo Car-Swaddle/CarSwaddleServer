@@ -16,6 +16,10 @@ const mechanic = function (sequelize, DataTypes) {
         dateOfBirth: {
             type: DataTypes.DATE,
             allowNull: true
+        },
+        profileImageID: {
+            type: DataTypes.STRING,
+            allowNull: true,
         }
     },
         {

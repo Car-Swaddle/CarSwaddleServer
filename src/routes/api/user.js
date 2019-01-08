@@ -1,17 +1,8 @@
 const uuidV1 = require('uuid/v1');
 const constants = require('../constants');
 const stripe = require('stripe')(constants.STRIPE_SECRET_KEY);
-const fs = require('fs');
 const fileStore = require('../../data/file-store.js');
-const bodyparser = require('body-parser');
 
-const aws = require('aws-sdk');
-
-const accessKeyID = 'AKIAJE4T6M2KIBNLNKRA'
-const secretAccessKey = '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';
-const bucketName = 'car-swaddle';
-
-const s3 = new aws.S3({ accessKeyId: accessKeyID, secretAccessKey: secretAccessKey });
 
 
 module.exports = function (router, models) {
@@ -87,20 +78,6 @@ module.exports = function (router, models) {
       return res.status(400).send('unable to fetch profile image');
     });
   });
-
-  // function uploadImage(image) {
-  //   const newUUID = uuidV1();
-  //   const imageName = newUUID + '.png';
-  //   const params = {
-  //     Bucket: bucketName,
-  //     Key: 'profile/' + imageName,
-  //     Body: image,
-  //   };
-  //   return s3.putObject(params).promise().then(data => {
-  //     console.log('came back ' + imageName);
-  //     return imageName;
-  //   });
-  // };
 
   router.patch('/update-user', function (req, res) {
     const body = req.body;

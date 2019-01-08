@@ -32,6 +32,14 @@ const user = function (sequelize, DataTypes) {
         profileImageID: {
             type: DataTypes.STRING,
             allowNull: true,
+        },
+        isEmailVerified: {
+            type: DataTypes.STRING,
+            allowNull: true,
+        },
+        isPhoneNumberVerified: {
+            type: DataTypes.STRING,
+            allowNull: true,
         }
     }, {
         freezeTableName: true,
