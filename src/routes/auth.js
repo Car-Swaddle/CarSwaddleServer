@@ -7,7 +7,7 @@ const bodyParser = require('body-parser');
 
 module.exports = function (app, models, passport) {
 
-    app.post('/login', bodyParser.json(), function (req, res, next) {
+    app.post('/login', bodyParser.urlencoded({ extended: true }), function (req, res, next) {
         passport.authenticate('local-login', { session: false }, (err, user, info) => {
             if (err || !user) {
                 return res.status(400).json({
@@ -51,7 +51,7 @@ module.exports = function (app, models, passport) {
 
     });
 
-    app.post('/signup', bodyParser.json(), function (req, res, next) {
+    app.post('/signup', bodyParser.urlencoded({ extended: true }), function (req, res, next) {
         passport.authenticate('local-signup', { session: false }, (err, user, info) => {
             if (err || !user) {
                 return res.status(400).json({
