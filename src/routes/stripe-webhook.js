@@ -5,9 +5,9 @@ const testEndpointSecret = 'whsec_Mihcejqv5prmk29eoHGuytmCFOwfDqzG';
 
 module.exports = function (app, models) {
 
-    app.use(require('body-parser').raw({type: '*/*'}));
+    const rawBody = app.use(require('body-parser').raw({type: '*/*'}));
 
-    app.post('/stripe-webhook', function (req, res) {
+    app.post('/stripe-webhook', rawBody, function (req, res) {
         let sig = req.headers["stripe-signature"];
         
         var event = null;
