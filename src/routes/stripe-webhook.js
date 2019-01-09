@@ -24,7 +24,7 @@ function addRawBody(req, res, next) {
 
 module.exports = function (app, models) {
 
-    app.post('/stripe-webhook', addRawBody, function (req, res) {
+    app.post('/stripe-webhook', function (req, res) {
         let sig = req.headers["stripe-signature"];
 
         var event = null;
