@@ -29,7 +29,7 @@ module.exports = function (app, models) {
 
         var event = null;
         try {
-            event = stripe.webhooks.constructEvent(req.rawBody, sig, testEndpointSecret);
+            event = stripe.webhooks.constructEvent(req.body, sig, testEndpointSecret);
         } catch (err) {
             return res.send(err);
         }
