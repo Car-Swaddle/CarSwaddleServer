@@ -7,16 +7,17 @@ const testEndpointSecret = 'whsec_Mihcejqv5prmk29eoHGuytmCFOwfDqzG';
 
 function addRawBody(req, res, next) {
     req.setEncoding('utf8');
-
+    console.log('adding raw body');
     var data = '';
 
     req.on('data', function (chunk) {
         data += chunk;
+        console.log('chunking data');
     });
 
     req.on('end', function () {
         req.rawBody = data;
-
+        console.log('set raw body');
         next();
     });
 }
@@ -28,7 +29,7 @@ module.exports = function (app, models) {
 
         var event = null;
         try {
-            event = stripe.webhooks.constructEvent(request.rawBody, sig, testEndpointSecret);
+            event = stripe.webhooks.constructEvent(req.rawBody, sig, testEndpointSecret);
         } catch (err) {
             return res.send(err);
         }
