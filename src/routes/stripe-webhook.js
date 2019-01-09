@@ -9,10 +9,10 @@ module.exports = function (app, models) {
 
     app.post('/stripe-webhook', function (req, res) {
         let sig = req.headers["stripe-signature"];
-
+        
         var event = null;
         try {
-            event = stripe.webhooks.constructEvent(req.body, sig, liveEndpointSecret);
+            event = stripe.webhooks.constructEvent(req.body, sig, testEndpointSecret);
         } catch (err) {
             return res.send(err);
         }
