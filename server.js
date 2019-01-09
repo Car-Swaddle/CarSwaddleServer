@@ -13,6 +13,7 @@ app.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
 app.use(bodyParser.json({ type: 'application/*+json' }))
 app.use(bodyParser.json({ type: 'application/json' }))
 app.use(bodyParser.json({ type: 'application/x-www-form-urlencoded' }))
+app.use(bodyParser.raw({type: '*/*'}));
 
 app.use(fileUpload());
 
