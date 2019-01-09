@@ -31,7 +31,7 @@ module.exports = function (app, models) {
         try {
             event = stripe.webhooks.constructEvent(req.body, sig, testEndpointSecret);
         } catch (err) {
-            return res.send(err);
+            return res.send(req.body);
         }
 
         console.log(event);
