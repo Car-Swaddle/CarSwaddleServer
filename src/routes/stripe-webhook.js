@@ -24,6 +24,8 @@ function addRawBody(req, res, next) {
 
 module.exports = function (app, models) {
 
+    app.use(require('body-parser').raw({type: '*/*'}));
+    
     app.post('/stripe-webhook', function (req, res) {
         let sig = req.headers["stripe-signature"];
 
