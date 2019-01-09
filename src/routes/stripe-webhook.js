@@ -2,7 +2,7 @@ const jwt = require('jsonwebtoken');
 const uuidV1 = require('uuid/v1');
 const constants = require('./constants');
 const stripe = require('stripe')(constants.STRIPE_SECRET_KEY);
-const endpointSecret = 'whsec_w70LXPKXB954f8H41fKnc7HBIwrBHyoT';
+const endpointSecret = 'whsec_Mihcejqv5prmk29eoHGuytmCFOwfDqzG';
 
 module.exports = function (app, models) {
 
