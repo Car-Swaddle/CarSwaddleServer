@@ -8,11 +8,11 @@ const fileUpload = require('express-fileupload');
 bodyParser.limit = '500mb';
 
 var app = express();
-app.use(bodyParser.json()); // support json encoded bodies
-app.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
-app.use(bodyParser.json({ type: 'application/*+json' }))
-app.use(bodyParser.json({ type: 'application/json' }))
-app.use(bodyParser.json({ type: 'application/x-www-form-urlencoded' }))
+// app.use(bodyParser.json()); // support json encoded bodies
+// app.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
+// app.use(bodyParser.json({ type: 'application/*+json' }))
+// app.use(bodyParser.json({ type: 'application/json' }))
+// app.use(bodyParser.json({ type: 'application/x-www-form-urlencoded' }))
 
 // var rawBodySaver = function (req, res, buf, encoding) {
 //     if (buf && buf.length) {
@@ -28,13 +28,13 @@ app.use(bodyParser.json({ type: 'application/x-www-form-urlencoded' }))
 
 
 
-app.use(fileUpload());
+// app.use(fileUpload());
 
-// Busboy
-app.use(busboy());
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());
-app.use(busboyBodyParser());
+// // Busboy
+// app.use(busboy());
+// app.use(bodyParser.urlencoded({ extended: true }));
+// app.use(bodyParser.json());
+// app.use(busboyBodyParser());
 
 app.use(express.static(__dirname + '/www'));
 
