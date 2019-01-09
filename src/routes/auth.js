@@ -9,7 +9,7 @@ module.exports = function (app, models, passport) {
 
     app.post('/login', bodyParser.json(), function (req, res, next) {
         passport.authenticate('local-login', { session: false }, (err, user, info) => {
-            if (err || user != null) {
+            if (err || !user) {
                 return res.status(400).json({
                     message: info ? info.message : 'Login failed',
                     user: user
@@ -53,7 +53,7 @@ module.exports = function (app, models, passport) {
 
     app.post('/signup', bodyParser.json(), function (req, res, next) {
         passport.authenticate('local-signup', { session: false }, (err, user, info) => {
-            if (err || user == null) {
+            if (err || !user) {
                 return res.status(400).json({
                     message: info ? info.message : 'Sign up failed',
                     user: user
