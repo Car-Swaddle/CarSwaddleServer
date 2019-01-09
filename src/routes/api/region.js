@@ -1,9 +1,10 @@
 const express = require('express');
 const uuidV1 = require('uuid/v1');
+const bodyParser = require('body-parser');
 
 module.exports = function (router, models) {
 
-    router.post('/region', function (req, res) {
+    router.post('/region', bodyParser.json(), function (req, res) {
         console.log('region POST');
 
         var latitude = req.body.latitude;
@@ -36,7 +37,7 @@ module.exports = function (router, models) {
         });
     });
 
-    router.get('/region', function (req, res) {
+    router.get('/region', bodyParser.json(), function (req, res) {
         console.log('region GET');
         req.user.getMechanic().then( mechanic => {
             return mechanic.getRegion();

@@ -3,6 +3,7 @@ const uuidV1 = require('uuid/v1');
 const passportJWT = require("passport-jwt");
 const JWTStrategy = passportJWT.Strategy;
 const ExtractJWT = passportJWT.ExtractJwt;
+// const bodyParser = require('body-parser');
 // const models = require('./src/models');
 // const bCrypt = require('bcrypt-nodejs');
 
@@ -13,22 +14,16 @@ module.exports = function (models) {
     passport.use('local-login', new LocalStrategy({
         usernameField: 'email',
         passwordField: 'password'
-    },
-        function (email, password, cb) {
-            console.log('local login email: ' + email);
-            return models.User.findOne({ where: { email: email } })
-                .then(user => {
-                    console.log('got users: ' + user);
-                    if (!user || user.validPassword(password) == false) {
-                        return cb(null, false, { message: 'Incorrect email or password.' });
-                    }
-                    return cb(null, user, { message: 'Logged In Successfully' });
-                })
-                .catch(err => cb(err));
-        }
-    ));
-
-
+    }, function (email, password, cb) {
+        console.log('local login email: ' + email);
+        return models.User.findOne({ where: { email: email } }).then(user => {
+            console.log('got users: ' + user);
+            if (!user || user.validPassword(password) == false) {
+                return cb(null, false, { message: 'Incorrect email or password.' });
+            }
+            return cb(null, user, { message: 'Logged In Successfully' });
+        }).catch(err => cb(err));
+    }));
 
     passport.use('jwt', new JWTStrategy({
         jwtFromRequest: ExtractJWT.fromAuthHeaderAsBearerToken(),

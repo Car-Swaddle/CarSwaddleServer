@@ -1,10 +1,11 @@
 const uuidV1 = require('uuid/v1');
 const pushService = require('../../notifications/pushNotifications.js');
+const bodyParser = require('body-parser');
 
 module.exports = function (router, models) {
 
     /// Should only get vehicles for current user
-    router.get('/vehicles', function (req, res, next) {
+    router.get('/vehicles', bodyParser.json(), function (req, res, next) {
         models.Vehicle.findAll({
             where: {
               userID: req.user.id
@@ -18,7 +19,7 @@ module.exports = function (router, models) {
     });
 
     /// Should only get vehicles for current user
-    router.get('/vehicle', function (req, res, next) {
+    router.get('/vehicle', bodyParser.json(), function (req, res, next) {
         models.Vehicle.findOne({
             where: {
               userID: req.user.id,
@@ -29,7 +30,7 @@ module.exports = function (router, models) {
         });
     });
 
-    router.put('/vehicle', function (req, res, next) {
+    router.put('/vehicle', bodyParser.json(), function (req, res, next) {
 
         const body = req.body;
         const licensePlate = body.licensePlate;
@@ -57,7 +58,7 @@ module.exports = function (router, models) {
         })
     });
 
-    router.post('/vehicle', function (req, res, next) {
+    router.post('/vehicle', bodyParser.json(), function (req, res, next) {
         const body = req.body;
         const licensePlate = body.licensePlate;
         const vin = body.vin;
@@ -84,7 +85,7 @@ module.exports = function (router, models) {
         })
     });
 
-    router.delete('/vehicle', function (req, res) {
+    router.delete('/vehicle', bodyParser.json(), function (req, res) {
         models.Vehicle.destroy({where: { id: req.query.id } }).then( deletedRows => {
             if (deletedRows > 0) {
                 return res.send(''+deletedRows);

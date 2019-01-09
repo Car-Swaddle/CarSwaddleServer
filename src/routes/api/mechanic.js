@@ -3,17 +3,19 @@ const uuidV1 = require('uuid/v1');
 const constants = require('../constants');
 const stripe = require('stripe')(constants.STRIPE_SECRET_KEY);
 const fileStore = require('../../data/file-store.js');
+const bodyParser = require('body-parser');
+const fileUpload = require('express-fileupload');
 
 module.exports = function (router, models) {
 
     require('../stats.js')(models);
 
-    router.get('/current-mechanic', async function (req, res) {
+    router.get('/current-mechanic', bodyParser.json(), async function (req, res) {
         const mechanic = await req.user.getMechanic();
         return res.json(mechanic);
     });
 
-    router.get('/stats', async function (req, res) {
+    router.get('/stats', bodyParser.json(), async function (req, res) {
         if (req.query.mechanic == null) {
             return res.status(422).send('invalid parameters');
         }
@@ -40,7 +42,7 @@ module.exports = function (router, models) {
         return res.json(json);
     });
 
-    router.get('/nearest-mechanics', function (req, res) {
+    router.get('/nearest-mechanics', bodyParser.json(), function (req, res) {
         console.log('nearest-mechanics GET');
         var query = req.query;
         var latitude = parseFloat(query.latitude);
@@ -58,7 +60,7 @@ module.exports = function (router, models) {
         });
     });
 
-    router.patch('/update-mechanic', function (req, res) {
+    router.patch('/update-mechanic', bodyParser.json(), function (req, res) {
         const body = req.body;
         var user = req.user;
         var didChangeMechanic = false;
@@ -202,7 +204,7 @@ module.exports = function (router, models) {
         });
     });
 
-    router.post('/data/mechanic/profile-picture', async function (req, res) {
+    router.post('/data/mechanic/profile-picture', fileUpload(), async function (req, res) {
         if (req.files == null) {
             return res.status(400).send('No files were uploaded.');
         }
@@ -231,7 +233,7 @@ module.exports = function (router, models) {
         });
     });
 
-    router.get('/data/mechanic/profile-picture/:mechanicID', function (req, res) {
+    router.get('/data/mechanic/profile-picture/:mechanicID', bodyParser.json(), function (req, res) {
         const mechanicID = req.params.mechanicID;
         if (mechanicID == null) {
             return res.status(422).send('invalid parameters');

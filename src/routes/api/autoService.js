@@ -1,6 +1,7 @@
 const express = require('express');
 const uuidV1 = require('uuid/v1');
 const pushService = require('../../notifications/pushNotifications.js');
+const bodyParser = require('body-parser');
 
 module.exports = function (router, models) {
 
@@ -66,7 +67,7 @@ module.exports = function (router, models) {
         return whereDict;
     }
 
-    router.get('/auto-service', function (req, res) {
+    router.get('/auto-service', bodyParser.json(), function (req, res) {
         const offset = req.query.offset || 0;
         const limit = req.query.limit || 50;
         var sortStatus = req.query.sortStatus || []; // || models.AutoService.allStatus;
@@ -104,7 +105,7 @@ module.exports = function (router, models) {
         })
     });
 
-    router.patch('/auto-service', async function (req, res) {
+    router.patch('/auto-service', bodyParser.json(), async function (req, res) {
 
         const autoServiceID = req.query.autoServiceID;
         const body = req.body;
@@ -276,7 +277,7 @@ module.exports = function (router, models) {
     });
 
 
-    router.post('/auto-service', async function (req, res) {
+    router.post('/auto-service', bodyParser.json(), async function (req, res) {
         console.log('auto-service POST')
 
         var body = req.body;

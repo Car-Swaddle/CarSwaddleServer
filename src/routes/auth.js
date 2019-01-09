@@ -2,11 +2,12 @@ const jwt = require('jsonwebtoken');
 const uuidV1 = require('uuid/v1');
 const constants = require('./constants');
 const stripe = require('stripe')(constants.STRIPE_SECRET_KEY);
+const bodyParser = require('body-parser');
 
 
 module.exports = function (app, models, passport) {
 
-    app.post('/login', function (req, res, next) {
+    app.post('/login', bodyParser.json(), function (req, res, next) {
         passport.authenticate('local-login', { session: false }, (err, user, info) => {
             if (err || !user) {
                 return res.status(400).json({
@@ -50,9 +51,9 @@ module.exports = function (app, models, passport) {
 
     });
 
-    app.post('/signup', function (req, res, next) {
+    app.post('/signup', bodyParser.json(), function (req, res, next) {
         passport.authenticate('local-signup', { session: false }, (err, user, info) => {
-            if (err || !user) {
+            if (err || user != null) {
                 return res.status(400).json({
                     message: info ? info.message : 'Sign up failed',
                     user: user

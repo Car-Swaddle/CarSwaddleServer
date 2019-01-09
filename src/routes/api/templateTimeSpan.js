@@ -1,9 +1,10 @@
 const express = require('express');
 const uuidV1 = require('uuid/v1');
+const bodyParser = require('body-parser');
 
 module.exports = function (router, models) {
 
-    router.get('/availability', function (req, res) {
+    router.get('/availability', bodyParser.json(), function (req, res) {
 
         var mechanicID = req.query.mechanicID;
 
@@ -28,7 +29,7 @@ module.exports = function (router, models) {
         }
     });
 
-    router.post('/availability', function (req, res) {
+    router.post('/availability', bodyParser.json(), function (req, res) {
 
         var spans = req.body.spans;
         

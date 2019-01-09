@@ -1,11 +1,12 @@
 const express = require('express');
 const constants = require('../constants');
+const bodyParser = require('body-parser');
 
 module.exports = function (router, models) {
 
     require('../stats.js')(models);
 
-    router.get('/average-rating-received', function (req, res) {
+    router.get('/average-rating-received', bodyParser.json(), function (req, res) {
         var id = null;
         if (req.query.mechanic != null) {
             id = req.query.mechanic;
@@ -22,7 +23,7 @@ module.exports = function (router, models) {
         });
     });
 
-    router.get('/ratings-count', function (req, res) {
+    router.get('/ratings-count', bodyParser.json(), function (req, res) {
         var id = null;
         if (req.query.mechanic != null) {
             id = req.query.mechanic;
@@ -39,7 +40,7 @@ module.exports = function (router, models) {
         });
     });
 
-    router.get('/reviews', function (req, res) {
+    router.get('/reviews', bodyParser.json(), function (req, res) {
         if (req.query.mechanic != null) {
             listReviewsGivenToMechanic(req, res, req.query.mechanic);
         } else {

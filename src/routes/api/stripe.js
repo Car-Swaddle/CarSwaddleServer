@@ -1,10 +1,11 @@
 const express = require('express');
 const constants = require('../constants');
 const stripe = require('stripe')(constants.STRIPE_SECRET_KEY);
+const bodyParser = require('body-parser');
 
 module.exports = function (router, models) {
 
-    router.post('/stripe/ephemeral-keys', (req, res) => {
+    router.post('/stripe/ephemeral-keys', bodyParser.json(), (req, res) => {
         const apiVersion = req.query.apiVersion;
         if (!apiVersion) {
             res.status(400).end();
@@ -21,7 +22,7 @@ module.exports = function (router, models) {
         });
     });
 
-    router.get('/stripe/verification', function (req, res) {
+    router.get('/stripe/verification', bodyParser.json(), function (req, res) {
         req.user.getMechanic().then(mechanic => {
             if (mechanic == null) {
                 return res.status(400).send();

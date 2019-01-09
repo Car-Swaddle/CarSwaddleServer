@@ -2,7 +2,8 @@ const uuidV1 = require('uuid/v1');
 const constants = require('../constants');
 const stripe = require('stripe')(constants.STRIPE_SECRET_KEY);
 const fileStore = require('../../data/file-store.js');
-
+const bodyParser = require('body-parser');
+const fileUpload = require('express-fileupload');
 
 
 module.exports = function (router, models) {
@@ -12,11 +13,11 @@ module.exports = function (router, models) {
   });
 
   /* GET user profile. */
-  router.get('/current-user', function (req, res, next) {
+  router.get('/current-user', bodyParser.json(), function (req, res, next) {
     return res.send(req.user);
   });
 
-  router.post('/data/profile-picture', function (req, res) {
+  router.post('/data/profile-picture', fileUpload(), function (req, res) {
     if (req.files == null) {
       return res.status(400).send('No files were uploaded.');
     }
@@ -39,7 +40,7 @@ module.exports = function (router, models) {
     });
   });
 
-  router.get('/data/image/:name', function (req, res) {
+  router.get('/data/image/:name', bodyParser.json(), function (req, res) {
     const fileName = req.params.name;
     if (fileName == null) {
       return res.status(422).send('invalid parameters');
@@ -57,7 +58,7 @@ module.exports = function (router, models) {
     });
   });
 
-  router.get('/data/profile-picture/:userID', function (req, res) {
+  router.get('/data/profile-picture/:userID', bodyParser.json(), function (req, res) {
     const userID = req.params.userID;
     if (userID == null) {
       return res.status(422).send('invalid parameters');
@@ -79,7 +80,7 @@ module.exports = function (router, models) {
     });
   });
 
-  router.patch('/update-user', function (req, res) {
+  router.patch('/update-user', bodyParser.json(), function (req, res) {
     const body = req.body;
     var user = req.user;
     var didChangeUser = false;
@@ -177,13 +178,13 @@ module.exports = function (router, models) {
     }
   });
 
-  router.get('/users', function (req, res) {
+  router.get('/users', bodyParser.json(), function (req, res) {
     models.User.findAll({ offset: req.query.offset, limit: Math.min(req.query.limit, 100) }).then(users => {
       res.json(users);
     });
   });
 
-  router.get('/user', function (req, res) {
+  router.get('/user', bodyParser.json(), function (req, res) {
     console.log('/user GET' + req.id);
 
     if (req.id === null) {

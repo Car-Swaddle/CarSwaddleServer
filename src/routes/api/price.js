@@ -1,7 +1,7 @@
 const express = require('express');
 const uuidV1 = require('uuid/v1');
 const constants = require('../constants');
-
+const bodyParser = require('body-parser');
 
 // All in cents
 const centsPerMile = 78;
@@ -22,7 +22,7 @@ const processingPercentage = 0.0325;
 
 module.exports = function (router, models) {
 
-    router.post('/price', function (req, res) {
+    router.post('/price', bodyParser.json(), function (req, res) {
 
         // locationID or location
         // correct oil type 
