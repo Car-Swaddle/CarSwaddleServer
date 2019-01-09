@@ -2,12 +2,11 @@ const constants = require('./constants');
 const stripe = require('stripe')(constants.STRIPE_SECRET_KEY);
 const liveEndpointSecret = 'whsec_w70LXPKXB954f8H41fKnc7HBIwrBHyoT';
 const testEndpointSecret = 'whsec_Mihcejqv5prmk29eoHGuytmCFOwfDqzG';
+const bodyParser = require('body-parser')
 
 module.exports = function (app, models) {
 
-    const rawBody = require('body-parser').raw({type: '*/*'});
-
-    app.post('/stripe-webhook', rawBody, function (req, res) {
+    app.post('/stripe-webhook', bodyParser.raw({type: '*/*'}), function (req, res) {
         let sig = req.headers["stripe-signature"];
         
         var event = null;
