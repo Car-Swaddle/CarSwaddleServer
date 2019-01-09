@@ -7,7 +7,7 @@ const endpointSecret = 'whsec_w70LXPKXB954f8H41fKnc7HBIwrBHyoT';
 module.exports = function (app, models) {
 
     app.post('/stripe-webhook', function (req, res) {
-        let sig = req.headers["stripe-signature"];
+        const sig = req.headers.stripe-signature;
 
         var event = null;
         try {
