@@ -13,7 +13,7 @@ module.exports = function (app, models) {
         try {
           event = stripe.webhooks.constructEvent(req.body.asText, sig, endpointSecret);
         } catch (err) {
-          res.status(406).end();
+          return res.status(406).end();
         }
 
         console.log(event);
