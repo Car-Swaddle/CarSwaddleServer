@@ -148,7 +148,6 @@ module.exports = function (router, models) {
     });
 
     function calculateProcessingFee(subtotal) {
-
         // d = ((s+b)+0.30)/(1-0.029)
         // fee = d - (s+b)
         const total = (subtotal + constants.BOOKING_FEE + stripeProcessTransactionFee) / (1.0 - stripeProcessPercentage);

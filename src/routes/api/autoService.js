@@ -204,12 +204,16 @@ module.exports = function (router, models) {
             shouldSave = true;
         }
 
+        var userDidReviewMechanic = false;
+
+        var reviewRating = 0;
         if (body.review != null && body.review.rating != null && body.review.text != null) {
             const rating = body.review.rating;
             const text = body.review.text;
 
             var autoServicePromise = null;
             if (changedByUser) {
+                userDidReviewMechanic = true;
                 autoServicePromise = autoService.getReviewFromUser();
             } else {
                 autoServicePromise = autoService.getReviewFromMechanic();
@@ -234,8 +238,9 @@ module.exports = function (router, models) {
                     review.revieweeID = autoServiceUser.id;
                     review.setAutoServiceFromMechanic(autoService, { save: false });
                 }
-                return review.save();
+                reviewRating = rating;
 
+                return review.save();
             });
             promises.push(promise);
         }
@@ -266,8 +271,21 @@ module.exports = function (router, models) {
 
                 if (changedByUser == true) {
                     newAutoService.getMechanic().then(mechanic => {
-                        const alert = req.user.displayName() + ' changed one of your scheduled auto services.';
-                        pushService.sendMechanicNotification(mechanic, alert, null, null);
+                        if (userDidReviewMechanic == true) {
+                            const name = req.user.displayName();
+                            var alert = '';
+                            if (reviewRating > 3) {
+                                alert = name + ' gave you ' + reviewRating + '️️⭐ review! Congratulations!';
+                            } else {
+                                alert = name + ' gave you a review!';
+                            }
+                            const body = 'New review from ' + name;
+
+                            pushService.sendMechanicNotification(mechanic, alert, body, null, null);
+                        } else {
+                            const alert = req.user.displayName() + ' changed one of your scheduled auto services.';
+                            pushService.sendMechanicNotification(mechanic, alert, null, null, null);
+                        }
                     });
                 }
 

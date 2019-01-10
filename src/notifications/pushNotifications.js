@@ -20,10 +20,10 @@ class PushService {
         this.carSwaddleMechanicProvider = new apnFramework.Provider(carSwaddleOptions);
     }
 
-    sendUserNotification(user, alert, payload, badge) {
+    sendUserNotification(user, alert, body, payload, badge) {
         return user.getDeviceTokens().then(tokens => {
             tokens.forEach(token => {
-                let notification = this.createNotification(alert, payload, badge);
+                let notification = this.createNotification(alert, body, payload, badge);
                 notification.topic = carSwaddleBundleID;
                 this.carSwaddleProvider.send(notification, token.token).then(result => {
                     console.log(result);
@@ -32,10 +32,10 @@ class PushService {
         });
     }
 
-    sendMechanicNotification(mechanic, alert, payload, badge) {
+    sendMechanicNotification(mechanic, alert, body, payload, badge) {
         return mechanic.getDeviceTokens().then(tokens => {
             tokens.forEach(token => {
-                let notification = this.createNotification(alert, payload, badge);
+                let notification = this.createNotification(alert, body, payload, badge);
                 notification.topic = carSwaddleMechanicBundleID;
                 this.carSwaddleMechanicProvider.send(notification, token.token).then(result => {
                     console.log(result);
@@ -44,10 +44,11 @@ class PushService {
         });
     }
 
-    createNotification(alert, payload, badge) {
+    createNotification(alert, body, payload, badge) {
         let notification = new apnFramework.Notification();
         notification.expiry = Math.floor(Date.now() / 1000) + 24 * 3600; // will expire in 24 hours from now
         notification.badge = badge;
+        notification.body = body
         notification.sound = "default";
         notification.alert = alert;
         notification.payload = payload;
