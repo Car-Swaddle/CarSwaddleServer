@@ -48,7 +48,7 @@ class PushService {
         let notification = new apnFramework.Notification();
         notification.expiry = Math.floor(Date.now() / 1000) + 24 * 3600; // will expire in 24 hours from now
         notification.badge = badge;
-        notification.body = body
+        notification.body = body;
         notification.sound = "default";
         notification.alert = alert;
         notification.payload = payload;

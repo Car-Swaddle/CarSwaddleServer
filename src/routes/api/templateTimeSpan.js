@@ -10,35 +10,31 @@ module.exports = function (router, models) {
 
         if (mechanicID == null) {
             req.user.getMechanic().then( function(mechanic) {
-                models.TemplateTimeSpan.findAll({
-                    where: {
-                        mechanicID: mechanic.id
-                    }
-                }).then( timeSpans => {
+                if (mechanic == null) {
+                    return res.status(422).send('unable to find mechanic');
+                }
+                findTimeSpansForMechanic(mechanic.id).then( timeSpans => {
                     return res.json(timeSpans);
                 });
             });
         } else {
-            models.TemplateTimeSpan.findAll({
-                where: {
-                    mechanicID: mechanicID
-                }
-            }).then( timeSpans => {
+            findTimeSpansForMechanic(mechanic.id).then( timeSpans => {
                 return res.json(timeSpans);
             });
         }
     });
 
     router.post('/availability', bodyParser.json(), function (req, res) {
-
         var spans = req.body.spans;
-        
         if (spans == null) { 
             res.status(400).send('Must provide a body');
             return
         }
-
         req.user.getMechanic().then( function(mechanic) {
+            if (mechanic == null) { 
+                res.status(400).send('Must have a current mechanic');
+                return
+            }
             models.TemplateTimeSpan.destroy({where: { mechanicID: mechanic.id }}).then(function () {
                 for (i = 0; i < spans.length; i++) { 
                     var val = spans[i];
@@ -50,11 +46,12 @@ module.exports = function (router, models) {
                     for (i = 0; i < newSpans.length; i++) { 
                         var newSpan = newSpans[i];
                         newSpan.mechanicID = mechanic.id;
-                        var promise = newSpan.setMechanic(mechanic);
+                        newSpan.setMechanic(mechanic, { save: false });
+                        var promise = newSpan.save();
                         promises.push(promise);
                     }
                     Promise.all(promises).then(function(updatedSpans) { 
-                        models.TemplateTimeSpan.findAll().then( fs => {
+                        findTimeSpansForMechanic(mechanic.id).then( fs => {
                             return res.json(fs);
                         });
                     });
@@ -62,6 +59,14 @@ module.exports = function (router, models) {
             });
         });
     });
+
+    function findTimeSpansForMechanic(mechanicID) {
+        return models.TemplateTimeSpan.findAll({
+            where: {
+                mechanicID: mechanicID
+            }
+        });
+    }
 
     return router;
 };

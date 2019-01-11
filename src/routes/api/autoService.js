@@ -275,7 +275,7 @@ module.exports = function (router, models) {
                             const name = req.user.displayName();
                             var alert = '';
                             if (reviewRating > 3) {
-                                alert = name + ' gave you ' + reviewRating + '️️⭐ review! Congratulations!';
+                                alert = name + ' gave you a ' + reviewRating + '️️⭐ review! Congratulations!';
                             } else {
                                 alert = name + ' gave you a review!';
                             }
