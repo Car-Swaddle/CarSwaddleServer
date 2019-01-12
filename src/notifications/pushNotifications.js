@@ -20,10 +20,10 @@ class PushService {
         this.carSwaddleMechanicProvider = new apnFramework.Provider(carSwaddleOptions);
     }
 
-    sendUserNotification(user, alert, body, payload, badge) {
+    sendUserNotification(user, alert, body, payload, badge, title) {
         return user.getDeviceTokens().then(tokens => {
             tokens.forEach(token => {
-                let notification = this.createNotification(alert, body, payload, badge);
+                let notification = this.createNotification(alert, body, payload, badge, title);
                 notification.topic = carSwaddleBundleID;
                 this.carSwaddleProvider.send(notification, token.token).then(result => {
                     console.log(result);
@@ -32,10 +32,10 @@ class PushService {
         });
     }
 
-    sendMechanicNotification(mechanic, alert, body, payload, badge) {
+    sendMechanicNotification(mechanic, alert, body, payload, badge, title) {
         return mechanic.getDeviceTokens().then(tokens => {
             tokens.forEach(token => {
-                let notification = this.createNotification(alert, body, payload, badge);
+                var notification = this.createNotification(alert, body, payload, badge, title);
                 notification.topic = carSwaddleMechanicBundleID;
                 this.carSwaddleMechanicProvider.send(notification, token.token).then(result => {
                     console.log(result);
@@ -44,13 +44,18 @@ class PushService {
         });
     }
 
-    createNotification(alert, body, payload, badge) {
-        let notification = new apnFramework.Notification();
+    sendMechanicFullNotification() {
+        
+    }
+
+    createNotification(alert, body, payload, badge, title) {
+        var notification = new apnFramework.Notification();
         notification.expiry = Math.floor(Date.now() / 1000) + 24 * 3600; // will expire in 24 hours from now
         notification.badge = badge;
-        notification.body = body;
+        notification.title = title;
+        notification.body = alert;
         notification.sound = "default";
-        notification.alert = alert;
+        // notification.alert = alert;
         notification.payload = payload;
         return notification
     }

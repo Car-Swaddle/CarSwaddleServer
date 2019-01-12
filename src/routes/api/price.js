@@ -77,7 +77,7 @@ module.exports = function (router, models) {
                 var subtotalPromise = [];
 
                 var laborPrice = models.PricePart.create({
-                    key: 'labor', value: (mechanicHourlyRate * 1), id: uuidV1()
+                    key: 'labor', value: Math.round(mechanicHourlyRate * 1), id: uuidV1()
                 });
                 subtotalPromise.push(laborPrice);
                 var oilFilterPrice = models.PricePart.create({
@@ -85,11 +85,11 @@ module.exports = function (router, models) {
                 });
                 subtotalPromise.push(oilFilterPrice);
                 var distancePrice = models.PricePart.create({
-                    key: 'distance', value: ((centsPerMile * miles) * 2), id: uuidV1()
+                    key: 'distance', value: Math.round((centsPerMile * miles) * 2), id: uuidV1()
                 });
                 subtotalPromise.push(distancePrice);
                 var oilTypePrice = models.PricePart.create({
-                    key: 'oil', value: centsForOilType(oilType), id: uuidV1()
+                    key: 'oil', value: Math.round(centsForOilType(oilType)), id: uuidV1()
                 });
                 subtotalPromise.push(oilTypePrice);
 
@@ -103,6 +103,7 @@ module.exports = function (router, models) {
                         console.log(value);
                         subtotal += value;
                     }
+                    var subtotal = Math.round(subtotal);
 
                     var totalPrices = []
                     var subtotalPricePromise = models.PricePart.create({
@@ -110,14 +111,14 @@ module.exports = function (router, models) {
                     });
                     totalPrices.push(subtotalPricePromise);
                     var bookingFeePricePromise = models.PricePart.create({
-                        key: 'bookingFee', value: constants.BOOKING_FEE, id: uuidV1()
+                        key: 'bookingFee', value: Math.round(constants.BOOKING_FEE), id: uuidV1()
                     });
                     totalPrices.push(bookingFeePricePromise);
 
                     const processingFee = calculateProcessingFee(subtotal);
 
                     var processingFeePricePromise = models.PricePart.create({
-                        key: 'processingFee', value: processingFee, id: uuidV1()
+                        key: 'processingFee', value: Math.round(processingFee), id: uuidV1()
                     });
                     totalPrices.push(processingFeePricePromise);
 
@@ -130,7 +131,7 @@ module.exports = function (router, models) {
                         }
                         Array.prototype.push.apply(prices, totalPrices);
 
-                        models.Price.create({ id: uuidV1(), totalPrice: total }).then(price => {
+                        models.Price.create({ id: uuidV1(), totalPrice: Math.round(total) }).then(price => {
                             price.setPriceParts(prices).then(result => {
                                 models.Price.findOne({
                                     where: { id: price.id },

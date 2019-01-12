@@ -18,7 +18,7 @@ module.exports = function (router, models) {
                 });
             });
         } else {
-            findTimeSpansForMechanic(mechanic.id).then( timeSpans => {
+            findTimeSpansForMechanic(mechanicID).then( timeSpans => {
                 return res.json(timeSpans);
             });
         }
