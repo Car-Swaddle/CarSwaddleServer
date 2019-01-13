@@ -34,9 +34,6 @@ module.exports = function (router, models) {
                 if (account.verification == null) {
                     return res.status(400).send();
                 }
-                // if (account.verification.fields_needed == null) {
-                //     return res.status(400);
-                // }
                 return res.json(account.verification);
             });
         });
@@ -66,14 +63,6 @@ module.exports = function (router, models) {
             return res.status(422).send('invalid parameters');
         }
 
-        // stripe.balance.retrieve({
-        //     stripe_account: mechanic.stripeAccountID,
-        // }, function (err, balance) {
-        //     if (err != null || balance == null) {
-        //         return res.status(422).send('invalid parameters');
-        //     }
-        //     return res.json(balance);
-        // });
         const startingAfterID = req.query.startingAfterID;
         const payoutID = req.query.payoutID;
         const limit = req.query.limit || 30;
