@@ -59,5 +59,36 @@ module.exports = function (router, models) {
         });
     });
 
+    router.get('/stripe/transactions', bodyParser.json(), async function (req, res) {
+        const mechanic = await req.user.getMechanic();
+
+        if (mechanic == null || mechanic.stripeAccountID == null) {
+            return res.status(422).send('invalid parameters');
+        }
+
+        // stripe.balance.retrieve({
+        //     stripe_account: mechanic.stripeAccountID,
+        // }, function (err, balance) {
+        //     if (err != null || balance == null) {
+        //         return res.status(422).send('invalid parameters');
+        //     }
+        //     return res.json(balance);
+        // });
+        const startingAfterID = req.query.startingAfterID;
+        const payoutID = req.query.payoutID;
+        const limit = req.query.limit || 30;
+
+        stripe.balance.listTransactions({
+            limit: limit,
+            starting_after: startingAfterID,
+            payout: payoutID,
+        }, { stripe_account: mechanic.stripeAccountID }, function (err, transactions) {
+            if (err != null || transactions == null) {
+                return res.status(422).send('invalid parameters');
+            }
+            return res.json(transactions);
+        });
+    });
+
     return router;
 };

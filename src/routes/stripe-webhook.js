@@ -11,16 +11,7 @@ module.exports = function (app, models) {
 // bodyParser.json()
 
     app.post('/stripe-webhook', bodyParser.json(), function (req, res) {
-        let sig = req.headers["stripe-signature"];
-
-        var event = null;
-        try {
-            event = stripe.webhooks.constructEvent(req.body, sig, testEndpointSecret);
-        } catch (err) {
-            return res.send(err);
-        }
-
-        // const event = req.body;
+        var event = eventFromBody(req.body);
 
         console.log(event);
 
@@ -57,6 +48,15 @@ module.exports = function (app, models) {
 
         return res.json({ received: true });
     });
+
+    function eventFromBody(body) {
+        let sig = req.headers["stripe-signature"];
+        try {
+            return stripe.webhooks.constructEvent(body, sig, testEndpointSecret);
+        } catch (err) {
+            return null;
+        }
+    }
 
     function findMechanicWithDestination(destination) {
         return models.Mechanic.findOne({ where: { stripeAccountID: destination } });
