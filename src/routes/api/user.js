@@ -90,7 +90,8 @@ module.exports = function (router, models) {
     if (body.firstName != null) {
       const promise = user.getMechanic().then(mechanic => {
         if (mechanic == null) {
-          return;
+          user.firstName = body.firstName;
+          return user.save();
         }
         return stripe.accounts.update(mechanic.stripeAccountID, {
           legal_entity: {
@@ -101,6 +102,7 @@ module.exports = function (router, models) {
             return;
           }
           user.firstName = body.firstName;
+          return user.save();
         });
       });
       promises.push(promise);
@@ -109,7 +111,8 @@ module.exports = function (router, models) {
     if (body.lastName != null) {
       const promise = user.getMechanic().then(mechanic => {
         if (mechanic == null) {
-          return;
+          user.lastName = body.lastName;
+          return user.save();
         }
         return stripe.accounts.update(mechanic.stripeAccountID, {
           legal_entity: {
@@ -120,6 +123,7 @@ module.exports = function (router, models) {
             return;
           }
           user.lastName = body.lastName;
+          return user.save();
         });
       });
       promises.push(promise);
@@ -128,7 +132,8 @@ module.exports = function (router, models) {
     if (body.phoneNumber != null) {
       const promise = user.getMechanic().then(mechanic => {
         if (mechanic == null) {
-          return;
+          user.phoneNumber = body.phoneNumber;
+          return user.save();
         }
         return stripe.accounts.update(mechanic.stripeAccountID, {
           legal_entity: {
@@ -139,6 +144,7 @@ module.exports = function (router, models) {
             return;
           }
           user.phoneNumber = body.phoneNumber;
+          return user.save();
         });
       });
       promises.push(promise);
