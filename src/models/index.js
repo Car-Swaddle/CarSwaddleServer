@@ -33,6 +33,7 @@ const models = {
   DeviceToken: sequelize.import('./deviceToken'),
   Address: sequelize.import('./address'),
   Review: sequelize.import('./review'),
+  Verification: sequelize.import('./verification'),
 };
 
 Object.keys(models).forEach(key => {

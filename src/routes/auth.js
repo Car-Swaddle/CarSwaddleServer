@@ -7,6 +7,9 @@ const bodyParser = require('body-parser');
 
 module.exports = function (app, models, passport) {
 
+    const emailFile = require('../notifications/email.js');
+    const emailer = new emailFile(models);
+
     app.post('/login', bodyParser.urlencoded({ extended: true }), function (req, res, next) {
         passport.authenticate('local-login', { session: false }, (err, user, info) => {
             if (err || !user) {
@@ -98,6 +101,11 @@ module.exports = function (app, models, passport) {
                                 }
                             });
                         } else {
+                            emailer.sendEmailVerificationEmail(user, function(err) {
+                                if (err) {
+                                    console.log(err);
+                                }
+                            });
                             return res.json({ user, token });
                         }
                     });

@@ -16,7 +16,7 @@ module.exports = function (app, models) {
         console.log(event);
 
         const destination = event.data.object.destination;
-        if (destination == null) {
+        if (destination == null || event == null) {
             return res.status(200).send();
         }
 
