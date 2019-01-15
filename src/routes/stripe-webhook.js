@@ -11,11 +11,14 @@ module.exports = function (app, models) {
 // bodyParser.json()
 
     app.post('/stripe-webhook', bodyParser.json(), function (req, res) {
-        var event = eventFromBody(req.body);
+        var event = eventFromReq(req);
 
         console.log(event);
 
         const destination = event.data.object.destination;
+        if (destination == null) {
+            return res.status(200).send();
+        }
 
         if (event.type == eventTypes.PAYOUT_PAID) {
             const amount = event.data.object.amount;
@@ -33,7 +36,18 @@ module.exports = function (app, models) {
         } else if (event.type == eventTypes.PAYOUT_CANCELED) {
 
         } else if (event.type == eventTypes.PAYOUT_CREATED) {
-
+            const amount = event.data.object.amount;
+            if (destination != null && amount != null) {
+                findMechanicWithDestination(destination).then(mechanic => {
+                    if (mechanic == null) {
+                        return res.json({ received: true });
+                    }
+                    const dollars = dollarFormat(amount);
+                    const alert = 'A payout was created. $' + dollars;
+                    const title = 'Payout: $' + dollars;
+                    pushService.sendMechanicNotification(mechanic, alert, null, null, null, title);
+                });
+            }
         } else if (event.type == eventTypes.PAYOUT_FAILED) {
 
         } else if (event.type == eventTypes.PAYOUT_UPDATED) {
@@ -45,14 +59,13 @@ module.exports = function (app, models) {
             }
         }
 
-
         return res.json({ received: true });
     });
 
-    function eventFromBody(body) {
+    function eventFromReq(req) {
         let sig = req.headers["stripe-signature"];
         try {
-            return stripe.webhooks.constructEvent(body, sig, testEndpointSecret);
+            return stripe.webhooks.constructEvent(req.body, sig, testEndpointSecret);
         } catch (err) {
             return null;
         }

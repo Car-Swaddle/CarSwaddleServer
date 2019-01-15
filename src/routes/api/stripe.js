@@ -88,10 +88,12 @@ module.exports = function (router, models) {
 
         const startingAfterID = req.query.startingAfterID;
         const limit = req.query.limit || 30;
+        const status = req.query.status;
 
         stripe.payouts.list({
             limit: limit,
             starting_after: startingAfterID,
+            status: status,
         }, { stripe_account: mechanic.stripeAccountID }, function (err, payouts) {
             if (err != null || payouts == null) {
                 return res.status(422).send('invalid parameters');
