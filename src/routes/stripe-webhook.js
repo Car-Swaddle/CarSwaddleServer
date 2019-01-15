@@ -8,9 +8,9 @@ const testEndpointSecret = 'whsec_Mihcejqv5prmk29eoHGuytmCFOwfDqzG';
 module.exports = function (app, models) {
 
     // bodyParser.json()
-    // bodyParser.raw()
+    // bodyParser.raw({ type: '*/*' })
     
-    app.post('/stripe-webhook', bodyParser.raw(), function (req, res) {
+    app.post('/stripe-webhook', bodyParser.raw({ type: '*/*' }), function (req, res) {
         var event = eventFromReq(req);
 
         console.log(event);
