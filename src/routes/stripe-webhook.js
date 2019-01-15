@@ -7,9 +7,6 @@ const testEndpointSecret = 'whsec_Mihcejqv5prmk29eoHGuytmCFOwfDqzG';
 
 module.exports = function (app, models) {
 
-// bodyParser.raw({ type: '*/*' })
-// bodyParser.json()
-
     app.post('/stripe-webhook', bodyParser.json(), function (req, res) {
         var event = eventFromReq(req);
 
@@ -67,6 +64,7 @@ module.exports = function (app, models) {
         try {
             return stripe.webhooks.constructEvent(req.body, sig, testEndpointSecret);
         } catch (err) {
+            console.log(err);
             return null;
         }
     }
