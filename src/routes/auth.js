@@ -20,7 +20,7 @@ module.exports = function (app, models, passport) {
             }
             req.login(user, { session: false }, (err) => {
                 if (err) {
-                    res.send(err);
+                    return res.send(err);
                 }
 
                 const token = jwt.sign(user.dataValues, 'your_jwt_secret');
@@ -80,6 +80,14 @@ module.exports = function (app, models, passport) {
 
                         const token = jwt.sign(user.dataValues, 'your_jwt_secret');
 
+                        if (user.isEmailVerified == false) {
+                            emailer.sendEmailVerificationEmail(user, function(err) {
+                                if (err) {
+                                    console.log(err);
+                                }
+                            });
+                        }
+
                         if (req.query.isMechanic == "true") {
                             models.Mechanic.findOrCreate({
                                 where: { userID: user.id },
@@ -101,11 +109,6 @@ module.exports = function (app, models, passport) {
                                 }
                             });
                         } else {
-                            emailer.sendEmailVerificationEmail(user, function(err) {
-                                if (err) {
-                                    console.log(err);
-                                }
-                            });
                             return res.json({ user, token });
                         }
                     });
