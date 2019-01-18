@@ -261,10 +261,10 @@ module.exports = function (router, models) {
                     newAutoService.getUser().then(user => {
                         if (didChangeStatus) {
                             const alert = 'Your mechanic changed the status of your oil change to ' + body.status + '.';
-                            pushService.sendUserNotification(user, alert, null, null);
+                            pushService.sendUserNotification(user, alert, null, null, null);
                         } else {
                             const alert = 'Your mechanic made a change to your oil change.';
-                            pushService.sendUserNotification(user, alert, null, null);
+                            pushService.sendUserNotification(user, alert, null, null, null);
                         }
                     });
                 }
@@ -279,9 +279,9 @@ module.exports = function (router, models) {
                             } else {
                                 alert = name + ' gave you a review!';
                             }
-                            const body = 'New review from ' + name;
+                            const title = 'New review from ' + name;
 
-                            pushService.sendMechanicNotification(mechanic, alert, body, null, null);
+                            pushService.sendMechanicNotification(mechanic, alert, null, null, title);
                         } else {
                             const alert = req.user.displayName() + ' changed one of your scheduled auto services.';
                             pushService.sendMechanicNotification(mechanic, alert, null, null, null);
@@ -416,7 +416,7 @@ module.exports = function (router, models) {
                                 }).then(newAutoService => {
                                     const displayName = req.user.displayName();
                                     const alert = displayName + ' scheduled an appointment';
-                                    pushService.sendMechanicNotification(mechanic, alert);
+                                    pushService.sendMechanicNotification(mechanic, alert, null, null, null);
                                     // return res.json(newAutoService);
                                     createCharge(sourceID, autoService.id, req.user).then(charge => {
                                         return res.json(newAutoService);

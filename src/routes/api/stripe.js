@@ -102,5 +102,22 @@ module.exports = function (router, models) {
         });
     });
 
+    router.get('/stripe/payout', bodyParser.json(), async function (req, res) {
+        const mechanic = await req.user.getMechanic();
+
+        const payoutID = req.query.payoutID;
+
+        if (payoutID == null) {
+            return res.status(422).send('invalid parameters');
+        }
+
+        stripe.payouts.retrieve(payoutID, { stripe_account: mechanic.stripeAccountID }, function (err, payout) {
+            if (err != null || payout == null) {
+                return res.status(422).send('invalid parameters');
+            }
+            return res.json(payout);
+        });
+    });
+
     return router;
 };
