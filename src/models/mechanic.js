@@ -13,6 +13,10 @@ const mechanic = function (sequelize, DataTypes) {
             type: DataTypes.STRING,
             allowNull: true
         },
+        identityDocumentID: {
+            type: DataTypes.STRING,
+            allowNull: true
+        },
         dateOfBirth: {
             type: DataTypes.DATE,
             allowNull: true

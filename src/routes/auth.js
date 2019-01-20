@@ -80,7 +80,7 @@ module.exports = function (app, models, passport) {
 
                         const token = jwt.sign(user.dataValues, 'your_jwt_secret');
 
-                        if (user.isEmailVerified == false) {
+                        if (!user.isEmailVerified) {
                             emailer.sendEmailVerificationEmail(user, function(err) {
                                 if (err) {
                                     console.log(err);

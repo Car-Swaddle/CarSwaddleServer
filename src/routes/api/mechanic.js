@@ -5,6 +5,7 @@ const stripe = require('stripe')(constants.STRIPE_SECRET_KEY);
 const fileStore = require('../../data/file-store.js');
 const bodyParser = require('body-parser');
 const fileUpload = require('express-fileupload');
+const path = require('path');
 
 module.exports = function (router, models) {
 
@@ -252,6 +253,59 @@ module.exports = function (router, models) {
             });
         }).catch(error => {
             return res.status(400).send('unable to fetch profile image');
+        });
+    });
+
+
+    router.post('/data/mechanic/identity-document', fileUpload(), async function (req, res) {
+        if (req.files == null) {
+            return res.status(400).send('No files were uploaded.');
+        }
+        if (Object.keys(req.files).length == 0) {
+            return res.status(400).send('No files were uploaded.');
+        }
+        var mechanic = await req.user.getMechanic();
+
+        if (mechanic == null) {
+            return res.status(400).send('No mechanic');
+        }
+
+        let image = req.files.image;
+        let name = req.files.image.name;
+        
+        stripe.files.create({
+            file: {
+                data: image.data,
+                name: name,
+                type: 'application/octet-stream',
+            },
+            purpose: 'identity_document',
+        }, { stripe_account: mechanic.stripeAccountID }, async function (err, file) {
+            if (err) {
+                console.log(err);
+                return res.status(500).send(err);
+            }
+            const fileID = file.id;
+            console.log(fileID);
+            mechanic.identityDocumentID = fileID;
+            await mechanic.save();
+            
+            if (err != null && fileID != null) {
+                return res.status(400).send(err);
+            }
+            stripe.accounts.update(mechanic.stripeAccountID, {
+                legal_entity: {
+                    verification: { document: fileID }
+                }
+            }, function (err, file) {
+                console.log(file);
+                if (err != null) {
+                    console.log(err);
+                    return res.status(400).send(err);
+                }
+
+                return res.status(200).json(mechanic);
+            });
         });
     });
 

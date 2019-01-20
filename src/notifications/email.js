@@ -55,11 +55,11 @@ class Emailer {
 
     verificationEmailOptions(user, link) {
         return {
-            from: 'Kyle <' + sendFromEmailAddress + '>', // sender address (who sends)
-            to: user.email, // list of receivers (who receives)
-            subject: 'Please verify',
-            text: 'Hello, please Click on this link to verify your email. ' + link,
-            html: 'Hello,<br> Please Click on this link to verify your email.<br><a href=' + link + '>' + link + '</a>'
+            from: 'Kyle <' + sendFromEmailAddress + '>', // sender address (who sends the email)
+            to: user.email, // list of receivers (who gets the email)
+            subject: 'Car Swaddle Email Verification',
+            text: 'Hello from Car Swaddle! Please click on this link to verify your email. ' + link,
+            html: 'Hello from Car Swaddle!<br>Please Click on this link to verify your email.<br><a href=' + link + '>' + link + '</a>'
         };
     }
 

@@ -87,10 +87,9 @@ module.exports = function (app, models) {
             const fieldsSame = fieldsNeeded.every(function (u, i) {
                 return u === previousFieldsNeeded[i];
             });
-            const isSameLength = fieldsNeeded.length == previousFieldsNeeded.length;
-            const isSame = fieldsSame && isSameLength;
+            const isPreviousLessThanCurrent = previousFieldsNeeded.length < fieldsNeeded.length;
 
-            if (isSame == false && stripeAccountID != null) {
+            if (isPreviousLessThanCurrent && fieldsSame && stripeAccountID != null) {
                 const mechanic = await findMechanicWithStripeID(stripeAccountID);
                 if (mechanic == null) {
                     return res.json({ received: true });
