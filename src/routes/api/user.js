@@ -58,26 +58,24 @@ module.exports = function (router, models) {
     });
   });
 
-  router.get('/data/profile-picture/:userID', bodyParser.json(), function (req, res) {
+  router.get('/data/profile-picture/:userID', bodyParser.json(), async function (req, res) {
     const userID = req.params.userID;
     if (userID == null) {
       return res.status(422).send('invalid parameters');
     }
-    models.User.findById(userID).then(user => {
-      fileStore.getImage(user.profileImageID).then(data => {
-        if (data == null) {
-          console.log(err);
-          res.status(404).send();
-        }
-        res.writeHead(200, { 'Content-Type': 'image/*' });
-        res.write(data.Body, 'binary');
-        res.end(null, 'binary');
-      }).catch(error => {
-        return res.status(400).send('unable to fetch profile image');
-      });
-    }).catch(error => {
+
+    const user = await models.User.findById(userID);
+    if (!user) {
       return res.status(400).send('unable to fetch profile image');
-    });
+    }
+    const data = await fileStore.getImage(user.profileImageID);
+    if (data == null) {
+      console.log(err);
+      res.status(404).send();
+    }
+    res.writeHead(200, { 'Content-Type': 'image/*' });
+    res.write(data.Body, 'binary');
+    res.end(null, 'binary');
   });
 
   router.patch('/update-user', bodyParser.json(), function (req, res) {
