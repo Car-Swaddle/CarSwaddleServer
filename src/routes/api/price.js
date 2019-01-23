@@ -103,11 +103,10 @@ module.exports = function (router, models) {
                         console.log(value);
                         subtotal += value;
                     }
-                    var subtotal = Math.round(subtotal);
 
                     var totalPrices = []
                     var subtotalPricePromise = models.PricePart.create({
-                        key: 'subtotal', value: subtotal, id: uuidV1()
+                        key: 'subtotal', value: Math.round(subtotal), id: uuidV1()
                     });
                     totalPrices.push(subtotalPricePromise);
                     var bookingFeePricePromise = models.PricePart.create({

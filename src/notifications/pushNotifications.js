@@ -1,12 +1,21 @@
 var apnFramework = require('apn');
 
-var carSwaddleOptions = {
+var carSwaddleProductionOptions = {
     token: {
         key: "src/resources/CarSwaddleAPNSKey.p8",
         keyId: "Y3N72N8FST",
         teamId: "MG7WLQ6J4A",
     },
     production: true
+};
+
+var carSwaddleDebugOptions = {
+    token: {
+        key: "src/resources/CarSwaddleAPNSKey.p8",
+        keyId: "Y3N72N8FST",
+        teamId: "MG7WLQ6J4A",
+    },
+    production: false
 };
 
 
@@ -16,8 +25,10 @@ const carSwaddleMechanicBundleID = "CS.CarSwaddleMechanic";
 class PushService {
 
     constructor() {
-        this.carSwaddleProvider = new apnFramework.Provider(carSwaddleOptions);
-        this.carSwaddleMechanicProvider = new apnFramework.Provider(carSwaddleOptions);
+        this.carSwaddleProviderProduction = new apnFramework.Provider(carSwaddleProductionOptions);
+        this.carSwaddleMechanicProviderProduction = new apnFramework.Provider(carSwaddleProductionOptions);
+        this.carSwaddleProviderDebug = new apnFramework.Provider(carSwaddleDebugOptions);
+        this.carSwaddleMechanicProviderDebug = new apnFramework.Provider(carSwaddleDebugOptions);
     }
 
     sendUserNotification(user, alert, payload, badge, title) {
@@ -25,7 +36,10 @@ class PushService {
             tokens.forEach(token => {
                 let notification = this.createNotification(alert, payload, badge, title);
                 notification.topic = carSwaddleBundleID;
-                this.carSwaddleProvider.send(notification, token.token).then(result => {
+                this.carSwaddleProviderProduction.send(notification, token.token).then(result => {
+                    console.log(result);
+                });
+                this.carSwaddleProviderDebug.send(notification, token.token).then(result => {
                     console.log(result);
                 });
             });
@@ -37,7 +51,10 @@ class PushService {
             tokens.forEach(token => {
                 var notification = this.createNotification(alert, payload, badge, title);
                 notification.topic = carSwaddleMechanicBundleID;
-                this.carSwaddleMechanicProvider.send(notification, token.token).then(result => {
+                this.carSwaddleMechanicProviderProduction.send(notification, token.token).then(result => {
+                    console.log(result);
+                });
+                this.carSwaddleMechanicProviderDebug.send(notification, token.token).then(result => {
                     console.log(result);
                 });
             });

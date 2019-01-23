@@ -208,6 +208,7 @@ module.exports = function (router, models) {
 
         var reviewRating = 0;
         if (body.review != null && body.review.rating != null && body.review.text != null) {
+            console.log('got review');
             const rating = body.review.rating;
             const text = body.review.text;
 
@@ -238,6 +239,7 @@ module.exports = function (router, models) {
                     review.revieweeID = autoServiceUser.id;
                     review.setAutoServiceFromMechanic(autoService, { save: false });
                 }
+                console.log('that review ' + review);
                 reviewRating = rating;
 
                 return review.save();
