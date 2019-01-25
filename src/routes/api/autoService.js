@@ -140,7 +140,7 @@ module.exports = function (router, models) {
             changedByUser = true;
         }
 
-        if (currentMechanic.id == autoServiceMechanic.id) {
+        if (currentMechanic != null && currentMechanic.id == autoServiceMechanic.id) {
             changedByMechanic = true;
         }
 
