@@ -6,7 +6,8 @@ const associationFilePath = 'src/resources/apple-app-site-association';
 
 module.exports = function (app, models, passport) {
 
-    app.get('/someTest/apple-app-site-association', bodyParser.json(), function (req, res, next) {
+    app.get('/.wellknown/apple-app-site-association', bodyParser.json(), function (req, res, next) {
+        res.setHeader("Content-Type", "application/json");
         return res.sendfile(path.resolve(associationFilePath));
     });
 };

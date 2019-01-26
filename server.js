@@ -9,7 +9,7 @@ bodyParser.limit = '500mb';
 
 var app = express();
 app.use(express.static(__dirname + '/www'));
-app.use('/.wellknown/apple-app-site-association', express.static(path.resolve(associationFilePath)));
+// app.use('/.wellknown/apple-app-site-association', express.static(path.resolve(associationFilePath)));
 
 var port = process.env.PORT;
 if (port == null || port == "") {
