@@ -1,4 +1,5 @@
 var apnFramework = require('apn');
+var dateFormat = require('dateformat');
 
 var carSwaddleProductionOptions = {
     token: {
@@ -31,10 +32,24 @@ class PushService {
         this.carSwaddleMechanicProviderDebug = new apnFramework.Provider(carSwaddleDebugOptions);
     }
 
-    sendUserNotification(user, alert, payload, badge, title) {
+    sendUserReminderNotification(autoService) {
+        const subject = "Upcoming Oil Change";
+        const dateString = dateFormat(autoService.scheduledDate, "dddd, mmmm dS, h:MM TT");
+        const text = autoService.user.firstName + ', you have an oil change coming up: ' + dateString;
+        this.sendUserNotification(autoService.user, text, null, null, subject);
+    }
+
+    sendMechanicReminderNotification(autoService) {
+        const subject = "Upcoming Oil Change";
+        const dateString = dateFormat(autoService.scheduledDate, "dddd, mmmm dS, h:MM TT");
+        const text = autoService.mechanic.user.firstName + ', you have an oil change coming up: ' + dateString;
+        this.sendMechanicNotification(autoService.mechanic, text, null, null, subject);
+    }
+
+    sendUserNotification(user, body, payload, badge, title) {
         return user.getDeviceTokens().then(tokens => {
             tokens.forEach(token => {
-                let notification = this.createNotification(alert, payload, badge, title);
+                let notification = this.createNotification(body, payload, badge, title);
                 notification.topic = carSwaddleBundleID;
                 this.carSwaddleProviderProduction.send(notification, token.token).then(result => {
                     console.log(result);
@@ -46,10 +61,10 @@ class PushService {
         });
     }
 
-    sendMechanicNotification(mechanic, alert, payload, badge, title) {
+    sendMechanicNotification(mechanic, body, payload, badge, title) {
         return mechanic.getDeviceTokens().then(tokens => {
             tokens.forEach(token => {
-                var notification = this.createNotification(alert, payload, badge, title);
+                var notification = this.createNotification(body, payload, badge, title);
                 notification.topic = carSwaddleMechanicBundleID;
                 this.carSwaddleMechanicProviderProduction.send(notification, token.token).then(result => {
                     console.log(result);
@@ -61,12 +76,12 @@ class PushService {
         });
     }
 
-    createNotification(alert, payload, badge, title) {
+    createNotification(body, payload, badge, title) {
         var notification = new apnFramework.Notification();
         notification.expiry = Math.floor(Date.now() / 1000) + 24 * 3600; // will expire in 24 hours from now
         notification.badge = badge;
         notification.title = title;
-        notification.body = alert;
+        notification.body = body;
         notification.sound = "default";
         // notification.alert = alert;
         notification.payload = payload;

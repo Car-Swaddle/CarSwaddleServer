@@ -65,7 +65,7 @@ module.exports = function (router, models) {
     }
 
     const user = await models.User.findById(userID);
-    if (!user) {
+    if (!user || !user.profileImageID) {
       return res.status(400).send('unable to fetch profile image');
     }
     const data = await fileStore.getImage(user.profileImageID);

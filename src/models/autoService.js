@@ -1,3 +1,6 @@
+const { Op } = require('sequelize');
+
+
 const autoService = function (sequelize, DataTypes) {
   const AutoService = sequelize.define('autoService', {
     id: {
@@ -25,7 +28,7 @@ const autoService = function (sequelize, DataTypes) {
     AutoService.hasOne(models.Location, { foreignKey: 'autoServiceID' });
     AutoService.hasOne(models.Review, { foreignKey: 'autoServiceIDFromUser', as: 'reviewFromUser' });
     AutoService.hasOne(models.Review, { foreignKey: 'autoServiceIDFromMechanic', as: 'reviewFromMechanic' });
-    AutoService.belongsTo(models.Vehicle, {foreignKey: 'vehicleID' } );
+    AutoService.belongsTo(models.Vehicle, { foreignKey: 'vehicleID' });
     AutoService.hasOne(models.Price, { foreignKey: 'autoServiceID' })
     AutoService.hasMany(models.ServiceEntity, { foreignKey: 'autoServiceID' })
   };
@@ -82,6 +85,31 @@ const autoService = function (sequelize, DataTypes) {
     queryString += 'ELSE ' + lastIndex + ' END';
 
     return queryString;
+  }
+
+  AutoService.findAllScheduled = function (models, callback) {
+    models.AutoService.findAll({
+      where: {
+        status: AutoService.STATUS.scheduled,
+        scheduledDate: {
+          [Op.gt]: new Date(),
+        }
+      },
+      include: [
+        { model: models.User, attributes: models.User.defaultAttributes, },
+        {
+          model: models.Mechanic,
+          include: [
+            {
+              model: models.User,
+              attributes: models.User.defaultAttributes,
+            }
+          ],
+        },
+      ],
+    }).then(autoServices => {
+      callback(autoServices);
+    });
   }
 
   return AutoService;

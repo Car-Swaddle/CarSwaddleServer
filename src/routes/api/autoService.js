@@ -7,6 +7,9 @@ module.exports = function (router, models) {
 
     require('../../stripe-methods/stripe-charge.js')(models);
 
+    const reminderFile = require('../../notifications/reminder.js');
+    const reminder = new reminderFile(models);
+
     const Op = models.Sequelize.Op;
 
     const includeDict = [
@@ -421,6 +424,7 @@ module.exports = function (router, models) {
                                     pushService.sendMechanicNotification(mechanic, alert, null, null, null);
                                     // return res.json(newAutoService);
                                     createCharge(sourceID, autoService.id, req.user).then(charge => {
+                                        reminder.scheduleRemindersForAutoService(newAutoService);
                                         return res.json(newAutoService);
                                     }).catch(error => {
                                         return res.status(400).send('something went wrong');

@@ -85,7 +85,7 @@ const user = function (sequelize, DataTypes) {
         return values;
     };
 
-    User.defaultAttributes = ['firstName', 'lastName', 'id', 'profileImageID'];
+    User.defaultAttributes = ['firstName', 'lastName', 'id', 'profileImageID', 'email'];
 
     return User;
 };

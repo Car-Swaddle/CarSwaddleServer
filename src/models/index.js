@@ -1,4 +1,5 @@
 const Sequelize = require('sequelize');
+const Reminder = require('../notifications/reminder.js');
 
 var sequelize = null;
 console.log('process.env.DATABASE: ' + process.env.DATABASE_URL);
@@ -47,6 +48,8 @@ Object.keys(models).forEach(key => {
 // {force: true}
 sequelize.sync().then( function() {
   console.log("synced")
+  const reminder = new Reminder(models);
+  reminder.rescheduleRemindersForAllAutoServices();
 });
 
 models.sequelize = sequelize;

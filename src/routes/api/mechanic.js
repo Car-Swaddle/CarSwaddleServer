@@ -166,7 +166,7 @@ module.exports = function (router, models) {
                 didChangeMechanic = true;
                 const date = new Date(body.dateOfBirth);
                 const day = date.getDate();
-                const month = date.getMonth();
+                const month = date.getMonth()+1;
                 const year = date.getFullYear();
 
                 const promise = stripe.accounts.update(mechanic.stripeAccountID, {
@@ -183,6 +183,8 @@ module.exports = function (router, models) {
                     }
                     mechanic.dateOfBirth = body.dateOfBirth;
                     return;
+                }).catch(error => {
+                    console.log('error: ' + error);
                 });
                 promises.push(promise);
             }
