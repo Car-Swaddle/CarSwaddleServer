@@ -29,6 +29,7 @@ class Reminder {
 
         if (threeDaysBefore > new Date()) {
             schedule.scheduleJob(threeDaysBefore, function (huh) {
+                // TODO: See if the auto service is still scheduled
                 self.mailer.sendUserOilChangeReminderMail(autoService);
                 pushNotification.sendUserReminderNotification(autoService);
                 // pushNotification.sendMechanicReminderNotification(autoService);
@@ -40,6 +41,7 @@ class Reminder {
 
         if (dayBefore > new Date()) {
             schedule.scheduleJob(dayBefore, function (huh) {
+                // TODO: See if the auto service is still scheduled
                 self.mailer.sendUserOilChangeReminderMail(autoService);
                 pushNotification.sendUserReminderNotification(autoService);
             });
@@ -49,17 +51,18 @@ class Reminder {
 
         if (thirtyMinutesBefore > new Date()) {
             schedule.scheduleJob(thirtyMinutesBefore, function (huh) {
+                // TODO: See if the auto service is still scheduled
                 self.mailer.sendUserOilChangeReminderMail(autoService);
                 pushNotification.sendUserReminderNotification(autoService);
                 pushNotification.sendMechanicReminderNotification(autoService);
             });
         }
 
-        schedule.scheduleJob(this.addSeconds(new Date(), 5), function (huh) {
-            self.mailer.sendUserOilChangeReminderMail(autoService, null);
-            pushNotification.sendUserReminderNotification(autoService);
-            pushNotification.sendMechanicReminderNotification(autoService);
-        });
+        // schedule.scheduleJob(this.addSeconds(new Date(), 5), function (huh) {
+        //     self.mailer.sendUserOilChangeReminderMail(autoService, null);
+        //     pushNotification.sendUserReminderNotification(autoService);
+        //     pushNotification.sendMechanicReminderNotification(autoService);
+        // });
 
     }
 
