@@ -16,6 +16,10 @@
             {
                 "appID": "MG7WLQ6J4A.CS.CarSwaddleMechanic",
                 "paths": ["*"]
+            },
+            {
+                "appID": "MG7WLQ6J4A.com.linksTest.LinksTest",
+                "paths": ["*"]
             }
         ]
     }
