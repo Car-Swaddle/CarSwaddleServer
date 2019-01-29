@@ -8,12 +8,13 @@ module.exports = function (app, models, passport) {
 
     app.get('/.well-known/apple-app-site-association', bodyParser.json(), function (req, res, next) {
         res.setHeader("Content-Type", "application/json");
-        return res.sendFile(path.resolve(associationFilePath));
+        return res.download(path.resolve(associationFilePath));
     });
 
     app.get('/apple-app-site-association', bodyParser.json(), function (req, res, next) {
         res.setHeader("Content-Type", "application/json");
-        return res.sendFile(path.resolve(associationFilePath));
+        return res.download(path.resolve(associationFilePath));
+        // return res.sendFile(path.resolve(associationFilePath));
     });
 
 };
