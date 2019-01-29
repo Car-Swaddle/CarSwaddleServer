@@ -4,5 +4,18 @@
            "MG7WLQ6J4A.CS.CarSwaddle",
            "MG7WLQ6J4A.CS.CarSwaddleMechanic"
         ]
+    },
+    "applinks": {
+        "apps": [],
+        "details": [
+            {
+                "appID": "MG7WLQ6J4A.CS.CarSwaddle",
+                "paths": ["*"]
+            },
+            {
+                "appID": "MG7WLQ6J4A.CS.CarSwaddleMechanic",
+                "paths": ["*"]
+            }
+        ]
     }
 }
