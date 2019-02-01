@@ -34,11 +34,11 @@ const user = function (sequelize, DataTypes) {
             allowNull: true,
         },
         isEmailVerified: {
-            type: DataTypes.STRING,
+            type: DataTypes.BOOLEAN,
             allowNull: true,
         },
         isPhoneNumberVerified: {
-            type: DataTypes.STRING,
+            type: DataTypes.BOOLEAN,
             allowNull: true,
         }
     }, {
