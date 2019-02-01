@@ -1,7 +1,4 @@
-const constants = require('./constants');
 const bodyParser = require('body-parser');
-
-const emailer = require('../notifications/email.js');
 
 // Create the transporter with the required configuration for Outlook
 // change the user and pass !

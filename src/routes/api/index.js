@@ -16,6 +16,7 @@ module.exports = function (app, models) {
     require('./stripe.js')(router, models);
     require('./review.js')(router, models);
     require('./logout.js')(router, models);
+    require('./email-verification.js')(router, models);
 
     return router;
 }
