@@ -9,7 +9,7 @@ const pricePart = function (sequelize, DataTypes) {
             type: DataTypes.STRING,
         },
         value: {
-            type: DataTypes.DECIMAL,
+            type: DataTypes.INTEGER,
         }
     }, {
         freezeTableName: true

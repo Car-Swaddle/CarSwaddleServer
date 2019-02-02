@@ -35,6 +35,8 @@ const models = {
   Address: sequelize.import('./address'),
   Review: sequelize.import('./review'),
   Verification: sequelize.import('./verification'),
+  TransactionMetadata: sequelize.import('./transaction-metadata'),
+  TransactionReceipt: sequelize.import('./transaction-receipt'),
 };
 
 Object.keys(models).forEach(key => {

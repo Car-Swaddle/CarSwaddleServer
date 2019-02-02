@@ -14,7 +14,7 @@ const vehicleDescription = function (sequelize, DataTypes) {
         style: {
             type: DataTypes.STRING
         },
-        trime: {
+        trim: {
             type: DataTypes.STRING
         },
         year: {

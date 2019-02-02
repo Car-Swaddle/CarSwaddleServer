@@ -68,7 +68,45 @@ module.exports = function (router, models) {
             if (err != null || transaction == null) {
                 return res.status(422).send('unable to fetch');
             }
-            return res.json(transaction);
+            models.TransactionMetadata.findOne({
+                where: {
+                    stripeTransactionID: transactionID
+                },
+                include: [{ model: models.TransactionReceipt }]
+            }).then(transactionMetadata => {
+                if (err != null || transaction == null) {
+                    return res.status(422).send('unable to fetch');
+                }
+                transaction.car_swaddle_meta = JSON.parse(transactionMetadata);
+                return res.json(transaction);
+            });
+        });
+    });
+
+    router.post('/stripe/transaction-details', bodyParser.json(), async function (req, res) {
+        const mechanic = await req.user.getMechanic();
+        const transactionID = req.query.transactionID;
+
+        if (mechanic == null || mechanic.stripeAccountID == null || transactionID == null) {
+            return res.status(422).send('invalid parameters');
+        }
+
+        stripe.balance.retrieveTransaction(transactionID, { stripe_account: mechanic.stripeAccountID }, function (err, transaction) {
+            if (err != null || transaction == null) {
+                return res.status(422).send('unable to fetch');
+            }
+            models.TransactionMetadata.findOne({
+                where: {
+                    stripeTransactionID: transactionID
+                },
+                include: [{ model: models.TransactionReceipt }]
+            }).then(transactionMetadata => {
+                if (err != null || transaction == null) {
+                    return res.status(422).send('unable to fetch');
+                }
+                transaction.car_swaddle_meta = JSON.parse(transactionMetadata);
+                return res.json(transaction);
+            });
         });
     });
 

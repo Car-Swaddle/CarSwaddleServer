@@ -33,7 +33,7 @@ module.exports = function (router, models) {
     function reviewIncludeDict(as) {
         return {
             model: models.Review,
-            attributes: ['id', 'rating', 'text', 'reviewerID', 'revieweeID'],
+            attributes: ['id', 'rating', 'text', 'reviewerID', 'revieweeID', 'createdAt'],
             as: as,
             include: [
                 { model: models.User, attributes: ['id'] },
