@@ -56,6 +56,22 @@ module.exports = function (router, models) {
         });
     });
 
+    router.get('/stripe/transaction-details', bodyParser.json(), async function (req, res) {
+        const mechanic = await req.user.getMechanic();
+        const transactionID = req.query.transactionID;
+
+        if (mechanic == null || mechanic.stripeAccountID == null || transactionID == null) {
+            return res.status(422).send('invalid parameters');
+        }
+
+        stripe.issuing.transactions.retrieve(transactionID, { stripe_account: mechanic.stripeAccountID }, function (err, transaction) {
+            if (err != null || transaction == null) {
+                return res.status(422).send('invalid parameters');
+            }
+            return res.json(transaction);
+        });
+    });
+
     router.get('/stripe/transactions', bodyParser.json(), async function (req, res) {
         const mechanic = await req.user.getMechanic();
 
