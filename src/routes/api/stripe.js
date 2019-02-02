@@ -64,7 +64,7 @@ module.exports = function (router, models) {
             return res.status(422).send('invalid parameters');
         }
 
-        stripe.issuing.transactions.retrieve(transactionID, { stripe_account: mechanic.stripeAccountID }, function (err, transaction) {
+        stripe.balance.retrieveTransaction(transactionID, { stripe_account: mechanic.stripeAccountID }, function (err, transaction) {
             if (err != null || transaction == null) {
                 return res.status(422).send('unable to fetch');
             }
