@@ -2,6 +2,8 @@ const express = require('express');
 const constants = require('../constants');
 const stripe = require('stripe')(constants.STRIPE_SECRET_KEY);
 const bodyParser = require('body-parser');
+const fileUpload = require('express-fileupload');
+const fileStore = require('../../data/file-store.js');
 
 module.exports = function (router, models) {
 
@@ -63,16 +65,40 @@ module.exports = function (router, models) {
         if (mechanic == null || mechanic.stripeAccountID == null || transactionID == null) {
             return res.status(422).send('invalid parameters');
         }
-
+        // , { stripe_account: mechanic.stripeAccountID }
         stripe.balance.retrieveTransaction(transactionID, { stripe_account: mechanic.stripeAccountID }, function (err, transaction) {
             if (err != null || transaction == null) {
                 return res.status(422).send('unable to fetch');
             }
             models.TransactionMetadata.findOne({
-                where: {
-                    stripeTransactionID: transactionID
-                },
+                where: { stripeTransactionID: transactionID },
                 include: [{ model: models.TransactionReceipt }]
+            }).then(transactionMetadata => {
+                if (err != null) {
+                    return res.status(422).send('unable to fetch');
+                }
+                transaction.car_swaddle_meta = transactionMetadata.toJSON();
+                return res.json(transaction);
+            });
+        });
+    });
+
+    router.post('/stripe/transaction-details', bodyParser.json(), async function (req, res) {
+        const mechanic = await req.user.getMechanic();
+        const transactionID = req.body.transactionID;
+        const cost = req.body.cost;
+
+        if (mechanic == null || mechanic.stripeAccountID == null || transactionID == null || cost == null) {
+            return res.status(422).send('invalid parameters');
+        }
+
+        stripe.balance.retrieveTransaction(transactionID, { stripe_account: mechanic.stripeAccountID }, function (err, transaction) {
+            if (err != null || transaction == null) {
+                return res.status(422).send('unable to fetch');
+            }
+            const dict = { stripeTransactionID: transactionID, mechanicID: mechanic.id };
+            models.TransactionMetadata.findOne({
+                where: dict
             }).then(transactionMetadata => {
                 if (err != null || transaction == null) {
                     return res.status(422).send('unable to fetch');
@@ -83,11 +109,12 @@ module.exports = function (router, models) {
         });
     });
 
-    router.post('/stripe/transaction-details', bodyParser.json(), async function (req, res) {
+    router.post('/stripe/transaction-details/receipt', fileUpload(), async function (req, res) {
         const mechanic = await req.user.getMechanic();
-        const transactionID = req.query.transactionID;
+        const transactionID = req.body.transactionID;
 
-        if (mechanic == null || mechanic.stripeAccountID == null || transactionID == null) {
+
+        if (mechanic == null || mechanic.stripeAccountID == null || transactionID == null || cost == null) {
             return res.status(422).send('invalid parameters');
         }
 
@@ -95,12 +122,12 @@ module.exports = function (router, models) {
             if (err != null || transaction == null) {
                 return res.status(422).send('unable to fetch');
             }
-            models.TransactionMetadata.findOne({
-                where: {
-                    stripeTransactionID: transactionID
-                },
-                include: [{ model: models.TransactionReceipt }]
-            }).then(transactionMetadata => {
+
+            const dict = { stripeTransactionID: transactionID, mechanicID: mechanic.id };
+            models.TransactionMetadata.findOrCreate({
+                where: dict,
+                defaults: dict
+            }).spread((transactionMetadata, created) => {
                 if (err != null || transaction == null) {
                     return res.status(422).send('unable to fetch');
                 }

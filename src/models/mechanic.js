@@ -63,6 +63,7 @@ const mechanic = function (sequelize, DataTypes) {
         });
         Mechanic.hasMany(models.DeviceToken, { foreignKey: 'mechanicID' });
         Mechanic.hasMany(models.Review, { foreignKey: 'mechanicID' });
+        Mechanic.hasMany(models.TransactionMetadata, { foreignKey: 'mechanicID' });
     };
 
     Mechanic.prototype.toJSON = function () {

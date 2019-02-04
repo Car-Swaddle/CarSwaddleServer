@@ -2,6 +2,9 @@ const express = require('express');
 const uuidV1 = require('uuid/v1');
 const pushService = require('../../notifications/pushNotifications.js');
 const bodyParser = require('body-parser');
+const constants = require('../constants');
+const stripe = require('stripe')(constants.STRIPE_SECRET_KEY);
+const distance = require('../distance.js');
 
 module.exports = function (router, models) {
 
@@ -306,46 +309,27 @@ module.exports = function (router, models) {
         var body = req.body;
 
         var status = body.status;
-        if (models.AutoService.isValidStatus(status) == false) {
-            return res.status(422).json({ error: 'Invalid status:' + status });
-        }
-
+        if (models.AutoService.isValidStatus(status) == false) { return res.status(422).json({ error: 'Invalid status:' + status }); }
         const priceID = body.priceID;
-        if (priceID == null) {
-            return res.status(422).send('invalid parameters');
-        }
+        if (priceID == null) { return res.status(422).send('invalid parameters'); }
         const price = await models.Price.findById(priceID);
-        if (price == null) {
-            return res.status(422).send('invalid parameters');
-        }
+        if (price == null) { return res.status(422).send('invalid parameters'); }
 
         const scheduledDate = body.scheduledDate;
-        if (scheduledDate == null) {
-            return res.status(422).send();
-        }
+        if (scheduledDate == null) { return res.status(422).send(); }
 
-        if (body.vehicleID == null) {
-            return res.status(422).send();
-        }
+        if (body.vehicleID == null) { return res.status(422).send(); }
 
         const sourceID = req.body.sourceID;
-        if (sourceID == null) {
-            return res.status(422).send('invalid parameters');
-        }
+        if (sourceID == null) { return res.status(422).send('invalid parameters'); }
 
         const serviceEntities = body.serviceEntities;
-
-        if (serviceEntities.length <= 0) {
-            // Must have at least one service entity
-            return res.status(422).send();
-        }
+        if (serviceEntities.length <= 0) { return res.status(422).send(); }
 
         var locationPromise = null;
-
-        const location = body.location;
         if (body.locationID != null) {
             locationPromise = models.Location.findById(body.locationID);
-        } else if (location != null && location.latitude != null && location.longitude != null) {
+        } else if (body.location != null && body.location.latitude != null && body.location.longitude != null) {
             var point = { type: 'Point', coordinates: [body.location.longitude, body.location.latitude] };
             locationPromise = models.Location.create({
                 point: point,
@@ -360,84 +344,105 @@ module.exports = function (router, models) {
             return res.status(422).send();
         }
 
-        locationPromise.then(location => {
-            models.Mechanic.findById(body.mechanicID).then(mechanic => {
-                models.Vehicle.findById(body.vehicleID).then(vehicle => {
-                    models.AutoService.create({
+        const location = await locationPromise;
+
+        const mechanic = await models.Mechanic.findById(body.mechanicID);
+        const vehicle = await models.Vehicle.findById(body.vehicleID);
+        const autoService = await models.AutoService.create({
+            id: uuidV1(),
+            status: status,
+            notes: body.notes,
+            scheduledDate: scheduledDate,
+        });
+        autoService.setMechanic(mechanic, { save: false });
+        autoService.setUser(req.user, { save: false });
+        autoService.setVehicle(vehicle, { save: false });
+        autoService.setLocation(location, { save: false });
+        autoService.setPrice(price, { save: false });
+        const updatedAutoService = await autoService.save();
+        var entityTypeToSpecificEntities = {};
+
+        for (i = 0; i < serviceEntities.length; i++) {
+            var val = serviceEntities[i];
+            const entityType = val.entityType;
+            if (entityTypeToSpecificEntities[entityType] == null) {
+                entityTypeToSpecificEntities[entityType] = []
+            }
+            entityTypeToSpecificEntities[entityType].push(val.specificService);
+        }
+
+        var serviceEntityPromises = [];
+        var keys = Object.keys(entityTypeToSpecificEntities)
+        for (i = 0; i < keys.length; i++) {
+            const key = keys[i];
+            var specificServices = entityTypeToSpecificEntities[key];
+            for (j = 0; j < specificServices.length; j++) {
+                if (key == 'OIL_CHANGE') {
+                    const specificService = specificServices[j];
+                    const p = models.OilChange.create({
                         id: uuidV1(),
-                        status: status,
-                        notes: body.notes,
-                        scheduledDate: scheduledDate,
-                    }).then(autoService => {
-                        autoService.setMechanic(mechanic, { save: false });
-                        autoService.setUser(req.user, { save: false });
-                        autoService.setVehicle(vehicle, { save: false });
-                        autoService.setLocation(location, { save: false });
-                        autoService.setPrice(price, { save: false });
-                        autoService.save().then(updatedAutoService => {
-                            var entityTypeToSpecificEntities = {};
-
-                            for (i = 0; i < serviceEntities.length; i++) {
-                                var val = serviceEntities[i];
-                                const entityType = val.entityType;
-                                if (entityTypeToSpecificEntities[entityType] == null) {
-                                    entityTypeToSpecificEntities[entityType] = []
-                                }
-                                entityTypeToSpecificEntities[entityType].push(val.specificService);
-                            }
-
-                            var serviceEntityPromises = [];
-                            var keys = Object.keys(entityTypeToSpecificEntities)
-                            for (i = 0; i < keys.length; i++) {
-                                const key = keys[i];
-                                var specificServices = entityTypeToSpecificEntities[key];
-                                for (j = 0; j < specificServices.length; j++) {
-                                    if (key == 'OIL_CHANGE') {
-                                        const specificService = specificServices[j];
-                                        const p = models.OilChange.create({
-                                            id: uuidV1(),
-                                            oilType: specificService.oilType
-                                        }).then(oilChange => {
-                                            return models.ServiceEntity.create({
-                                                id: uuidV1(),
-                                                entityType: key,
-                                                autoService: updatedAutoService,
-                                                oilChange: oilChange
-                                            }).then(serviceEntity => {
-                                                serviceEntity.setOilChange(oilChange);
-                                                serviceEntity.setAutoService(updatedAutoService);
-                                                return serviceEntity.save();
-                                            });
-                                        });
-                                        serviceEntityPromises.push(p);
-                                    }
-                                }
-                            }
-
-                            Promise.all(serviceEntityPromises).then(values => {
-                                models.AutoService.findOne({
-                                    where: { id: autoService.id },
-                                    include: includeDict,
-                                }).then(newAutoService => {
-                                    const displayName = req.user.displayName();
-                                    const alert = displayName + ' scheduled an appointment';
-                                    pushService.sendMechanicNotification(mechanic, alert, null, null, null);
-                                    // return res.json(newAutoService);
-                                    createCharge(sourceID, autoService.id, req.user).then(charge => {
-                                        reminder.scheduleRemindersForAutoService(newAutoService);
-                                        return res.json(newAutoService);
-                                    }).catch(error => {
-                                        return res.status(400).send('something went wrong');
-                                    });
-                                });
-                            });
-                        }).catch((error) => {
-                            // Delete created Location
+                        oilType: specificService.oilType
+                    }).then(oilChange => {
+                        return models.ServiceEntity.create({
+                            id: uuidV1(),
+                            entityType: key,
+                            autoService: updatedAutoService,
+                            oilChange: oilChange
+                        }).then(serviceEntity => {
+                            serviceEntity.setOilChange(oilChange);
+                            serviceEntity.setAutoService(updatedAutoService);
+                            return serviceEntity.save();
                         });
                     });
-                })
-            });
+                    serviceEntityPromises.push(p);
+                }
+            }
+        }
+
+        const values = await Promise.all(serviceEntityPromises);
+        const newAutoService = await models.AutoService.findOne({
+            where: { id: autoService.id },
+            include: includeDict,
         });
+        const displayName = req.user.displayName();
+        const alert = displayName + ' scheduled an appointment';
+        pushService.sendMechanicNotification(mechanic, alert, null, null, null);
+        const charge = await createCharge(sourceID, autoService.id, req.user);
+        reminder.scheduleRemindersForAutoService(newAutoService);
+        const fullCharge = await stripe.charges.retrieve(charge.id, {
+            expand: ["transfer.destination_payment"]
+        }); 
+        console.log(fullCharge);
+        const stripeTransactionID = fullCharge.transfer.destination_payment.balance_transaction;
+        newAutoService.balanceTransactionID = stripeTransactionID;
+
+        const region = await mechanic.getRegion();
+        const locationPoint = { latitude: location.point.coordinates[1], longitude: location.point.coordinates[0] };
+        const regionPoint = { latitude: region.origin.coordinates[1], longitude: region.origin.coordinates[0] };
+        const meters = distance.metersBetween(locationPoint, regionPoint);
+
+        const priceParts = await models.PricePart.findAll({
+            where: {
+                priceID: price.id,
+                key: {
+                    [Op.or]: ['labor', 'oilFilter', 'oil']
+                }
+            }
+        })
+
+        var mechanicCost = 0
+        priceParts.forEach(function (part) {
+            console.log(part);
+            mechanicCost += part.value;
+        });
+
+        const transactionMetadata = await models.TransactionMetadata.create({id: uuidV1(), stripeTransactionID: stripeTransactionID, mechanicCost: mechanicCost, drivingDistance: meters });
+        transactionMetadata.setAutoService(newAutoService, {save: false});
+        transactionMetadata.setMechanic(mechanic, {save: false});
+        newAutoService.transactionMetadata = transactionMetadata;
+        await transactionMetadata.save();
+        const s = await newAutoService.save();
+        return res.json(s);
     });
 
     function numberOfAutoServicesProvided(id) {
@@ -449,13 +454,3 @@ module.exports = function (router, models) {
 
     return router;
 };
-
-
-// module.exports = function () {
-//     function numberOfAutoServicesProvided(id)  {
-//         return models.sequelize.query('SELECT COUNT(object) as count FROM (SELECT FROM "autoService" as r WHERE "mechanicID" = ? AND "status" = "completed") as object', {
-//             replacements: [id],
-//             type: models.sequelize.QueryTypes.SELECT
-//         });
-//     }
-// };

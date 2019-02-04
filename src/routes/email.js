@@ -1,33 +1,5 @@
 const bodyParser = require('body-parser');
 
-// Create the transporter with the required configuration for Outlook
-// change the user and pass !
-// var transporter = nodemailer.createTransport({
-//     host: "smtp-mail.outlook.com", // hostname
-//     secureConnection: false, // TLS requires secureConnection to be false
-//     port: 587, // port for secure SMTP
-//     tls: {
-//         ciphers: 'SSLv3'
-//     },
-//     auth: {
-//         user: 'kyle@carswaddle.com',
-//         pass: 'carswaddleftw1"'
-//     }
-// });
-
-// var transporter = nodemailer.createTransport({
-//     host: 'smtp.office365.com', // Office 365 server
-//     port: 587,     // secure SMTP
-//     secure: false, // false for TLS - as a boolean not string - but the default is false so just remove this completely
-//     auth: {
-//         user: username,
-//         pass: password
-//     },
-//     tls: {
-//         ciphers: 'SSLv3'
-//     }
-// });
-
 const ONE_HOUR = 60 * 60 * 1000; /* ms */
 const ONE_DAY = ONE_HOUR * 24;
 

@@ -14,6 +14,10 @@ const autoService = function (sequelize, DataTypes) {
     status: {
       type: DataTypes.STRING // ENUM('scheduled', 'inProgress', 'completed', 'canceled'),
     },
+    balanceTransactionID: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
     notes: {
       type: DataTypes.STRING,
       allowNull: true
@@ -29,8 +33,9 @@ const autoService = function (sequelize, DataTypes) {
     AutoService.hasOne(models.Review, { foreignKey: 'autoServiceIDFromUser', as: 'reviewFromUser' });
     AutoService.hasOne(models.Review, { foreignKey: 'autoServiceIDFromMechanic', as: 'reviewFromMechanic' });
     AutoService.belongsTo(models.Vehicle, { foreignKey: 'vehicleID' });
-    AutoService.hasOne(models.Price, { foreignKey: 'autoServiceID' })
-    AutoService.hasMany(models.ServiceEntity, { foreignKey: 'autoServiceID' })
+    AutoService.hasOne(models.Price, { foreignKey: 'autoServiceID' });
+    AutoService.hasMany(models.ServiceEntity, { foreignKey: 'autoServiceID' });
+    AutoService.hasMany(models.TransactionMetadata, { foreignKey: 'autoServiceID' });;
   };
 
   AutoService.STATUS = {

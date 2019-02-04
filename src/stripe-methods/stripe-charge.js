@@ -1,9 +1,9 @@
 const constants = require('../routes/constants');
 const stripe = require('stripe')(constants.STRIPE_SECRET_KEY);
 
-var methods = function(models) {
+var methods = function (models) {
 
-    this.createCharge = async function(sourceID, autoServiceID, user) {
+    this.createCharge = async function (sourceID, autoServiceID, user) {
 
         if (sourceID == null || autoServiceID == null) {
             return res.status(422).send();
@@ -44,7 +44,7 @@ var methods = function(models) {
     function generateDestinationAmount(priceParts) {
         // const subtotalPricePart = priceParts.find(x => x.key === 'subtotal')[0];
 
-        for (var i=0; i<priceParts.length; i++) {
+        for (var i = 0; i < priceParts.length; i++) {
             var pricePart = priceParts[i];
             if (pricePart.key == 'subtotal') {
                 return pricePart.value

@@ -6,18 +6,28 @@ const transactionMetadata = function (sequelize, DataTypes) {
             unique: true
         },
         stripeTransactionID: {
-            type: DataTypes.STRING
+            type: DataTypes.STRING,
+            allowNull: true
         },
-        cost: {
-            type: DataTypes.INTEGER
+        // Cost in cents 
+        mechanicCost: {
+            type: DataTypes.INTEGER,
+            allowNull: true
+        },
+        // distance in meters
+        drivingDistance: {
+            type: DataTypes.INTEGER,
+            allowNull: true
         }
     }, {
         freezeTableName: true,
     });
 
-    // TransactionMetadata.associate = models => {
-    //     TransactionMetadata.belongsTo(models.Vehicle, { foreignKey: 'transactionMetadataID' });
-    // };
+    TransactionMetadata.associate = models => {
+        TransactionMetadata.belongsTo(models.AutoService, { foreignKey: 'autoServiceID' });
+        TransactionMetadata.belongsTo(models.Mechanic, { foreignKey: 'mechanicID' });
+        TransactionMetadata.hasMany(models.TransactionReceipt, { foreignKey: 'transactionMetadataID' });
+    };
 
     return TransactionMetadata;
 };

@@ -13,11 +13,10 @@ const transactionReceipt = function (sequelize, DataTypes) {
     });
 
     TransactionReceipt.associate = models => {
-        TransactionReceipt.belongsTo(models.TransactionMetadata, { foreignKey: 'transactionReceiptID' });
+        TransactionReceipt.belongsTo(models.TransactionMetadata, { foreignKey: 'transactionMetadataID' });
     };
 
     return TransactionReceipt;
 };
-
 
 module.exports = transactionReceipt;
