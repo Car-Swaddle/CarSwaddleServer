@@ -4,7 +4,7 @@ const stripe = require('stripe')(constants.STRIPE_SECRET_KEY);
 const fileStore = require('../../data/file-store.js');
 const bodyParser = require('body-parser');
 const fileUpload = require('express-fileupload');
-
+const phone = require('../../controllers/phone-verification.js')();
 
 module.exports = function (router, models) {
 
@@ -142,7 +142,13 @@ module.exports = function (router, models) {
             return;
           }
           user.phoneNumber = body.phoneNumber;
-          return user.save();
+          return user.save().then(user => {
+            return phone.requestPhoneVerification(body.phoneNumber, 1, null, function (err, response) {
+              if (!err) {
+                console.log('unable to send sms');
+              }
+            });
+          });
         });
       });
       promises.push(promise);

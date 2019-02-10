@@ -4,6 +4,7 @@ const stripe = require('stripe')(constants.STRIPE_SECRET_KEY);
 const bodyParser = require('body-parser');
 const fileUpload = require('express-fileupload');
 const fileStore = require('../../data/file-store.js');
+const uuidV1 = require('uuid/v1');
 
 module.exports = function (router, models) {
 
@@ -65,76 +66,79 @@ module.exports = function (router, models) {
         if (mechanic == null || mechanic.stripeAccountID == null || transactionID == null) {
             return res.status(422).send('invalid parameters');
         }
-        // , { stripe_account: mechanic.stripeAccountID }
-        stripe.balance.retrieveTransaction(transactionID, { stripe_account: mechanic.stripeAccountID }, function (err, transaction) {
-            if (err != null || transaction == null) {
-                return res.status(422).send('unable to fetch');
+        fetchTransaction(transactionID, mechanic, function (transaction, transactionMetadata, err) {
+            if (err != null || transactionMetadata == null) {
+                return res.status(422).send('invalid parameters');
             }
-            models.TransactionMetadata.findOne({
-                where: { stripeTransactionID: transactionID },
-                include: [{ model: models.TransactionReceipt }]
-            }).then(transactionMetadata => {
-                if (err != null) {
-                    return res.status(422).send('unable to fetch');
-                }
-                transaction.car_swaddle_meta = transactionMetadata.toJSON();
-                return res.json(transaction);
-            });
+
+            return res.json(transaction);
         });
     });
 
-    router.post('/stripe/transaction-details', bodyParser.json(), async function (req, res) {
+    router.patch('/stripe/transaction-details', bodyParser.json(), async function (req, res) {
         const mechanic = await req.user.getMechanic();
         const transactionID = req.body.transactionID;
-        const cost = req.body.cost;
+        const cost = parseInt(req.body.cost, 10); // in cents
+        const distance = parseInt(req.body.distance, 10); // in meters
 
-        if (mechanic == null || mechanic.stripeAccountID == null || transactionID == null || cost == null) {
+        if (mechanic == null || transactionID == null || (!(cost) && !(distance))) {
             return res.status(422).send('invalid parameters');
         }
 
-        stripe.balance.retrieveTransaction(transactionID, { stripe_account: mechanic.stripeAccountID }, function (err, transaction) {
-            if (err != null || transaction == null) {
-                return res.status(422).send('unable to fetch');
+        fetchTransaction(transactionID, mechanic, async function (transaction, transactionMetadata, err) {
+            if (err != null) {
+                return res.status(422).send('invalid parameters');
             }
-            const dict = { stripeTransactionID: transactionID, mechanicID: mechanic.id };
-            models.TransactionMetadata.findOne({
-                where: dict
-            }).then(transactionMetadata => {
-                if (err != null || transaction == null) {
-                    return res.status(422).send('unable to fetch');
-                }
-                transaction.car_swaddle_meta = JSON.parse(transactionMetadata);
-                return res.json(transaction);
-            });
+
+            if (cost) {
+                transactionMetadata.mechanicCost = cost;
+            }
+            if (distance) {
+                transactionMetadata.drivingDistance = distance;
+            }
+            const savedTransactionMetadata = await transactionMetadata.save();
+            if (savedTransactionMetadata == null) {
+                return res.status(422).send('invalid parameters');
+            }
+            transaction.car_swaddle_meta = savedTransactionMetadata.toJSON();
+            return res.json(transaction);
         });
     });
 
     router.post('/stripe/transaction-details/receipt', fileUpload(), async function (req, res) {
         const mechanic = await req.user.getMechanic();
-        const transactionID = req.body.transactionID;
+        const transactionID = req.query.transactionID;
 
-
-        if (mechanic == null || mechanic.stripeAccountID == null || transactionID == null || cost == null) {
+        if (mechanic == null || transactionID == null) {
             return res.status(422).send('invalid parameters');
         }
 
-        stripe.balance.retrieveTransaction(transactionID, { stripe_account: mechanic.stripeAccountID }, function (err, transaction) {
-            if (err != null || transaction == null) {
-                return res.status(422).send('unable to fetch');
-            }
+        if (req.files == null) {
+            return res.status(400).send('No files were uploaded.');
+        }
+        if (Object.keys(req.files).length == 0) {
+            return res.status(400).send('No files were uploaded.');
+        }
 
-            const dict = { stripeTransactionID: transactionID, mechanicID: mechanic.id };
-            models.TransactionMetadata.findOrCreate({
-                where: dict,
-                defaults: dict
-            }).spread((transactionMetadata, created) => {
-                if (err != null || transaction == null) {
-                    return res.status(422).send('unable to fetch');
-                }
-                transaction.car_swaddle_meta = JSON.parse(transactionMetadata);
-                return res.json(transaction);
+        fetchTransaction(transactionID, mechanic, async function (transaction, transactionMetadata, err) {
+            if (err != null) {
+                return res.status(422).send('invalid parameters');
+            }
+            let file = req.files.image;
+            const newFileName = await fileStore.uploadImage(file.data, null);
+            console.log(newFileName);
+            if (newFileName == null) {
+                return res.status(400).send('Unable to upload image');
+            }
+            const transactionReceipt = await models.TransactionReceipt.create({ id: uuidV1(), receiptPhotoID: newFileName })
+            transactionReceipt.setTransactionMetadatum(transactionMetadata, {save: false});
+            transactionReceipt.save().then(receipt => {
+                return res.status(200).json(receipt);
+            }).catch(error => {
+                return res.status(400).send('Unable to upload image to user');
             });
         });
+
     });
 
     router.get('/stripe/transactions', bodyParser.json(), async function (req, res) {
@@ -199,6 +203,24 @@ module.exports = function (router, models) {
             return res.json(payout);
         });
     });
+
+    function fetchTransaction(stripeTransactionID, mechanic, callback) {
+        stripe.balance.retrieveTransaction(stripeTransactionID, { stripe_account: mechanic.stripeAccountID }, function (err, transaction) {
+            if (err != null || transaction == null) {
+                return callback(null, null, err);
+            }
+            models.TransactionMetadata.findOne({
+                where: { stripeTransactionID: stripeTransactionID },
+                include: [{ model: models.TransactionReceipt }]
+            }).then(transactionMetadata => {
+                if (err != null) {
+                    return callback(null, null, err);
+                }
+                transaction.car_swaddle_meta = transactionMetadata.toJSON();
+                callback(transaction, transactionMetadata);
+            });
+        });
+    }
 
     return router;
 };

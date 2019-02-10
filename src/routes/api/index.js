@@ -17,6 +17,7 @@ module.exports = function (app, models) {
     require('./review.js')(router, models);
     require('./logout.js')(router, models);
     require('./email-verification.js')(router, models);
+    require('./sms.js')(router, models);
 
     return router;
 }

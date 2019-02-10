@@ -31,6 +31,7 @@ module.exports = function (router, models) {
         },
         reviewIncludeDict('reviewFromUser'),
         reviewIncludeDict('reviewFromMechanic'),
+        'balanceTransactionID',
     ];
 
     function reviewIncludeDict(as) {
