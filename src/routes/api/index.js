@@ -18,6 +18,7 @@ module.exports = function (app, models) {
     require('./logout.js')(router, models);
     require('./email-verification.js')(router, models);
     require('./sms.js')(router, models);
+    require('./taxes.js')(router, models);
 
     return router;
 }
