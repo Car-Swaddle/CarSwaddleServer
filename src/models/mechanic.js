@@ -24,12 +24,11 @@ const mechanic = function (sequelize, DataTypes) {
         profileImageID: {
             type: DataTypes.STRING,
             allowNull: true,
+        },
+        isAllowed: {
+            type: DataTypes.STRING,
+            allowNull: true,
         }
-        // ,
-        // isAllowed: {
-        //     type: DataTypes.STRING,
-        //     allowNull: true,
-        // }
     },
         {
             freezeTableName: true,
