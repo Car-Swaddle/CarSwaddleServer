@@ -24,33 +24,69 @@ Taxes.prototype.init = function () {
  * @param {!string} token
  * @param {!function} callback
  */
-Taxes.prototype.fetchTotalDrivingDistance = function (tax_year, mechanic, callback) {
+Taxes.prototype.fetchTotalDrivingDistance = function (taxYear, mechanic, callback) {
     const Op = this.models.Sequelize.Op;
-    this.models.TransactionMetadata.sum('drivingDistance', {
-        where: {
-            mechanicID: mechanic.id
-        },
-        group: ['transactionMetadata.id', 'autoService.id'],
-        include: [{
-            model: this.models.AutoService,
-            where: {
-                scheduledDate: {
-                    [Op.between]: [this.startOfYear(tax_year), this.endOfYear(tax_year)]
-                }
-            }
-        }]
+    this.models.TransactionMetadata.sequelize.query('SELECT SUM (t."drivingDistance") AS total FROM "autoService" as a, "transactionMetadata" as t WHERE a."scheduledDate" > ? AND a."scheduledDate" < ? AND a."mechanicID" = ?;', {
+        replacements: [this.startOfYear(taxYear), this.endOfYear(taxYear), mechanic.id],
+        type: this.models.sequelize.QueryTypes.SELECT,
+        model: this.models.AutoService
     }).then(metersDriven => {
-        console.log(metersDriven);
-        callback(metersDriven, null);
+        callback(parseInt(metersDriven[0].dataValues.total), null);
     }).catch(err => {
         console.log(err);
         callback(null, err);
     });
 };
 
-Taxes.prototype.fetchTotalMechanicCost = function (tax_year, mechanic, callback) {
+Taxes.prototype.fetchTotalMechanicCost = function (taxYear, mechanic, callback) {
     const Op = this.models.Sequelize.Op;
-    this.models.TransactionMetadata.sum('mechanicCost', {
+    this.models.TransactionMetadata.sequelize.query('SELECT SUM (t."mechanicCost") AS total FROM "autoService" as a, "transactionMetadata" as t WHERE a."scheduledDate" > ? AND a."scheduledDate" < ? AND a."mechanicID" = ?;', {
+        replacements: [this.startOfYear(taxYear), this.endOfYear(taxYear), mechanic.id],
+        type: this.models.sequelize.QueryTypes.SELECT,
+        model: this.models.AutoService
+    }).then(mechanicCost => {
+        callback(parseInt(mechanicCost[0].dataValues.total), null);
+    }).catch(err => {
+        console.log(err);
+        callback(null, err);
+    });
+};
+
+// Taxes.prototype.fetchTransactions = function (taxYear, mechanic, callback) {
+//     const Op = this.models.Sequelize.Op;
+//     this.models.TransactionMetadata.sequelize.query('SELECT *, t as transaction FROM "autoService" as a, "transactionMetadata" as t WHERE a."scheduledDate" > ? AND a."scheduledDate" < ? AND a."mechanicID" = ?;', {
+//         replacements: [this.startOfYear(taxYear), this.endOfYear(taxYear), mechanic.id],
+//         type: this.models.sequelize.QueryTypes.SELECT,
+//         model: this.models.AutoService
+//     }).then(ts => {
+//         // console.log('mechanicID: ' + mechanic.id + ', value: ' + ts[0].dataValues.mechanicID);
+//         callback(ts);
+//         // callback(parseInt(mechanicCost[0].dataValues.total), null);
+//     }).catch(err => {
+//         console.log(err);
+//         callback(null, err);
+//     });
+// };
+
+Taxes.prototype.fetchYearsWithAnAutoService = function (mechanic, callback) {
+    this.models.sequelize.query('SELECT EXTRACT(YEAR FROM "scheduledDate") FROM "autoService" GROUP BY EXTRACT(YEAR FROM "scheduledDate")', {
+        replacements: [],
+        type: this.models.sequelize.QueryTypes.SELECT,
+        model: this.models.AutoService
+    }).then(years => {
+        var yearArray = [];
+        for (var i=0; i<years.length; i++) {
+            yearArray.push(years[i].dataValues.date_part.toString());
+        }
+        callback(yearArray, null);
+    }).catch(err => {
+        console.log(err);
+        callback(null, err);
+    });
+};
+
+Taxes.prototype.aggregationDict = function (mechanic, taxYear) {
+    return {
         where: {
             mechanicID: mechanic.id
         },
@@ -59,41 +95,12 @@ Taxes.prototype.fetchTotalMechanicCost = function (tax_year, mechanic, callback)
             model: this.models.AutoService,
             where: {
                 scheduledDate: {
-                    [Op.between]: [this.startOfYear(tax_year), this.endOfYear(tax_year)]
+                    [Op.between]: [this.startOfYear(taxYear), this.endOfYear(taxYear)]
                 }
             }
         }]
-    }).then(mechanicCost => {
-        console.log(mechanicCost);
-        callback(mechanicCost, null);
-    }).catch(err => {
-        console.log(err);
-        callback(null, err);
-    });
-};
-
-
-
-/**
- * Request a phone verification
- *
- * @param {!string} phone_number
- * @param {!string} country_code
- * @param {!string} via
- * @param {!function} callback
- */
-Taxes.prototype.requestPhoneVerification = function (phone_number, country_code, via, callback) {
-    this._request("post", "/protected/json/phones/verification/start", {
-        "api_key": this.apiKey,
-        "phone_number": phone_number,
-        "via": via || 'sms',
-        "country_code": country_code || 1,
-        "code_length": 5
-    },
-        callback
-    );
-};
-
+    }
+}
 
 Taxes.prototype.startOfYear = function (year) {
     var date = new Date(year, 0, 1);

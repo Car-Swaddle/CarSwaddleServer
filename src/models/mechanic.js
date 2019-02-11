@@ -25,6 +25,11 @@ const mechanic = function (sequelize, DataTypes) {
             type: DataTypes.STRING,
             allowNull: true,
         }
+        // ,
+        // isAllowed: {
+        //     type: DataTypes.STRING,
+        //     allowNull: true,
+        // }
     },
         {
             freezeTableName: true,
