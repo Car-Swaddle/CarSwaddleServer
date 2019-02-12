@@ -48,7 +48,7 @@ Object.keys(models).forEach(key => {
 });
 
 // {force: true}
-sequelize.sync({force: true}).then( function() {
+sequelize.sync().then( function() {
   console.log("synced")
   const reminder = new Reminder(models);
   reminder.rescheduleRemindersForAllAutoServices();
