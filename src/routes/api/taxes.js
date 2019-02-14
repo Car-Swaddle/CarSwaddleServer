@@ -27,6 +27,16 @@ module.exports = function (app, models) {
         });
     });
 
+    app.get('/tax-transactions', bodyParser.json(), async function (req, res) {
+        if (req.user == null) {
+            return res.status(400).send();
+        }
+        const mechanic = await req.user.getMechanic();
+        taxes.fetchTransactions(req.query.taxYear, mechanic, function (mechanicCost, err) {
+            return res.json(mechanicCost);
+        });
+    });
+
     app.get('/tax-years', bodyParser.json(), async function (req, res) {
         if (req.user == null) {
             return res.status(400).send();
