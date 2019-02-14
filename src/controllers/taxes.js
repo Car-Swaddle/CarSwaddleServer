@@ -25,7 +25,6 @@ Taxes.prototype.init = function () {
  * @param {!function} callback
  */
 Taxes.prototype.fetchTotalDrivingDistance = function (taxYear, mechanic, callback) {
-    const Op = this.models.Sequelize.Op;
     this.models.TransactionMetadata.sequelize.query('SELECT SUM(t."drivingDistance") AS total FROM "transactionMetadata" as t, "autoService" as a WHERE a."scheduledDate" > ? AND a."scheduledDate" < ? AND a."mechanicID" = ? AND t."autoServiceID" = a.id;', {
         replacements: [this.startOfYear(taxYear), this.endOfYear(taxYear), mechanic.id],
         type: this.models.sequelize.QueryTypes.SELECT,
@@ -39,7 +38,6 @@ Taxes.prototype.fetchTotalDrivingDistance = function (taxYear, mechanic, callbac
 };
 
 Taxes.prototype.fetchTotalMechanicCost = function (taxYear, mechanic, callback) {
-    const Op = this.models.Sequelize.Op;
     this.models.TransactionMetadata.sequelize.query('SELECT SUM(t."mechanicCost") AS total FROM "transactionMetadata" as t, "autoService" as a WHERE a."scheduledDate" > ? AND a."scheduledDate" < ? AND a."mechanicID" = ? AND t."autoServiceID" = a.id;', {
         replacements: [this.startOfYear(taxYear), this.endOfYear(taxYear), mechanic.id],
         type: this.models.sequelize.QueryTypes.SELECT,
@@ -53,7 +51,6 @@ Taxes.prototype.fetchTotalMechanicCost = function (taxYear, mechanic, callback) 
 };
 
 Taxes.prototype.fetchTransactions = function (taxYear, mechanic, callback) {
-    const Op = this.models.Sequelize.Op;
     this.models.TransactionMetadata.sequelize.query('SELECT t.* FROM "transactionMetadata" as t, "autoService" as a WHERE a."scheduledDate" > ? AND a."scheduledDate" < ? AND a."mechanicID" = ? AND t."autoServiceID" = a.id;', {
         replacements: [this.startOfYear(taxYear), this.endOfYear(taxYear), mechanic.id],
         type: this.models.sequelize.QueryTypes.SELECT,
