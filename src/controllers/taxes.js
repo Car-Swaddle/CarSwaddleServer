@@ -26,7 +26,7 @@ Taxes.prototype.init = function () {
  */
 Taxes.prototype.fetchTotalDrivingDistance = function (taxYear, mechanic, callback) {
     const Op = this.models.Sequelize.Op;
-    this.models.TransactionMetadata.sequelize.query('SELECT SUM (t."drivingDistance") AS total FROM "autoService" as a, "transactionMetadata" as t WHERE a."scheduledDate" > ? AND a."scheduledDate" < ? AND a."mechanicID" = ?;', {
+    this.models.TransactionMetadata.sequelize.query('SELECT SUM (t."drivingDistance") / COUNT(t) AS total FROM "autoService" as a, "transactionMetadata" as t WHERE a."scheduledDate" > ? AND a."scheduledDate" < ? AND a."mechanicID" = ?;', {
         replacements: [this.startOfYear(taxYear), this.endOfYear(taxYear), mechanic.id],
         type: this.models.sequelize.QueryTypes.SELECT,
         model: this.models.AutoService
@@ -40,7 +40,7 @@ Taxes.prototype.fetchTotalDrivingDistance = function (taxYear, mechanic, callbac
 
 Taxes.prototype.fetchTotalMechanicCost = function (taxYear, mechanic, callback) {
     const Op = this.models.Sequelize.Op;
-    this.models.TransactionMetadata.sequelize.query('SELECT SUM (t."mechanicCost") AS total FROM "autoService" as a, "transactionMetadata" as t WHERE a."scheduledDate" > ? AND a."scheduledDate" < ? AND a."mechanicID" = ?;', {
+    this.models.TransactionMetadata.sequelize.query('SELECT SUM(t."mechanicCost") / COUNT(t) AS total FROM "autoService" as a, "transactionMetadata" as t WHERE a."scheduledDate" > ? AND a."scheduledDate" < ? AND a."mechanicID" = ?;', {
         replacements: [this.startOfYear(taxYear), this.endOfYear(taxYear), mechanic.id],
         type: this.models.sequelize.QueryTypes.SELECT,
         model: this.models.AutoService

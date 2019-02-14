@@ -10,7 +10,7 @@ module.exports = function (app, models) {
     // bodyParser.json()
     // bodyParser.raw({ type: '*/*' })
 
-    app.post('/stripe-webhook', bodyParser.json(), async function (req, res) {
+    app.post('/stripe-webhook', bodyParser.raw({ type: '*/*' }), async function (req, res) {
         var event = eventFromReq(req);
 
         console.log(event);
@@ -78,7 +78,7 @@ module.exports = function (app, models) {
             
         } else if (event.type == eventTypes.ACCOUNT_UPDATED) {
             const verification = event.data.object.verification;
-            if (verification == null) {
+            if (!verification) {
                 return res.json({ received: true });
             }
             const fieldsNeeded = verification.fields_needed;
@@ -95,7 +95,7 @@ module.exports = function (app, models) {
                     return res.json({ received: true });
                 }
                 const user = await mechanic.getUser();
-                if (user == null) {
+                if (!user) {
                     return res.json({ received: true });
                 }
                 const title = user.firstName + ', your account needs some attention';
