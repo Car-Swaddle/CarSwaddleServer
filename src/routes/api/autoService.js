@@ -73,6 +73,20 @@ module.exports = function (router, models) {
         return whereDict;
     }
 
+    router.get('/auto-service-details', bodyParser.json(), function (req, res) {
+        if (!req.query.autoServiceID) {
+            return res.status(422).send();
+        }
+        models.AutoService.findOne({
+            where: {
+                id: req.query.autoServiceID
+            },
+            include: includeDict,
+        }).then(autoServices => {
+            return res.json(autoServices);
+        });
+    });
+
     router.get('/auto-service', bodyParser.json(), function (req, res) {
         const offset = req.query.offset || 0;
         const limit = req.query.limit || 50;
