@@ -170,7 +170,10 @@ module.exports = function (router, models) {
 
         var didChangeStatus = false
         var promises = []
-        if (body.status != null && models.AutoService.isValidStatus(body.status) == true && body.status != autoService.status) {
+        if (body.status != null &&
+            models.AutoService.isValidStatus(body.status) == true &&
+            body.status != autoService.status &&
+            models.AutoService.allStatus.indexOf(autoService.status) < models.AutoService.allStatus.indexOf(body.status)) {
             autoService.status = body.status
             shouldSave = true;
             didChangeStatus = true;
@@ -425,7 +428,7 @@ module.exports = function (router, models) {
         reminder.scheduleRemindersForAutoService(newAutoService);
         const fullCharge = await stripe.charges.retrieve(charge.id, {
             expand: ["transfer.destination_payment"]
-        }); 
+        });
         console.log(fullCharge);
         const stripeTransactionID = fullCharge.transfer.destination_payment.balance_transaction;
         newAutoService.balanceTransactionID = stripeTransactionID;
@@ -450,9 +453,9 @@ module.exports = function (router, models) {
             mechanicCost += part.value;
         });
 
-        const transactionMetadata = await models.TransactionMetadata.create({id: uuidV1(), stripeTransactionID: stripeTransactionID, mechanicCost: mechanicCost, drivingDistance: meters });
-        transactionMetadata.setAutoService(newAutoService, {save: false});
-        transactionMetadata.setMechanic(mechanic, {save: false});
+        const transactionMetadata = await models.TransactionMetadata.create({ id: uuidV1(), stripeTransactionID: stripeTransactionID, mechanicCost: mechanicCost, drivingDistance: meters });
+        transactionMetadata.setAutoService(newAutoService, { save: false });
+        transactionMetadata.setMechanic(mechanic, { save: false });
         newAutoService.transactionMetadata = transactionMetadata;
         await transactionMetadata.save();
         const s = await newAutoService.save();

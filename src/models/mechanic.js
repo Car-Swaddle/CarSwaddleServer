@@ -26,8 +26,9 @@ const mechanic = function (sequelize, DataTypes) {
             allowNull: true,
         },
         isAllowed: {
-            type: DataTypes.STRING,
-            allowNull: true,
+            type: DataTypes.BOOLEAN,
+            allowNull: false,
+            defaultValue: true
         }
     },
         {
