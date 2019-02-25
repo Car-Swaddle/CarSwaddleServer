@@ -198,14 +198,14 @@ module.exports = function (router, models) {
             promises.push(p);
         }
 
-        if (body.locationID != null && body.locationID != autoService.locationID && autoServiceUser.id == req.user.id) {
+        if (body.locationID != null && body.locationID != autoService.locationID) {
             const p = models.Location.findById(body.locationID).then(location => {
                 return autoService.setLocation(location);
             });
             promises.push(p);
         }
 
-        if (body.location != null && body.location.longitude != null && body.location.latitude != null && autoServiceUser.id == req.user.id) {
+        if (body.location != null && body.location.longitude != null && body.location.latitude != null) {
             var point = { type: 'Point', coordinates: [body.location.longitude, body.location.latitude] };
             const p = models.Location.create({
                 point: point,
@@ -217,12 +217,12 @@ module.exports = function (router, models) {
             promises.push(p);
         }
 
-        if (body.scheduledDate != null && body.scheduledDate != autoService.scheduledDate && autoServiceUser.id == req.user.id) {
+        if (body.scheduledDate != null && body.scheduledDate != autoService.scheduledDate) {
             autoService.scheduledDate = body.scheduledDate;
             shouldSave = true;
         }
 
-        if (body.notes != null && body.notes != autoService.notes && autoServiceUser.id == req.user.id) {
+        if (body.notes != null && body.notes != autoService.notes) {
             autoService.notes = body.notes;
             shouldSave = true;
         }
