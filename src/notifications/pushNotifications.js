@@ -34,14 +34,14 @@ class PushService {
 
     sendUserReminderNotification(autoService) {
         const subject = "Upcoming Oil Change";
-        const dateString = dateFormat(autoService.scheduledDate, "dddd, mmmm dS, h:MM TT");
+        const dateString = dateFormat(autoService.scheduledDate, "dddd, mmmm dS, h:MM TT Z");
         const text = autoService.user.firstName + ', you have an oil change coming up: ' + dateString;
         this.sendUserNotification(autoService.user, text, null, null, subject);
     }
 
     sendMechanicReminderNotification(autoService) {
         const subject = "Upcoming Oil Change";
-        const dateString = dateFormat(autoService.scheduledDate, "dddd, mmmm dS, h:MM TT");
+        const dateString = dateFormat(autoService.scheduledDate, "dddd, mmmm dS, h:MM TT Z");
         const text = autoService.mechanic.user.firstName + ', you have an oil change coming up: ' + dateString;
         this.sendMechanicNotification(autoService.mechanic, text, null, null, subject);
     }

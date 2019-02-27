@@ -18,6 +18,14 @@ const autoService = function (sequelize, DataTypes) {
       type: DataTypes.STRING,
       allowNull: true
     },
+    chargeID: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+    refundID: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
     notes: {
       type: DataTypes.STRING,
       allowNull: true
@@ -101,21 +109,25 @@ const autoService = function (sequelize, DataTypes) {
           [Op.gt]: new Date(),
         }
       },
-      include: [
-        { model: models.User, attributes: models.User.defaultAttributes, },
-        {
-          model: models.Mechanic,
-          include: [
-            {
-              model: models.User,
-              attributes: models.User.defaultAttributes,
-            }
-          ],
-        },
-      ],
+      include: AutoService.includeValues(models),
     }).then(autoServices => {
       callback(autoServices);
     });
+  }
+
+  AutoService.includeValues = function (models) {
+    return [
+      { model: models.User, attributes: models.User.defaultAttributes, },
+      {
+        model: models.Mechanic,
+        include: [
+          {
+            model: models.User,
+            attributes: models.User.defaultAttributes,
+          }
+        ],
+      },
+    ]
   }
 
   return AutoService;

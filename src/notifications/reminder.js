@@ -21,6 +21,8 @@ class Reminder {
 
     scheduleRemindersForAutoService(autoService) {
         var scheduledDate = autoService.scheduledDate;
+        const autoServiceID = autoService.id;
+        const models = this.models;
 
         var self = this;
 
@@ -28,11 +30,17 @@ class Reminder {
         threeDaysBefore.setDate(scheduledDate.getDate() - 3);
 
         if (threeDaysBefore > new Date()) {
-            schedule.scheduleJob(threeDaysBefore, function (huh) {
-                // TODO: See if the auto service is still scheduled
-                self.mailer.sendUserOilChangeReminderMail(autoService);
-                pushNotification.sendUserReminderNotification(autoService);
-                // pushNotification.sendMechanicReminderNotification(autoService);
+            schedule.scheduleJob(threeDaysBefore, function (time) {
+                AutoService.findOne({
+                    where: { id: autoServiceID },
+                    include: AutoService.includeValues(models),
+                }).then(fetchedAutoService => {
+                    if (fetchedAutoService.status != 'canceled') {
+                        self.mailer.sendUserOilChangeReminderMail(fetchedAutoService);
+                        pushNotification.sendUserReminderNotification(fetchedAutoService);
+                        pushNotification.sendMechanicReminderNotification(fetchedAutoService);
+                    }
+                });
             });
         }
 
@@ -40,30 +48,37 @@ class Reminder {
         dayBefore.setDate(scheduledDate.getDate() - 1);
 
         if (dayBefore > new Date()) {
-            schedule.scheduleJob(dayBefore, function (huh) {
-                // TODO: See if the auto service is still scheduled
-                self.mailer.sendUserOilChangeReminderMail(autoService);
-                pushNotification.sendUserReminderNotification(autoService);
+            schedule.scheduleJob(dayBefore, function (time) {
+                AutoService.findOne({
+                    where: { id: autoServiceID },
+                    include: AutoService.includeValues(models),
+                }).then(fetchedAutoService => {
+                    if (fetchedAutoService.status != 'canceled') {
+                        self.mailer.sendUserOilChangeReminderMail(fetchedAutoService);
+                        pushNotification.sendUserReminderNotification(fetchedAutoService);
+                        pushNotification.sendMechanicReminderNotification(fetchedAutoService);
+                    }
+                });
             });
         }
 
         var thirtyMinutesBefore = this.addMinutes(scheduledDate, -30);
 
         if (thirtyMinutesBefore > new Date()) {
-            schedule.scheduleJob(thirtyMinutesBefore, function (huh) {
-                // TODO: See if the auto service is still scheduled
-                self.mailer.sendUserOilChangeReminderMail(autoService);
-                pushNotification.sendUserReminderNotification(autoService);
-                pushNotification.sendMechanicReminderNotification(autoService);
+            const AutoService = this.models.AutoService;
+            schedule.scheduleJob(thirtyMinutesBefore, function (time) {
+                AutoService.findOne({
+                    where: { id: autoServiceID },
+                    include: AutoService.includeValues(models),
+                }).then(fetchedAutoService => {
+                    if (fetchedAutoService.status != 'canceled') {
+                        self.mailer.sendUserOilChangeReminderMail(fetchedAutoService);
+                        pushNotification.sendUserReminderNotification(fetchedAutoService);
+                        pushNotification.sendMechanicReminderNotification(fetchedAutoService);
+                    }
+                });
             });
         }
-
-        // schedule.scheduleJob(this.addSeconds(new Date(), 5), function (huh) {
-        //     self.mailer.sendUserOilChangeReminderMail(autoService, null);
-        //     pushNotification.sendUserReminderNotification(autoService);
-        //     pushNotification.sendMechanicReminderNotification(autoService);
-        // });
-
     }
 
     addMinutes(date, minutes) {

@@ -1,6 +1,9 @@
 var express = require('express');
 var models = require('./src/models');
 var bodyParser = require('body-parser');
+const path = require('path');
+
+const associationFilePath = 'src/resources/apple-app-site-association';
 
 bodyParser.limit = '500mb';
 
@@ -16,7 +19,7 @@ app.use(express.static(__dirname + '/www'));
 
 var port = process.env.PORT;
 if (port == null || port == "") {
-    port = 5432;
+    port = 3000;
 }
 app.listen(port);
 

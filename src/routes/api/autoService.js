@@ -314,7 +314,34 @@ module.exports = function (router, models) {
                     });
                 }
 
-                return res.json(newAutoService);
+                if (didChangeStatus == true && newAutoService.chargeID != null) {
+                    newAutoService.getPrice().then(price => {
+                        if (price.totalPrice) {
+                            stripe.refunds.create({
+                                charge: autoService.chargeID,
+                                amount: price.totalPrice,
+                                reverse_transfer: true,
+                            }).then(refund => {
+                                if (refund) {
+                                    newAutoService.refundID = refund.id;
+                                    newAutoService.save().then(savedAutoService => {
+                                        return res.json(savedAutoService);
+                                    });
+                                } else {
+                                    return res.json(newAutoService);
+                                }
+                            }).catch( error =>{
+                                return res.json(newAutoService);
+                            });
+                        } else {
+                            return res.json(newAutoService);
+                        }
+                    }).catch( error =>{
+                        return res.json(newAutoService);
+                    });
+                } else {
+                    return res.json(newAutoService);
+                }
             });
         });
     });
@@ -432,6 +459,7 @@ module.exports = function (router, models) {
         console.log(fullCharge);
         const stripeTransactionID = fullCharge.transfer.destination_payment.balance_transaction;
         newAutoService.balanceTransactionID = stripeTransactionID;
+        newAutoService.chargeID = charge.id;
 
         const region = await mechanic.getRegion();
         const locationPoint = { latitude: location.point.coordinates[1], longitude: location.point.coordinates[0] };
