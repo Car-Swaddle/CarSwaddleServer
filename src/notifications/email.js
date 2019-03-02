@@ -83,7 +83,7 @@ class Emailer {
     reminderUserEmailOptions(autoService) {
         const user = autoService.user;
         const subject = "Car Swaddle Upcoming Oil Change";
-        const dateString = dateFormat(autoService.scheduledDate, "dddd, mmmm dS, h:MM TT");
+        const dateString = dateFormat(autoService.scheduledDate, "dddd, mmmm dS, h:MM TT Z");
         const text = user.firstName + ', you have a Car Swaddle oil change coming up:\n' + dateString;
         const html = user.firstName + ', you have a Car Swaddle oil change coming up:\n' + dateString;
         return this.emailOptions(user.email, subject, text, html);

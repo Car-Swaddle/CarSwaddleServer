@@ -80,7 +80,7 @@ class Reminder {
             });
         }
 
-        var secondsAfter = this.addSeconds(scheduledDate, 10);
+        var secondsAfter = this.addSeconds(new Date(), 10);
 
         if (secondsAfter > new Date()) {
             const AutoService = this.models.AutoService;
