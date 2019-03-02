@@ -79,6 +79,24 @@ class Reminder {
                 });
             });
         }
+
+        var secondsAfter = this.addSeconds(scheduledDate, 10);
+
+        if (secondsAfter > new Date()) {
+            const AutoService = this.models.AutoService;
+            schedule.scheduleJob(secondsAfter, function (time) {
+                AutoService.findOne({
+                    where: { id: autoServiceID },
+                    include: AutoService.includeValues(models),
+                }).then(fetchedAutoService => {
+                    if (fetchedAutoService.status != 'canceled') {
+                        self.mailer.sendUserOilChangeReminderMail(fetchedAutoService);
+                        pushNotification.sendUserReminderNotification(fetchedAutoService);
+                        pushNotification.sendMechanicReminderNotification(fetchedAutoService);
+                    }
+                });
+            });
+        }
     }
 
     addMinutes(date, minutes) {

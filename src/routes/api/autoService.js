@@ -451,12 +451,18 @@ module.exports = function (router, models) {
         const displayName = req.user.displayName();
         const alert = displayName + ' scheduled an appointment';
         pushService.sendMechanicNotification(mechanic, alert, null, null, null);
+
         const charge = await createCharge(sourceID, autoService.id, req.user);
         reminder.scheduleRemindersForAutoService(newAutoService);
         const fullCharge = await stripe.charges.retrieve(charge.id, {
             expand: ["transfer.destination_payment"]
         });
         console.log(fullCharge);
+
+        // create a transfer from mechanic account to your account %0.25 of their payment
+        // and 2$ if they haven't paid the monthly service fee yet
+        // plus %1.5 of the value that will be debited (mechanics account to car swaddle)
+
         const stripeTransactionID = fullCharge.transfer.destination_payment.balance_transaction;
         newAutoService.balanceTransactionID = stripeTransactionID;
         newAutoService.chargeID = charge.id;
