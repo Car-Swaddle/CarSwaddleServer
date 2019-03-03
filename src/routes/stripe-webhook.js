@@ -33,8 +33,8 @@ module.exports = function (app, models) {
                         return res.json({ received: true });
                     }
                     const dollars = dollarFormat(amount);
-                    const alert = 'A payout was paid of $' + dollars;
-                    const title = 'Payout: $' + dollars;
+                    const alert = 'A deposit was paid of $' + dollars;
+                    const title = 'Deposit: $' + dollars;
                     pushService.sendMechanicNotification(mechanic, alert, null, null, title);
                 });
             }
@@ -48,8 +48,8 @@ module.exports = function (app, models) {
                         return res.json({ received: true });
                     }
                     const dollars = dollarFormat(amount);
-                    const alert = 'A payout was created. $' + dollars;
-                    const title = 'Payout: $' + dollars;
+                    const alert = 'A Deposit was scheduled. $' + dollars;
+                    const title = 'Deposit: $' + dollars;
                     pushService.sendMechanicNotification(mechanic, alert, null, null, title);
                 });
             }
@@ -65,8 +65,8 @@ module.exports = function (app, models) {
                 if (user == null) {
                     return res.json({ received: true });
                 }
-                const title = 'There was a problem completing a payout';
-                const alert = "Your payout of $" + dollarFormat(amount) + " was unable to be paid. Tap here to see what you can do to fix this issue.";
+                const title = 'There was a problem completing a deposit';
+                const alert = "Your deposit of $" + dollarFormat(amount) + " was unable to be deposited. Tap here to see what you can do to fix this issue.";
                 const payload = {
                     payoutID: payoutID
                 };
@@ -99,7 +99,7 @@ module.exports = function (app, models) {
                     return res.json({ received: true });
                 }
                 const title = user.firstName + ', your account needs some attention';
-                const alert = "You'll need to update your account to receive payouts. Tap here to see exacly what you need to update.";
+                const alert = "You'll need to update your account to receive funds. Tap here to see exacly what you need to update.";
                 pushService.sendMechanicNotification(mechanic, alert, null, null, title);
             }
         }
@@ -107,7 +107,7 @@ module.exports = function (app, models) {
         return res.json({ received: true });
     });
 
-    const isLocal = true
+    const isLocal = false
 
     function eventFromReq(req) {
         if (isLocal) {
@@ -160,7 +160,7 @@ module.exports = function (app, models) {
         UNSUPPORTED_CARD: 'unsupported_card', // The bank no longer supports payouts to this card. Update bank account info.
     }
 
-    function decriptionForPayoutFailuer(failure) {
+    function decriptionForPayoutFailure(failure) {
         if (failure == payoutFailures.ACCOUNT_CLOSED) {
             return '';
         } else if (failure == payoutFailures.ACCOUNT_CLOSED) {
