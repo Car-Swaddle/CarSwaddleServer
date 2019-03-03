@@ -81,23 +81,23 @@ class Reminder {
             });
         }
 
-        var secondsAfter = this.addSeconds(new Date(), 3);
+        // var secondsAfter = this.addSeconds(new Date(), 3);
 
-        if (secondsAfter > new Date()) {
-            const AutoService = this.models.AutoService;
-            schedule.scheduleJob(secondsAfter, function (time) {
-                AutoService.findOne({
-                    where: { id: autoServiceID },
-                    include: AutoService.includeValues(models),
-                }).then(fetchedAutoService => {
-                    if (fetchedAutoService.status != AutoService.STATUS.canceled) {
-                        self.mailer.sendUserOilChangeReminderMail(fetchedAutoService);
-                        pushNotification.sendUserReminderNotification(fetchedAutoService);
-                        pushNotification.sendMechanicReminderNotification(fetchedAutoService);
-                    }
-                });
-            });
-        }
+        // if (secondsAfter > new Date()) {
+        //     const AutoService = this.models.AutoService;
+        //     schedule.scheduleJob(secondsAfter, function (time) {
+        //         AutoService.findOne({
+        //             where: { id: autoServiceID },
+        //             include: AutoService.includeValues(models),
+        //         }).then(fetchedAutoService => {
+        //             if (fetchedAutoService.status != AutoService.STATUS.canceled) {
+        //                 self.mailer.sendUserOilChangeReminderMail(fetchedAutoService);
+        //                 pushNotification.sendUserReminderNotification(fetchedAutoService);
+        //                 pushNotification.sendMechanicReminderNotification(fetchedAutoService);
+        //             }
+        //         });
+        //     });
+        // }
     }
 
     addMinutes(date, minutes) {
