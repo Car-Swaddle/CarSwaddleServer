@@ -1,5 +1,6 @@
 const schedule = require('node-schedule');
 const pushNotification = require('./pushNotifications.js');
+const { DateTime } = require('luxon');
 
 class Reminder {
 
@@ -71,7 +72,7 @@ class Reminder {
                     where: { id: autoServiceID },
                     include: AutoService.includeValues(models),
                 }).then(fetchedAutoService => {
-                    if (fetchedAutoService.status != 'canceled') {
+                    if (fetchedAutoService.status != AutoService.STATUS.canceled) {
                         self.mailer.sendUserOilChangeReminderMail(fetchedAutoService);
                         pushNotification.sendUserReminderNotification(fetchedAutoService);
                         pushNotification.sendMechanicReminderNotification(fetchedAutoService);
@@ -80,7 +81,7 @@ class Reminder {
             });
         }
 
-        var secondsAfter = this.addSeconds(new Date(), 10);
+        var secondsAfter = this.addSeconds(new Date(), 3);
 
         if (secondsAfter > new Date()) {
             const AutoService = this.models.AutoService;
@@ -89,7 +90,7 @@ class Reminder {
                     where: { id: autoServiceID },
                     include: AutoService.includeValues(models),
                 }).then(fetchedAutoService => {
-                    if (fetchedAutoService.status != 'canceled') {
+                    if (fetchedAutoService.status != AutoService.STATUS.canceled) {
                         self.mailer.sendUserOilChangeReminderMail(fetchedAutoService);
                         pushNotification.sendUserReminderNotification(fetchedAutoService);
                         pushNotification.sendMechanicReminderNotification(fetchedAutoService);

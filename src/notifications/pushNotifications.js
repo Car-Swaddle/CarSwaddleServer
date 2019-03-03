@@ -42,8 +42,14 @@ class PushService {
     sendMechanicReminderNotification(autoService) {
         const subject = "Upcoming Oil Change";
         const dateString = dateFormat(autoService.scheduledDate, "dddd, mmmm dS, h:MM TT Z");
-        const text = autoService.mechanic.user.firstName + ', you have an oil change coming up: ' + dateString;
-        this.sendMechanicNotification(autoService.mechanic, text, null, null, subject);
+        const name = autoService.mechanic.user.firstName
+        const text = name + ', you have an oil change coming up: ' + dateString;
+        const payload = {
+            'type': 'reminder', 
+            'date': autoService.scheduledDate,
+            'name': name,
+        };
+        this.sendMechanicNotification(autoService.mechanic, text, payload, null, subject);
     }
 
     sendUserNotification(user, body, payload, badge, title) {
@@ -80,10 +86,14 @@ class PushService {
         var notification = new apnFramework.Notification();
         notification.expiry = Math.floor(Date.now() / 1000) + 24 * 3600; // will expire in 24 hours from now
         notification.badge = badge;
-        notification.title = title;
-        notification.body = body;
+        // notification.title = title;
+        // notification.body = body;
         notification.sound = "default";
-        // notification.alert = alert;
+        notification.mutableContent = true;
+        notification.alert = { 'title': title, 'body': body };
+        // notification.alert.title = payload;
+        // notification.alert.body = body;
+        // notification.payload = payload;
         notification.payload = payload;
         return notification
     }

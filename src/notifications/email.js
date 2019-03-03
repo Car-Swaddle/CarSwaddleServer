@@ -1,6 +1,7 @@
 const nodemailer = require('nodemailer');
 const uuidV1 = require('uuid/v1');
 var dateFormat = require('dateformat');
+const { DateTime } = require('luxon');
 
 // Create the transporter with the required configuration for Outlook
 // change the user and pass !
@@ -83,7 +84,9 @@ class Emailer {
     reminderUserEmailOptions(autoService) {
         const user = autoService.user;
         const subject = "Car Swaddle Upcoming Oil Change";
-        const dateString = dateFormat(autoService.scheduledDate, "dddd, mmmm dS, h:MM TT Z");
+        const dateTime = DateTime.fromJSDate(autoService.scheduledDate, { setZone: true, zone: user.timeZone || 'America/Denver'});
+        const dateString = dateTime.toFormat("cccc LLLL d, h:mm ZZZZ");
+        console.log(dateString);
         const text = user.firstName + ', you have a Car Swaddle oil change coming up:\n' + dateString;
         const html = user.firstName + ', you have a Car Swaddle oil change coming up:\n' + dateString;
         return this.emailOptions(user.email, subject, text, html);

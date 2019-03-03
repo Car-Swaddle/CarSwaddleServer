@@ -40,6 +40,11 @@ const user = function (sequelize, DataTypes) {
         isPhoneNumberVerified: {
             type: DataTypes.BOOLEAN,
             allowNull: true,
+        },
+        timeZone: {
+            type: DataTypes.STRING,
+            allowNull: false,
+            defaultValue: 'America/Denver'
         }
     }, {
         freezeTableName: true,
@@ -85,7 +90,7 @@ const user = function (sequelize, DataTypes) {
         return values;
     };
 
-    User.defaultAttributes = ['firstName', 'lastName', 'id', 'profileImageID', 'email', 'phoneNumber'];
+    User.defaultAttributes = ['firstName', 'lastName', 'id', 'profileImageID', 'email', 'phoneNumber', 'timeZone'];
 
     return User;
 };

@@ -177,6 +177,12 @@ module.exports = function (router, models) {
       promises.push(promise);
       didChangeUser = true;
     }
+
+    if (body.timeZone != null) {
+      user.timeZone = body.timeZone;
+      didChangeUser = true;
+    }
+
     if (didChangeUser == true) {
       Promise.all(promises).then(values => {
         user.save().then(savedUser => {

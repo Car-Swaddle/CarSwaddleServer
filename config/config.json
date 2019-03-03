@@ -1,0 +1,23 @@
+{
+  "development": {
+    "username": "kylekendall",
+    "password": "password",
+    "database": "carswaddle",
+    "host": "127.0.0.1",
+    "dialect": "postgres"
+  },
+  "test": {
+    "username": "kylekendall",
+    "password": "password",
+    "database": "carswaddle",
+    "host": "127.0.0.1",
+    "dialect": "postgres"
+  },
+  "production": {
+    "username": "kylekendall",
+    "password": "password",
+    "database": "carswaddle",
+    "host": "127.0.0.1",
+    "dialect": "postgres"
+  }
+}
