@@ -25,7 +25,8 @@ StripeCharges.prototype.createDebit = function (totalDebit, mechanic) {
     return stripe.transfers.create({
         amount: totalDebit,
         currency: "usd",
-        destination: constants.STRIPE_PLATFORM_ACCOUNT_ID
+        destination: constants.STRIPE_PLATFORM_ACCOUNT_ID,
+        description: 'Account volume fee'
     }, { stripe_account: mechanic.stripeAccountID });
 }
 
