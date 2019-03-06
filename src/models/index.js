@@ -37,6 +37,7 @@ const models = {
   Verification: sequelize.import('./verification'),
   TransactionMetadata: sequelize.import('./transaction-metadata'),
   TransactionReceipt: sequelize.import('./transaction-receipt'),
+  MechanicMonthDebit: sequelize.import('./mechanic-month-debit'),
 };
 
 Object.keys(models).forEach(key => {

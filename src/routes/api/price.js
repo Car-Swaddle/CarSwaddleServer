@@ -19,6 +19,7 @@ const metersToMilesConstant = 1609.344;
 
 // Covers Stripe charge fee %3 and the connect payout volume %0.25 fee 
 const stripeProcessPercentage = 0.029;
+const stripeConnectProcessPercentage = 0.025;
 // in cents
 const stripeProcessTransactionFee = 30;
 
@@ -138,7 +139,10 @@ module.exports = function (router, models) {
     function calculateProcessingFee(subtotal) {
         // d = ((s+b)+0.30)/(1-0.029)
         // fee = d - (s+b)
-        const total = (subtotal + constants.BOOKING_FEE + stripeProcessTransactionFee) / (1.0 - stripeProcessPercentage);
+        // The mechanic will make a little bit more than what we will take out for the stripeConnectProcessFee because we add
+        // the product of the stripeConectFee and the entire total instead of just what the mechanic gets. The profit goes to
+        // the mechanic.
+        const total = (subtotal + constants.BOOKING_FEE + stripeProcessTransactionFee) / (1.0 - (stripeProcessPercentage + stripeConnectProcessPercentage));
         return total - (subtotal + constants.BOOKING_FEE);
     }
 

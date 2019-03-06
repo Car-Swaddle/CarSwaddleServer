@@ -13,6 +13,7 @@ module.exports = function (app, models) {
     app.post('/stripe-webhook', bodyParser.raw({ type: '*/*' }), async function (req, res) {
         var event = eventFromReq(req);
 
+        console.log('stripe webhook');
         console.log(event);
 
         // if (event.livemode == false) { // I don't know if we need to check this because the accounts in test mode should be fake anyway.

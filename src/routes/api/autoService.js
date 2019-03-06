@@ -5,10 +5,12 @@ const bodyParser = require('body-parser');
 const constants = require('../constants');
 const stripe = require('stripe')(constants.STRIPE_SECRET_KEY);
 const distance = require('../distance.js');
+const stripeChargesFile = require('../../controllers/stripe-charges.js');
 
 module.exports = function (router, models) {
 
     require('../../stripe-methods/stripe-charge.js')(models);
+    const stripeCharges = stripeChargesFile(models);
 
     const reminderFile = require('../../notifications/reminder.js');
     const reminder = new reminderFile(models);
@@ -330,13 +332,13 @@ module.exports = function (router, models) {
                                 } else {
                                     return res.json(newAutoService);
                                 }
-                            }).catch( error =>{
+                            }).catch(error => {
                                 return res.json(newAutoService);
                             });
                         } else {
                             return res.json(newAutoService);
                         }
-                    }).catch( error =>{
+                    }).catch(error => {
                         return res.json(newAutoService);
                     });
                 } else {
@@ -457,11 +459,11 @@ module.exports = function (router, models) {
         const fullCharge = await stripe.charges.retrieve(charge.id, {
             expand: ["transfer.destination_payment"]
         });
-        console.log(fullCharge);
 
-        // create a transfer from mechanic account to your account %0.25 of their payment
-        // and 2$ if they haven't paid the monthly service fee yet
-        // plus %1.5 of the value that will be debited (mechanics account to car swaddle)
+        if (fullCharge.transfer.destination_payment.amount) {
+            const mechanicPayment = fullCharge.transfer.destination_payment.amount
+            await stripeCharges.performDebit(mechanic, mechanicPayment);
+        }
 
         const stripeTransactionID = fullCharge.transfer.destination_payment.balance_transaction;
         newAutoService.balanceTransactionID = stripeTransactionID;

@@ -16,14 +16,6 @@ Taxes.prototype.init = function () {
 
 };
 
-/**
- * Verify a phone number
- *
- * @param {!string} phone_number
- * @param {!string} country_code
- * @param {!string} token
- * @param {!function} callback
- */
 Taxes.prototype.fetchTotalDrivingDistance = function (taxYear, mechanic, callback) {
     this.models.TransactionMetadata.sequelize.query('SELECT SUM(t."drivingDistance") AS total FROM "transactionMetadata" as t, "autoService" as a WHERE a."scheduledDate" > ? AND a."scheduledDate" < ? AND a."mechanicID" = ? AND t."autoServiceID" = a.id;', {
         replacements: [this.startOfYear(taxYear), this.endOfYear(taxYear), mechanic.id],
