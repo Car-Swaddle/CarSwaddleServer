@@ -16,10 +16,6 @@ module.exports = function (app, models) {
         console.log('stripe webhook');
         console.log(event);
 
-        // if (event.livemode == false) { // I don't know if we need to check this because the accounts in test mode should be fake anyway.
-
-        // }
-
         const stripeAccountID = event.account;
 
         if (event == null) {
@@ -37,6 +33,7 @@ module.exports = function (app, models) {
                     const alert = 'A deposit was paid of $' + dollars;
                     const title = 'Deposit: $' + dollars;
                     pushService.sendMechanicNotification(mechanic, alert, null, null, title);
+                    return res.json({ received: true });
                 });
             }
         } else if (event.type == eventTypes.PAYOUT_CANCELED) {
@@ -52,6 +49,7 @@ module.exports = function (app, models) {
                     const alert = 'A Deposit was scheduled. $' + dollars;
                     const title = 'Deposit: $' + dollars;
                     pushService.sendMechanicNotification(mechanic, alert, null, null, title);
+                    return res.json({ received: true });
                 });
             }
         } else if (event.type == eventTypes.PAYOUT_FAILED) {
@@ -72,6 +70,7 @@ module.exports = function (app, models) {
                     payoutID: payoutID
                 };
                 pushService.sendMechanicNotification(mechanic, alert, payload, 1, title);
+                return res.json({ received: true });
             }
         } else if (event.type == eventTypes.PAYOUT_UPDATED) {
 
@@ -102,6 +101,7 @@ module.exports = function (app, models) {
                 const title = user.firstName + ', your account needs some attention';
                 const alert = "You'll need to update your account to receive funds. Tap here to see exacly what you need to update.";
                 pushService.sendMechanicNotification(mechanic, alert, null, null, title);
+                return res.json({ received: true });
             }
         }
 

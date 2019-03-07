@@ -21,12 +21,12 @@ StripeCharges.prototype.init = function () {
 
 };
 
-StripeCharges.prototype.createDebit = function (totalDebit, mechanic) {
+StripeCharges.prototype.createDebit = function (totalDebit, mechanic, description) {
     return stripe.transfers.create({
         amount: totalDebit,
         currency: "usd",
         destination: constants.STRIPE_PLATFORM_ACCOUNT_ID,
-        description: 'Account volume fee'
+        description: description || 'Account volume fee'
     }, { stripe_account: mechanic.stripeAccountID });
 }
 
@@ -76,10 +76,10 @@ StripeCharges.prototype.performDebit = function (mechanic, mechanicPayment) {
         if (!mechanicMonthDebit) {
             totalDebit += this.monthlyDebitFee();
             return this.createMonthDebit(mechanic.id).then(newMechanicDebit => {
-                return this.createDebit(totalDebit, mechanic);
+                return this.createDebit(totalDebit, mechanic, 'Account volume fee and monthly service fee');
             });
         } else {
-            return this.createDebit(totalDebit, mechanic);
+            return this.createDebit(totalDebit, mechanic, 'Account volume fee');
         }
     });
 }
