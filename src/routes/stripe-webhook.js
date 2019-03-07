@@ -4,14 +4,26 @@ const bodyParser = require('body-parser');
 const pushService = require('../notifications/pushNotifications.js');
 const liveEndpointSecret = 'whsec_w70LXPKXB954f8H41fKnc7HBIwrBHyoT';
 const testEndpointSecret = 'whsec_Mihcejqv5prmk29eoHGuytmCFOwfDqzG';
+const stripeChargesFile = require('../controllers/stripe-charges.js');
 
 module.exports = function (app, models) {
+
+    const stripeCharges = stripeChargesFile(models);
+
+    function secret() {
+        if (process.env.DATABASE_URL && false) {
+            return liveEndpointSecret;
+        } else {
+            return testEndpointSecret;
+        }
+    }
 
     // bodyParser.json()
     // bodyParser.raw({ type: '*/*' })
 
-    app.post('/stripe-webhook', bodyParser.raw({ type: '*/*' }), async function (req, res) {
-        var event = eventFromReq(req);
+    app.post('/stripe-webhook', bodyParser.json(), async function (req, res) {
+        // var event = eventFromReq(req);
+        var event = req.body
 
         console.log('stripe webhook');
         console.log(event);
@@ -33,6 +45,11 @@ module.exports = function (app, models) {
                     const alert = 'A deposit was paid of $' + dollars;
                     const title = 'Deposit: $' + dollars;
                     pushService.sendMechanicNotification(mechanic, alert, null, null, title);
+
+                    stripeCharges.performPayoutDebits(mechanic, function (error) {
+                        console.log(error);
+                    });
+
                     return res.json({ received: true });
                 });
             }
@@ -75,7 +92,7 @@ module.exports = function (app, models) {
         } else if (event.type == eventTypes.PAYOUT_UPDATED) {
 
         } else if (event.type == eventTypes.CHARGE_SUCCEEDED) {
-            
+
         } else if (event.type == eventTypes.ACCOUNT_UPDATED) {
             const verification = event.data.object.verification;
             if (!verification) {
@@ -117,7 +134,7 @@ module.exports = function (app, models) {
             var sig = req.headers["stripe-signature"];
             var body = req.body;
             try {
-                return stripe.webhooks.constructEvent(body, sig, testEndpointSecret);
+                return stripe.webhooks.constructEvent(body, sig, this.secret());
             } catch (err) {
                 console.log(err);
                 return null;

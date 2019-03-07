@@ -7,6 +7,7 @@ const stripe = require('stripe')(constants.STRIPE_SECRET_KEY);
 const stripeConnectProcessPercentage = 0.0025;
 const stripeConnectAccountDebitPercentage = 0.015;
 const stripeConnectMonthlyDebit = 200;
+const stripeConnectPayoutDebitAmount = 25;
 
 module.exports = function (models) {
     return new StripeCharges(models);
@@ -21,12 +22,12 @@ StripeCharges.prototype.init = function () {
 
 };
 
-StripeCharges.prototype.createDebit = function (totalDebit, mechanic, description) {
+StripeCharges.prototype.createDebitTransfer = function (totalDebit, mechanic, description) {
     return stripe.transfers.create({
         amount: totalDebit,
         currency: "usd",
         destination: constants.STRIPE_PLATFORM_ACCOUNT_ID,
-        description: description || 'Account volume fee'
+        description: description
     }, { stripe_account: mechanic.stripeAccountID });
 }
 
@@ -46,6 +47,14 @@ StripeCharges.prototype.createMonthDebit = function (mechanicID) {
         mechanicID: mechanicID,
         debitMonth: currentMonth(),
         debitYear: currentYear()
+    });
+}
+
+StripeCharges.prototype.createPayoutDebit = function (mechanicID, payoutID) {
+    return this.models.MechanicPayoutDebit.create({
+        id: uuidV1(),
+        mechanicID: mechanicID,
+        payoutID: payoutID
     });
 }
 
@@ -76,11 +85,89 @@ StripeCharges.prototype.performDebit = function (mechanic, mechanicPayment) {
         if (!mechanicMonthDebit) {
             totalDebit += this.monthlyDebitFee();
             return this.createMonthDebit(mechanic.id).then(newMechanicDebit => {
-                return this.createDebit(totalDebit, mechanic, 'Account volume fee and monthly service fee');
+                return this.createDebitTransfer(totalDebit, mechanic, 'Account volume fee and monthly service fee');
             });
         } else {
-            return this.createDebit(totalDebit, mechanic, 'Account volume fee');
+            return this.createDebitTransfer(totalDebit, mechanic, 'Account volume fee');
         }
+    });
+}
+
+StripeCharges.prototype.listPayoutDebits = function (limit, mechanicID, callback) {
+    this.models.MechanicPayoutDebit.findAll({
+        where: {
+            mechanicID: mechanicID
+        },
+        limit: limit
+    }).then(payoutDebits => {
+        callback(null, payoutDebits);
+    }).catch(err => {
+        callback(err, null);
+    });
+}
+
+StripeCharges.prototype.performPayoutDebits = function (mechanic, callback) {
+    const limit = 50;
+    var self = this;
+    listPayouts(limit, mechanic.stripeAccountID, function (payoutsError, payouts) {
+        if (payoutsError != null || payouts == null || payouts.data == null) {
+            callback(payoutsError);
+            return;
+        }
+        self.listPayoutDebits(limit, mechanic.id, function (debitError, payoutDebits) {
+            if (debitError != null) {
+                callback(debitError);
+                return;
+            }
+            const payoutsDict = unfeedPayouts(payouts.data, payoutDebits);
+            const numberOfPayoutDebits = Object.keys(payoutsDict).length;
+            const payoutDebitAmount = numberOfPayoutDebits * stripeConnectPayoutDebitAmount;
+
+            var description = 'Payout account fee';
+            if (numberOfPayoutDebits > 1) {
+                description = 'Payout account fee for ' + numberOfPayoutDebits + ' payouts'
+            } else {
+                callback(null);
+                return;
+            }
+
+            self.createDebitTransfer(payoutDebitAmount, mechanic, description).then(transfer => {
+                var promises = [];
+                for (var key in payoutsDict) {
+                    const unfeedPayout = payoutsDict[key];
+                    const promise = self.createPayoutDebit(mechanic.id, unfeedPayout.id)
+                    promises.push(promise);
+                }
+                Promise.all(promises).then(values => {
+                    callback(null);
+                }).catch(error => {
+                    callback(error);
+                });
+            }).catch(error => {
+                console.log(error);
+            });
+        });
+    });
+}
+
+function unfeedPayouts(payouts, payoutDebits) {
+    var payoutsDict = {};
+    for (var i = 0; i < payouts.length; i++) {
+        payoutsDict[payouts[i].id] = payouts[i];
+    }
+    for (var i = 0; i < payoutDebits.length; i++) {
+        delete payoutsDict[payoutDebits[i].payoutID];
+    }
+
+    return payoutsDict;
+}
+
+function listPayouts(limit, stripeID, callback) {
+    stripe.payouts.list({
+        limit: limit,
+        status: 'paid',
+    }, { stripe_account: stripeID }, function (err, payouts) {
+        callback(err, payouts);
     });
 }
 
