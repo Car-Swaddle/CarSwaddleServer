@@ -21,9 +21,9 @@ module.exports = function (app, models) {
     // bodyParser.json()
     // bodyParser.raw({ type: '*/*' })
 
-    app.post('/stripe-webhook', bodyParser.json(), async function (req, res) {
-        // var event = eventFromReq(req);
-        var event = req.body
+    app.post('/stripe-webhook', bodyParser.raw({ type: '*/*' }), async function (req, res) {
+        var event = eventFromReq(req);
+        // var event = req.body
 
         console.log('stripe webhook');
         console.log(event);
