@@ -8,6 +8,9 @@ const address = function (sequelize, DataTypes) {
         line1: {
             type: DataTypes.STRING,
         },
+        line2: {
+            type: DataTypes.STRING,
+        },
         postalCode: {
             type: DataTypes.STRING,
         },

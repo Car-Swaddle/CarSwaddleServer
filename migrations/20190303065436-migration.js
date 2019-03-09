@@ -89,6 +89,9 @@ module.exports = {
         onUpdate: 'CASCADE',
         onDelete: 'SET NULL',
       }
+    )).then(() => queryInterface.addColumn('Address', 'line2', {
+        type: Sequelize.STRING
+      }
     ));
   },
 
@@ -104,29 +107,15 @@ module.exports = {
       .then(() => queryInterface.dropTable('mechanicMonthDebit'))
       .then(() => queryInterface.dropTable('mechanicPayoutDebit'))
       .then(() => {
-        // remove Order hasMany Product
-        return queryInterface.removeColumn(
-          'mechanicMonthDebit', // name of the Target model
-          'mechanicID' // key we want to remove
-        );
+        return queryInterface.removeColumn('mechanicMonthDebit','mechanicID');
       }).then(() => {
-        // remove Order hasMany Product
-        return queryInterface.removeColumn(
-          'mechanicPayoutDebit', // name of the Target model
-          'mechanicID' // key we want to remove
-        );
+        return queryInterface.removeColumn('mechanicPayoutDebit','mechanicID');
       }).then(() => {
-        // remove Order hasMany Product
-        return queryInterface.removeColumn(
-          'mechanic', // name of the Target model
-          'mechanicMonthDebitID' // key we want to remove
-        );
+        return queryInterface.removeColumn('mechanic','mechanicMonthDebitID');
       }).then(() => {
-        // remove Order hasMany Product
-        return queryInterface.removeColumn(
-          'mechanic', // name of the Target model
-          'mechanicPayoutDebitID' // key we want to remove
-        );
+        return queryInterface.removeColumn('mechanic', 'mechanicPayoutDebitID');
+      }).then(() => {
+        return queryInterface.removeColumn( 'address', 'line2');
       });
   }
 };

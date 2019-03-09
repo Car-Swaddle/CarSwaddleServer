@@ -97,7 +97,6 @@ module.exports = function (router, models) {
         var subtotal = 0;
         for (var i = 0; i < subPrices.length; i++) {
             const value = Number(subPrices[i].value);
-            // console.log(value);
             subtotal += value;
         }
 
@@ -117,6 +116,8 @@ module.exports = function (router, models) {
             key: 'processingFee', value: Math.round(processingFee), id: uuidV1()
         });
         totalPricePromises.push(processingFeePricePromise);
+
+
 
         const totalPrices = await Promise.all(totalPricePromises);
         var total = 0;

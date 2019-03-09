@@ -8,6 +8,25 @@ const uuidV1 = require('uuid/v1');
 
 module.exports = function (router, models) {
 
+    router.get('/stripe/externalAccount', bodyParser.json(), async (req, res) => {
+        const mechanic = await req.user.getMechanic();
+        stripe.accounts.retrieve(mechanic.stripeAccountID, (err, account) => {
+            if (err != null || account == null) {
+                return res.status(400).send();
+            }
+            if (account.external_accounts.data == null || account.external_accounts.data[0].id == null) {
+                return res.status(400).send();
+            }
+            stripe.accounts.retrieveExternalAccount(
+                mechanic.stripeAccountID,
+                account.external_accounts.data[0].id,
+                function (err, external_account) {
+                    return res.json(external_account);
+                }
+            );
+        });
+    });
+
     router.post('/stripe/ephemeral-keys', bodyParser.json(), (req, res) => {
         const apiVersion = req.query.apiVersion;
         if (!apiVersion) {
@@ -131,7 +150,7 @@ module.exports = function (router, models) {
                 return res.status(400).send('Unable to upload image');
             }
             const transactionReceipt = await models.TransactionReceipt.create({ id: uuidV1(), receiptPhotoID: newFileName })
-            transactionReceipt.setTransactionMetadatum(transactionMetadata, {save: false});
+            transactionReceipt.setTransactionMetadatum(transactionMetadata, { save: false });
             transactionReceipt.save().then(receipt => {
                 return res.status(200).json(receipt);
             }).catch(error => {

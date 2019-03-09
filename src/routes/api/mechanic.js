@@ -110,6 +110,7 @@ module.exports = function (router, models) {
                     legal_entity: {
                         address: {
                             line1: address.line1,
+                            line2: address.line2,
                             postal_code: address.postalCode,
                             city: address.city,
                             state: address.state,
