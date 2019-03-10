@@ -478,7 +478,7 @@ module.exports = function (router, models) {
             where: {
                 priceID: price.id,
                 key: {
-                    [Op.or]: ['labor', 'oilFilter', 'oil']
+                    [Op.or]: ['distance', 'oilFilter', 'oil']
                 }
             }
         })

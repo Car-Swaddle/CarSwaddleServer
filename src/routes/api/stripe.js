@@ -232,7 +232,7 @@ module.exports = function (router, models) {
                 where: { stripeTransactionID: stripeTransactionID },
                 include: [{ model: models.TransactionReceipt }]
             }).then(transactionMetadata => {
-                if (err != null) {
+                if (err != null && transactionMetadata != null) {
                     return callback(null, null, err);
                 }
                 transaction.car_swaddle_meta = transactionMetadata.toJSON();
