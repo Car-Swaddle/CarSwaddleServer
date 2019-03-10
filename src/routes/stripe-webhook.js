@@ -134,7 +134,7 @@ module.exports = function (app, models) {
             var sig = req.headers["stripe-signature"];
             var body = req.body;
             try {
-                return stripe.webhooks.constructEvent(body, sig, this.secret());
+                return stripe.webhooks.constructEvent(body, sig, secret());
             } catch (err) {
                 console.log(err);
                 return null;
