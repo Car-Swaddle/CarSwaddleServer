@@ -66,12 +66,6 @@ const mechanic = function (sequelize, DataTypes) {
                 allowNull: true
             },
         });
-        Mechanic.hasOne(models.MechanicMonthDebit, {
-            foreignKey: {
-                name: 'mechanicID',
-                allowNull: true
-            },
-        });
         Mechanic.hasMany(models.DeviceToken, { foreignKey: 'mechanicID' });
         Mechanic.hasMany(models.Review, { foreignKey: 'mechanicID' });
         Mechanic.hasMany(models.TransactionMetadata, { foreignKey: 'mechanicID' });
