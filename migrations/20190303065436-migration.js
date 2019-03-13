@@ -89,7 +89,7 @@ module.exports = {
         onUpdate: 'CASCADE',
         onDelete: 'SET NULL',
       }
-    )).then(() => queryInterface.addColumn('Address', 'line2', {
+    )).then(() => queryInterface.addColumn('address', 'line2', {
         type: Sequelize.STRING
       }
     ));

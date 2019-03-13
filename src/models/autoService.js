@@ -54,7 +54,7 @@ const autoService = function (sequelize, DataTypes) {
   };
 
   /// Order of this matters, the client can't change from a later status to an earlier status
-  AutoService.allStatus = ['scheduled', 'inRoute', 'arrived', 'inProgress', 'completed', 'canceled'];
+  AutoService.allStatus = ['scheduled', 'inProgress', 'completed', 'canceled'];
 
   AutoService.isValidStatus = function (status) {
     if (AutoService.allStatus.includes(status) == true) {
