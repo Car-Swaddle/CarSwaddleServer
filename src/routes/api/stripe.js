@@ -14,7 +14,9 @@ module.exports = function (router, models) {
             if (err != null || account == null) {
                 return res.status(400).send();
             }
-            if (account.external_accounts.data == null || account.external_accounts.data[0].id == null) {
+            if (account.external_accounts.data == null || 
+                account.external_accounts.data.length == 0 ||
+                account.external_accounts.data[0].id == null ) {
                 return res.status(400).send();
             }
             stripe.accounts.retrieveExternalAccount(
