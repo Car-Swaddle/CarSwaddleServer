@@ -79,7 +79,7 @@ module.exports = function (router, models) {
             }
         });
 
-        var centsPerMile = oilChangePricing.centsPerMile || constants.DEFAULT_CENTS_PER_MILE;
+        var centsPerMile = oilChangePricing && oilChangePricing.centsPerMile || constants.DEFAULT_CENTS_PER_MILE;
         var oilChangePrice = centsForOilType(oilType, oilChangePricing) || constants.DEFAULT_CENTS_PER_MILE;
         const oilChangeKey = oilChangeKeyForOilType(oilType);
 
