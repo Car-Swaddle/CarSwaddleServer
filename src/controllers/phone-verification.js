@@ -1,4 +1,4 @@
-const constants = require('../routes/constants.js');
+const constants = require('./constants.js');
 var request = require('request');
 var VERSION = "0.1";
 

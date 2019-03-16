@@ -1,4 +1,4 @@
-const constants = require('../routes/constants');
+const constants = require('../controllers/constants');
 const stripe = require('stripe')(constants.STRIPE_SECRET_KEY);
 
 var methods = function (models) {

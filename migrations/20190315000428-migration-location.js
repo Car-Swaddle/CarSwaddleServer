@@ -9,8 +9,8 @@ module.exports = {
       Example:
       return queryInterface.createTable('users', { id: Sequelize.INTEGER });
     */
-    return queryInterface.addColumn('user', 'timeZone', Sequelize.STRING, {
-      defaultValue: 'America/Denver'
+    return queryInterface.addColumn('location', 'mechanicID', {
+      type: Sequelize.UUID, allowNull: true,
     });
   },
 
@@ -22,6 +22,6 @@ module.exports = {
       Example:
       return queryInterface.dropTable('users');
     */
-    return queryInterface.removeColumn('user', 'timeZone', Sequelize.STRING);
+    return queryInterface.removeColumnc('location', 'mechanicID');
   }
 };

@@ -39,6 +39,7 @@ const models = {
   TransactionReceipt: sequelize.import('./transaction-receipt'),
   MechanicMonthDebit: sequelize.import('./mechanic-month-debit'),
   MechanicPayoutDebit: sequelize.import('./mechanic-payout-debit'),
+  OilChangePricing: sequelize.import('./oilChangePricing'),
 };
 
 Object.keys(models).forEach(key => {

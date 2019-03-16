@@ -1,4 +1,4 @@
-const constants = require('../routes/constants.js');
+const constants = require('./constants.js');
 const { Op } = require('sequelize');
 const uuidV1 = require('uuid/v1');
 const stripe = require('stripe')(constants.STRIPE_SECRET_KEY);

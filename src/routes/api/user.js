@@ -1,5 +1,5 @@
 const uuidV1 = require('uuid/v1');
-const constants = require('../constants');
+const constants = require('../../controllers/constants.js');
 const stripe = require('stripe')(constants.STRIPE_SECRET_KEY);
 const fileStore = require('../../data/file-store.js');
 const bodyParser = require('body-parser');
@@ -92,7 +92,7 @@ module.exports = function (router, models) {
           return user.save();
         }
         return stripe.accounts.update(mechanic.stripeAccountID, {
-          legal_entity: {
+          individual: {
             first_name: body.firstName,
           }
         }).then(stripeAccount => {
@@ -113,7 +113,7 @@ module.exports = function (router, models) {
           return user.save();
         }
         return stripe.accounts.update(mechanic.stripeAccountID, {
-          legal_entity: {
+          individual: {
             last_name: body.lastName,
           }
         }).then(stripeAccount => {
@@ -134,8 +134,8 @@ module.exports = function (router, models) {
           return user.save();
         }
         return stripe.accounts.update(mechanic.stripeAccountID, {
-          legal_entity: {
-            phone_number: body.phoneNumber,
+          individual: {
+            phone: body.phoneNumber,
           }
         }).then(stripeAccount => {
           if (stripeAccount == null) {

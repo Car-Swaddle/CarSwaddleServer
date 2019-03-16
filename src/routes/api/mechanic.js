@@ -1,11 +1,12 @@
 const express = require('express');
 const uuidV1 = require('uuid/v1');
-const constants = require('../constants');
+const constants = require('../../controllers/constants');
 const stripe = require('stripe')(constants.STRIPE_SECRET_KEY);
 const fileStore = require('../../data/file-store.js');
 const bodyParser = require('body-parser');
 const fileUpload = require('express-fileupload');
 const path = require('path');
+const stripeFiles = require('../../controllers/stripe-files.js')();
 
 module.exports = function (router, models) {
 
@@ -52,7 +53,7 @@ module.exports = function (router, models) {
         limit = limit > 25 ? 25 : limit;
         const maxDistance = parseFloat(query.maxDistance) || 100000;
 
-        models.sequelize.query('SELECT *, u.id as "userID", m.id as "id", r.id as "regionID", ST_Distance(r.origin, ST_MakePoint(?, ?), false) AS "distance" FROM "user" AS u INNER JOIN mechanic as m ON m."userID" = u.id INNER JOIN region AS r ON m.id = r."mechanicID" AND ST_Distance(r.origin, ST_MakePoint(?, ?), false) < r.radius AND m."isActive" = true AND ST_Distance(r.origin, ST_MakePoint(?, ?), false) <= ? ORDER BY ST_MakePoint(?,?) <-> r.origin FETCH FIRST ? ROWS ONLY', {
+        models.sequelize.query('SELECT *, u.id as "userID", m.id as "id", r.id as "regionID", ST_Distance(r.origin, ST_MakePoint(?, ?), false) AS "distance" FROM "user" AS u INNER JOIN mechanic as m ON m."userID" = u.id INNER JOIN region AS r ON m.id = r."mechanicID" AND ST_Distance(r.origin, ST_MakePoint(?, ?), false) < r.radius AND m."isActive" = true AND m."isAllowed" = true AND ST_Distance(r.origin, ST_MakePoint(?, ?), false) <= ? ORDER BY ST_MakePoint(?,?) <-> r.origin FETCH FIRST ? ROWS ONLY', {
             replacements: [longitude, latitude, longitude, latitude, longitude, latitude, maxDistance, longitude, latitude, limit],
             type: models.sequelize.QueryTypes.SELECT,
             model: models.User
@@ -107,7 +108,7 @@ module.exports = function (router, models) {
                     address.country = 'US';
                 }
                 const promise = stripe.accounts.update(mechanic.stripeAccountID, {
-                    legal_entity: {
+                    individual: {
                         address: {
                             line1: address.line1,
                             line2: address.line2,
@@ -138,7 +139,7 @@ module.exports = function (router, models) {
             if (body.ssnLast4 != null) {
                 didChangeMechanic = true;
                 const promise = stripe.accounts.update(mechanic.stripeAccountID, {
-                    legal_entity: {
+                    individual: {
                         ssn_last_4: body.ssnLast4,
                     }
                 });
@@ -148,8 +149,8 @@ module.exports = function (router, models) {
             if (body.personalID != null) {
                 didChangeMechanic = true;
                 const promise = stripe.accounts.update(mechanic.stripeAccountID, {
-                    legal_entity: {
-                        personal_id_number: body.personalID,
+                    individual: {
+                        id_number: body.personalID,
                     }
                 });
                 promises.push(promise);
@@ -167,11 +168,11 @@ module.exports = function (router, models) {
                 didChangeMechanic = true;
                 const date = new Date(body.dateOfBirth);
                 const day = date.getDate();
-                const month = date.getMonth()+1;
+                const month = date.getMonth() + 1;
                 const year = date.getFullYear();
 
                 const promise = stripe.accounts.update(mechanic.stripeAccountID, {
-                    legal_entity: {
+                    individual: {
                         dob: {
                             day: day,
                             month: month,
@@ -275,40 +276,19 @@ module.exports = function (router, models) {
 
         let image = req.files.image;
         let name = req.files.image.name;
-        
-        stripe.files.create({
-            file: {
-                data: image.data,
-                name: name,
-                type: 'application/octet-stream',
-            },
-            purpose: 'identity_document',
-        }, { stripe_account: mechanic.stripeAccountID }, async function (err, file) {
-            if (err) {
-                console.log(err);
-                return res.status(500).send(err);
-            }
-            const fileID = file.id;
-            console.log(fileID);
-            mechanic.identityDocumentID = fileID;
-            await mechanic.save();
-            
-            if (err != null && fileID != null) {
-                return res.status(400).send(err);
-            }
-            stripe.accounts.update(mechanic.stripeAccountID, {
-                legal_entity: {
-                    verification: { document: fileID }
-                }
-            }, function (err, file) {
-                console.log(file);
-                if (err != null) {
-                    console.log(err);
-                    return res.status(400).send(err);
-                }
 
+        let side = req.query.side || 'front';
+
+        if (side != 'front' && side != 'back') {
+            return res.status(422).send('Invalid parameters');
+        }
+
+        stripeFiles.uploadIdentityDocument(image, name, mechanic, side, function (err, mechanic) {
+            if (err) {
+                return res.status(400).send();
+            } else {
                 return res.status(200).json(mechanic);
-            });
+            }
         });
     });
 

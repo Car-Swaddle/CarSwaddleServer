@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 const uuidV1 = require('uuid/v1');
-const constants = require('./constants');
+const constants = require('../controllers/constants.js');
 const stripe = require('stripe')(constants.STRIPE_SECRET_KEY);
 const bodyParser = require('body-parser');
 
@@ -32,16 +32,30 @@ module.exports = function (app, models, passport) {
                     }).spread(function (mechanic, created) {
                         if (created == true) {
                             stripe.accounts.create(stripeCreateDict(req.connection.remoteAddress)).then(stripeAccount => {
-                                user.setMechanic(mechanic).then(function () {
-                                    mechanic.stripeAccountID = stripeAccount.id;
-                                    mechanic.save().then(mechanic => {
-                                        return res.json({ user, mechanic, token });
+                                models.OilChangePricing.findOrCreate({
+                                    where: { mechanicID: mechanic.id },
+                                    defaults: { id: uuidV1() }
+                                }).spread(async function (oilChangePricing, created) {
+                                    await oilChangePricing.setMechanic(mechanic);
+                                    await oilChangePricing.save();
+                                    user.setMechanic(mechanic).then(function () {
+                                        mechanic.stripeAccountID = stripeAccount.id;
+                                        mechanic.save().then(mechanic => {
+                                            return res.json({ user, mechanic, token });
+                                        });
                                     });
                                 });
                             });
                         } else {
-                            user.setMechanic(mechanic).then(function () {
-                                return res.json({ user, mechanic, token });
+                            models.OilChangePricing.findOrCreate({
+                                where: { mechanicID: mechanic.id },
+                                defaults: { id: uuidV1() }
+                            }).spread(async function (oilChangePricing, created) {
+                                await oilChangePricing.setMechanic(mechanic);
+                                await oilChangePricing.save();
+                                user.setMechanic(mechanic).then(function () {
+                                    return res.json({ user, mechanic, token });
+                                });
                             });
                         }
                     });
@@ -81,7 +95,7 @@ module.exports = function (app, models, passport) {
                         const token = jwt.sign(user.dataValues, 'your_jwt_secret');
 
                         if (!user.isEmailVerified) {
-                            emailer.sendEmailVerificationEmail(user, function(err) {
+                            emailer.sendEmailVerificationEmail(user, function (err) {
                                 if (err) {
                                     console.log(err);
                                 }
@@ -95,10 +109,17 @@ module.exports = function (app, models, passport) {
                             }).spread(function (mechanic, created) {
                                 if (created == true) {
                                     stripe.accounts.create(stripeCreateDict(req.connection.remoteAddress)).then(stripeAccount => {
-                                        user.setMechanic(mechanic).then(function () {
-                                            mechanic.stripeAccountID = stripeAccount.id;
-                                            mechanic.save().then(mechanic => {
-                                                return res.json({ user, mechanic, token });
+                                        models.OilChangePricing.findOrCreate({
+                                            where: { mechanicID: mechanic.id },
+                                            defaults: { id: uuidV1() }
+                                        }).spread(async function (oilChangePricing, created) {
+                                            await oilChangePricing.setMechanic(mechanic);
+                                            await oilChangePricing.save();
+                                            user.setMechanic(mechanic).then(function () {
+                                                mechanic.stripeAccountID = stripeAccount.id;
+                                                mechanic.save().then(mechanic => {
+                                                    return res.json({ user, mechanic, token });
+                                                });
                                             });
                                         });
                                     });
@@ -127,9 +148,7 @@ module.exports = function (app, models, passport) {
                 date: Math.floor(Date.now() / 1000),
                 ip: ip
             },
-            legal_entity: {
-                type: 'individual',
-            }
+            business_type: 'individual',
         }
     }
 

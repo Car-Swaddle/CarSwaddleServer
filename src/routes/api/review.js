@@ -1,5 +1,5 @@
 const express = require('express');
-const constants = require('../constants');
+const constants = require('../../controllers/constants');
 const bodyParser = require('body-parser');
 
 module.exports = function (router, models) {

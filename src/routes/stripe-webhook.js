@@ -1,4 +1,4 @@
-const constants = require('./constants');
+const constants = require('../controllers/constants');
 const stripe = require('stripe')(constants.STRIPE_SECRET_KEY);
 const bodyParser = require('body-parser');
 const pushService = require('../notifications/pushNotifications.js');

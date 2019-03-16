@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const constants = require('../constants');
+const constants = require('../../controllers/constants');
 const bodyParser = require('body-parser');
 
 

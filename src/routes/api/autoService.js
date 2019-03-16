@@ -2,7 +2,7 @@ const express = require('express');
 const uuidV1 = require('uuid/v1');
 const pushService = require('../../notifications/pushNotifications.js');
 const bodyParser = require('body-parser');
-const constants = require('../constants');
+const constants = require('../../controllers/constants');
 const stripe = require('stripe')(constants.STRIPE_SECRET_KEY);
 const distance = require('../distance.js');
 const stripeChargesFile = require('../../controllers/stripe-charges.js');
@@ -478,10 +478,10 @@ module.exports = function (router, models) {
             where: {
                 priceID: price.id,
                 key: {
-                    [Op.or]: ['distance', 'oilFilter', 'oil']
+                    [Op.or]: ['oilChange', 'distance']
                 }
             }
-        })
+        });
 
         var mechanicCost = 0
         priceParts.forEach(function (part) {

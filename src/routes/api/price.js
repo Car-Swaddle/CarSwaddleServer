@@ -1,19 +1,21 @@
 const express = require('express');
 const uuidV1 = require('uuid/v1');
-const constants = require('../constants');
+const constants = require('../../controllers/constants');
 const bodyParser = require('body-parser');
 const distance = require('../distance.js');
 
 // All in cents
-const centsPerMile = 78;
-const oilFilterCents = 950;
-const mechanicHourlyRate = 1200;
+// const centsPerMile = 78;
+// const oilFilterCents = 950;
+// const mechanicHourlyRate = 1200;
 
-const conventionalQuartPrice = 300;
-const blendQuartPrice = 390;
-const syntheticQuartPrice = 440;
+const bookingFeePercentage = 0.10;
 
-const quartsPerOilChange = 5.5;
+// const conventionalQuartPrice = 300;
+// const blendQuartPrice = 390;
+// const syntheticQuartPrice = 440;
+
+// const quartsPerOilChange = 5.5;
 
 const metersToMilesConstant = 1609.344;
 
@@ -29,7 +31,7 @@ module.exports = function (router, models) {
 
         const body = req.body;
 
-        if (body.oilType == null || body.mechanicID == null || centsForOilType(body.oilType) == null) {
+        if (body.oilType == null || body.mechanicID == null) {
             return res.status(422).send();
         }
 
@@ -71,24 +73,34 @@ module.exports = function (router, models) {
         const meters = distance.metersBetween(locationPoint, regionPoint);
         const miles = meters / metersToMilesConstant;
 
+        const oilChangePricing = await models.OilChangePricing.findOne({
+            where: {
+                mechanicID: mechanic.id
+            }
+        });
+
+        var centsPerMile = oilChangePricing.centsPerMile || constants.DEFAULT_CENTS_PER_MILE;
+        var oilChangePrice = centsForOilType(oilType, oilChangePricing) || constants.DEFAULT_CENTS_PER_MILE;
+        const oilChangeKey = oilChangeKeyForOilType(oilType);
+
         var subtotalPromise = [];
 
         var laborPrice = models.PricePart.create({
-            key: 'labor', value: Math.round(mechanicHourlyRate * 1), id: uuidV1()
+            key: oilChangeKey, value: Math.round(oilChangePrice), id: uuidV1()
         });
         subtotalPromise.push(laborPrice);
-        var oilFilterPrice = models.PricePart.create({
-            key: 'oilFilter', value: oilFilterCents, id: uuidV1()
-        });
-        subtotalPromise.push(oilFilterPrice);
+        // var oilFilterPrice = models.PricePart.create({
+        //     key: 'oilFilter', value: oilFilterCents, id: uuidV1()
+        // });
+        // subtotalPromise.push(oilFilterPrice);
         var distancePrice = models.PricePart.create({
             key: 'distance', value: Math.round((centsPerMile * miles) * 2), id: uuidV1()
         });
         subtotalPromise.push(distancePrice);
-        var oilTypePrice = models.PricePart.create({
-            key: 'oil', value: Math.round(centsForOilType(oilType)), id: uuidV1()
-        });
-        subtotalPromise.push(oilTypePrice);
+        // var oilTypePrice = models.PricePart.create({
+        //     key: 'oil', value: Math.round(centsForOilType(oilType)), id: uuidV1()
+        // });
+        // subtotalPromise.push(oilTypePrice);
 
         const subPrices = await Promise.all(subtotalPromise);
         var prices = [];
@@ -106,7 +118,7 @@ module.exports = function (router, models) {
         });
         totalPricePromises.push(subtotalPricePromise);
         var bookingFeePricePromise = models.PricePart.create({
-            key: 'bookingFee', value: Math.round(constants.BOOKING_FEE), id: uuidV1()
+            key: 'bookingFee', value: Math.round(bookingFeePercentage * Math.round(subtotal)), id: uuidV1()
         });
         totalPricePromises.push(bookingFeePricePromise);
 
@@ -116,8 +128,6 @@ module.exports = function (router, models) {
             key: 'processingFee', value: Math.round(processingFee), id: uuidV1()
         });
         totalPricePromises.push(processingFeePricePromise);
-
-
 
         const totalPrices = await Promise.all(totalPricePromises);
         var total = 0;
@@ -143,20 +153,37 @@ module.exports = function (router, models) {
         // The mechanic will make a little bit more than what we will take out for the stripeConnectProcessFee because we add
         // the product of the stripeConectFee and the entire total instead of just what the mechanic gets. The profit goes to
         // the mechanic.
-        const total = (subtotal + constants.BOOKING_FEE + stripeProcessTransactionFee) / (1.0 - (stripeProcessPercentage + stripeConnectProcessPercentage));
-        return total - (subtotal + constants.BOOKING_FEE);
+
+        var connectFee = subtotal / (1.0 - (stripeConnectProcessPercentage));
+        connectFee = connectFee - subtotal;
+
+        const basePrice = subtotal + (subtotal * constants.BOOKING_FEE_PERCENTAGE) + connectFee;
+        const total = (basePrice + stripeProcessTransactionFee) / (1.0 - (stripeProcessPercentage));
+        return total - basePrice;
     }
 
-    function centsForOilType(oilType) {
-        var quartPrice = 0.0;
+    function oilChangeKeyForOilType(oilType) {
         if (oilType == 'CONVENTIONAL') {
-            quartPrice = conventionalQuartPrice;
+            return 'oilChangeConventional'
         } else if (oilType == 'BLEND') {
-            quartPrice = blendQuartPrice;
+            return 'oilChangeBlend'
         } else if (oilType == 'SYNTHETIC') {
-            quartPrice = syntheticQuartPrice;
+            return 'oilChangeSynthetic'
+        } else if (oilType == 'HIGH_MILEAGE') {
+            return 'oilChangeHighMileage'
         }
-        return Number(quartPrice * quartsPerOilChange);
+    }
+
+    function centsForOilType(oilType, oilChangePricing) {
+        if (oilType == 'CONVENTIONAL') {
+            return oilChangePricing.conventional || constants.DEFAULT_CONVENTIONAL_PRICE;
+        } else if (oilType == 'BLEND') {
+            return oilChangePricing.blend || constants.DEFAULT_BLEND_PRICE;
+        } else if (oilType == 'SYNTHETIC') {
+            return oilChangePricing.synthetic || constants.DEFAULT_SYNTHETIC_PRICE;
+        } else if (oilType == 'HIGH_MILEAGE') {
+            return oilChangePricing.highMileage || constants.DEFAULT_HIGH_MILEAGE_PRICE;
+        }
     }
 
     // function metersBetween(point1, point2) {

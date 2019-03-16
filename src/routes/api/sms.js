@@ -1,4 +1,4 @@
-const constants = require('../constants.js');
+const constants = require('../../controllers/constants.js');
 var twilioFramework = require('twilio');
 var twilio = new twilioFramework(constants.TWILIO_SID, constants.TWILIO_AUTH_TOKEN);
 const bodyParser = require('body-parser');

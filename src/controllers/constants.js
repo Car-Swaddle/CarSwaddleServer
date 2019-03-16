@@ -1,5 +1,10 @@
 module.exports = Object.freeze({
-    BOOKING_FEE: 998, // in cents
+    BOOKING_FEE_PERCENTAGE: 0.10,
+    DEFAULT_CONVENTIONAL_PRICE: 4500, // in cents
+    DEFAULT_BLEND_PRICE: 5000, // in cents
+    DEFAULT_SYNTHETIC_PRICE: 5600, // in cents
+    DEFAULT_HIGH_MILEAGE_PRICE: 5850, // in cents
+    DEFAULT_CENTS_PER_MILE: 50, // in cents
     STRIPE_SECRET_KEY: 'sk_test_6q7v6X4y8vsXZPd7sSh65Q0E',
     STRIPE_PLATFORM_ACCOUNT_ID: 'acct_1D3sExIh8ecz19vM',
     TWILIO_SID: 'AC347857af1bb465179b76b5a273c68e87',
