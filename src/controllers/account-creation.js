@@ -30,19 +30,23 @@ AccountCreation.prototype.createStripeCustomerAccount = function (user, callback
     });
 }
 
-AccountCreation.prototype.createOilChangePricing = function (mechanic, callback) {
+AccountCreation.prototype.findOrCreateOilChangePricing = function (mechanic, callback) {
     this.models.OilChangePricing.findOrCreate({
         where: { mechanicID: mechanic.id },
         defaults: { id: uuidV1() }
     }).spread(function (oilChangePricing, created) {
-        oilChangePricing.setMechanic(mechanic);
-        oilChangePricing.save().then(oilChangePricing => {
+        if (oilChangePricing.mechanicID == mechanic.id) {
             callback(null, oilChangePricing);
-        }).catch(err => {
-            callback(err, null);
-        });
+        } else {
+            oilChangePricing.setMechanic(mechanic);
+            oilChangePricing.save().then(oilChangePricing => {
+                callback(null, oilChangePricing);
+            }).catch(err => {
+                callback(err, oilChangePricing);
+            });
+        }
     }).catch(err => {
-        callback(err);
+        callback(err, null);
     });
 }
 
@@ -56,20 +60,6 @@ AccountCreation.prototype.createStripeMechanicAccount = function (mechanic, remo
         });
     }).catch(err => {
         callback(err, null);
-    });
-}
-
-AccountCreation.prototype.findOrCreateOilChangePricing = function (mechanic, callback) {
-    this.models.OilChangePricing.findOrCreate({
-        where: { mechanicID: mechanic.id },
-        defaults: { id: uuidV1() }
-    }).spread(function (oilChangePricing, created) {
-        oilChangePricing.setMechanic(mechanic);
-        oilChangePricing.save().then(oilChangePricing => {
-            callback(null, oilChangePricing);
-        }).catch(err => {
-            callback(err, null);
-        });
     });
 }
 
@@ -100,13 +90,15 @@ AccountCreation.prototype.completeMechanicCreationOrUpdate = function (user, rem
                 });
             });
         } else {
-            if (mechanic.userID == user.id) {
-                callback(null, mechanic);
-            } else {
-                user.setMechanic(mechanic).then(function () {
+            self.findOrCreateOilChangePricing(mechanic, function (err, oilChangePricing) {
+                if (mechanic.userID == user.id) {
                     callback(null, mechanic);
-                });
-            }
+                } else {
+                    user.setMechanic(mechanic).then(function () {
+                        callback(null, mechanic);
+                    });
+                }
+            });
         }
     });
 }
