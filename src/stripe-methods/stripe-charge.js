@@ -27,9 +27,13 @@ var methods = function (models) {
             customer: user.stripeCustomerID,
             description: "Oil Change from Car Swaddle",
             statement_descriptor: "Car Swaddle Oil Change",
-            destination: {
-                account: mechanic.stripeAccountID,
+            // destination: {
+            //     account: mechanic.stripeAccountID,
+            //     amount: Math.floor(destinationAmount),
+            // },
+            transfer_data: {
                 amount: Math.floor(destinationAmount),
+                destination: mechanic.stripeAccountID,
             },
             receipt_email: user.email,
             metadata: {

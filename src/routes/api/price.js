@@ -9,7 +9,7 @@ const distance = require('../distance.js');
 // const oilFilterCents = 950;
 // const mechanicHourlyRate = 1200;
 
-const bookingFeePercentage = 0.10;
+// const bookingFeePercentage = 0.10;
 
 // const conventionalQuartPrice = 300;
 // const blendQuartPrice = 390;
@@ -79,7 +79,7 @@ module.exports = function (router, models) {
             }
         });
 
-        var centsPerMile = oilChangePricing && oilChangePricing.centsPerMile || constants.DEFAULT_CENTS_PER_MILE;
+        var centsPerMile = (oilChangePricing && oilChangePricing.centsPerMile) || constants.DEFAULT_CENTS_PER_MILE;
         var oilChangePrice = centsForOilType(oilType, oilChangePricing) || constants.DEFAULT_CENTS_PER_MILE;
         const oilChangeKey = oilChangeKeyForOilType(oilType);
 
@@ -118,7 +118,7 @@ module.exports = function (router, models) {
         });
         totalPricePromises.push(subtotalPricePromise);
         var bookingFeePricePromise = models.PricePart.create({
-            key: 'bookingFee', value: Math.round(bookingFeePercentage * Math.round(subtotal)), id: uuidV1()
+            key: 'bookingFee', value: Math.round(constants.BOOKING_FEE_PERCENTAGE * Math.round(subtotal)), id: uuidV1()
         });
         totalPricePromises.push(bookingFeePricePromise);
 

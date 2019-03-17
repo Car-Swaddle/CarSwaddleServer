@@ -55,10 +55,10 @@ module.exports = function (router, models) {
                 if (err != null || account == null) {
                     return res.status(400).send();
                 }
-                if (account.verification == null) {
+                if (account.requirements == null) {
                     return res.status(400).send();
                 }
-                return res.json(account.verification);
+                return res.json(account.requirements);
             });
         });
     });

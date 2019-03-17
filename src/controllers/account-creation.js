@@ -50,8 +50,8 @@ AccountCreation.prototype.findOrCreateOilChangePricing = function (mechanic, cal
     });
 }
 
-AccountCreation.prototype.createStripeMechanicAccount = function (mechanic, remoteAddress, callback) {
-    stripe.accounts.create(stripeCreateDict(remoteAddress)).then(stripeAccount => {
+AccountCreation.prototype.createStripeMechanicAccount = function (mechanic, remoteAddress, email, callback) {
+    stripe.accounts.create(stripeCreateDict(remoteAddress, email)).then(stripeAccount => {
         mechanic.stripeAccountID = stripeAccount.id;
         mechanic.save().then(mechanic => {
             callback(null, mechanic);
@@ -84,7 +84,7 @@ AccountCreation.prototype.completeMechanicCreationOrUpdate = function (user, rem
     var self = this;
     this.findOrCreateMechanic(user, function (user, mechanic, created) {
         if (created == true) {
-            self.createStripeMechanicAccount(mechanic, remoteAddress, function (err, stripeAccount) {
+            self.createStripeMechanicAccount(mechanic, remoteAddress, user.email, function (err, stripeAccount) {
                 self.findOrCreateOilChangePricing(mechanic, function (err, oilChangePricing) {
                     callback(err, mechanic);
                 });
@@ -103,7 +103,7 @@ AccountCreation.prototype.completeMechanicCreationOrUpdate = function (user, rem
     });
 }
 
-function stripeCreateDict(ip) {
+function stripeCreateDict(ip, email) {
     return {
         country: 'US',
         type: 'custom',
@@ -112,6 +112,12 @@ function stripeCreateDict(ip) {
             ip: ip
         },
         business_type: 'individual',
-        requested_capabilities: ['platform_payments']
+        requested_capabilities: ['platform_payments'],
+        individual: {
+            email: email
+        },
+        business_profile: {
+            product_description: 'This connect user is a mechanic who sells Oil changes through Car Swaddle'
+        }
     }
 }
