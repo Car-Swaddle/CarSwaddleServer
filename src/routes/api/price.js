@@ -89,18 +89,10 @@ module.exports = function (router, models) {
             key: oilChangeKey, value: Math.round(oilChangePrice), id: uuidV1()
         });
         subtotalPromise.push(laborPrice);
-        // var oilFilterPrice = models.PricePart.create({
-        //     key: 'oilFilter', value: oilFilterCents, id: uuidV1()
-        // });
-        // subtotalPromise.push(oilFilterPrice);
         var distancePrice = models.PricePart.create({
             key: 'distance', value: Math.round((centsPerMile * miles) * 2), id: uuidV1()
         });
         subtotalPromise.push(distancePrice);
-        // var oilTypePrice = models.PricePart.create({
-        //     key: 'oil', value: Math.round(centsForOilType(oilType)), id: uuidV1()
-        // });
-        // subtotalPromise.push(oilTypePrice);
 
         const subPrices = await Promise.all(subtotalPromise);
         var prices = [];

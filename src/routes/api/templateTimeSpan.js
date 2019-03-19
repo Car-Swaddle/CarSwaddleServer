@@ -50,6 +50,11 @@ module.exports = function (router, models) {
                         var promise = newSpan.save();
                         promises.push(promise);
                     }
+
+                    mechanic.hasSetAvailability = true
+                    const mechanicPromise = mechanic.save();
+                    promise.push(mechanicPromise);
+
                     Promise.all(promises).then(function(updatedSpans) { 
                         findTimeSpansForMechanic(mechanic.id).then( fs => {
                             return res.json(fs);
