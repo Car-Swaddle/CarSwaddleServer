@@ -10,19 +10,18 @@ module.exports = function (router, models) {
         var latitude = req.body.latitude;
         var longitude = req.body.longitude;
         var radius = req.body.radius;
-        req.user.getMechanic().then( function(mechanic) {
-            mechanic.getRegion().then( previousRegion => {
-                if (previousRegion == null) {
-                    return;
-                } else {
-                    return previousRegion.destroy();
-                }
-            }).then(() => {
-                var point = { type: 'Point', coordinates: [longitude,latitude] };
-                return models.Region.create({ id: uuidV1(), origin: point, radius: radius });
-            }).then( region => {
-                mechanic.setRegion(region).then( region => {
-                    models.Mechanic.find({ 
+        req.user.getMechanic().then(async function (mechanic) {
+            const previousRegion = await mechanic.getRegion();
+            if (!previousRegion) {
+                await previousRegion.destroy();
+            }
+            var point = { type: 'Point', coordinates: [longitude, latitude] };
+            const region = await models.Region.create({ id: uuidV1(), origin: point, radius: radius });
+
+            mechanic.setRegion(region).then(region => {
+                mechanic.hasSetServiceRegion = true;
+                mechanic.save().then(mechanic => {
+                    models.Mechanic.find({
                         where: {
                             id: mechanic.id
                         },
@@ -39,9 +38,9 @@ module.exports = function (router, models) {
 
     router.get('/region', bodyParser.json(), function (req, res) {
         console.log('region GET');
-        req.user.getMechanic().then( mechanic => {
+        req.user.getMechanic().then(mechanic => {
             return mechanic.getRegion();
-        }).then( region => {
+        }).then(region => {
             return res.json(region);
         })
     });
