@@ -81,12 +81,11 @@ module.exports = function (router, models) {
 
         var centsPerMile = (oilChangePricing && oilChangePricing.centsPerMile) || constants.DEFAULT_CENTS_PER_MILE;
         var oilChangePrice = centsForOilType(oilType, oilChangePricing) || constants.DEFAULT_CENTS_PER_MILE;
-        const oilChangeKey = oilChangeKeyForOilType(oilType);
 
         var subtotalPromise = [];
 
         var laborPrice = models.PricePart.create({
-            key: oilChangeKey, value: Math.round(oilChangePrice), id: uuidV1()
+            key: 'oilChange', value: Math.round(oilChangePrice), id: uuidV1()
         });
         subtotalPromise.push(laborPrice);
         var distancePrice = models.PricePart.create({

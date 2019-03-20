@@ -485,8 +485,7 @@ module.exports = function (router, models) {
 
         var mechanicCost = 0
         priceParts.forEach(function (part) {
-            console.log(part);
-            mechanicCost += part.value;
+            mechanicCost += part.value * 0.7;
         });
 
         const transactionMetadata = await models.TransactionMetadata.create({ id: uuidV1(), stripeTransactionID: stripeTransactionID, mechanicCost: mechanicCost, drivingDistance: meters });
