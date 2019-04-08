@@ -8,6 +8,16 @@ const uuidV1 = require('uuid/v1');
 
 module.exports = function (router, models) {
 
+    router.get('/stripe/account', bodyParser.json(), async (req, res) => {
+        const mechanic = await req.user.getMechanic();
+        stripe.accounts.retrieve(mechanic.stripeAccountID, (err, account) => {
+            if (err != null || account == null) {
+                return res.status(400).send();
+            }
+            return res.json(account);
+        });
+    });
+
     router.get('/stripe/externalAccount', bodyParser.json(), async (req, res) => {
         const mechanic = await req.user.getMechanic();
         stripe.accounts.retrieve(mechanic.stripeAccountID, (err, account) => {
