@@ -5,9 +5,20 @@ module.exports = Object.freeze({
     DEFAULT_SYNTHETIC_PRICE: 5600, // in cents
     DEFAULT_HIGH_MILEAGE_PRICE: 5850, // in cents
     DEFAULT_CENTS_PER_MILE: 50, // in cents
-    STRIPE_SECRET_KEY: 'sk_test_6q7v6X4y8vsXZPd7sSh65Q0E',
-    STRIPE_PLATFORM_ACCOUNT_ID: 'acct_1D3sExIh8ecz19vM',
+    STRIPE_SECRET_KEY: stripeSecretKeyForCurrentEnvironment(),
+    STRIPE_PLATFORM_ACCOUNT_ID: 'acct_1EGAxMDGwCXJzLur', // carswaddle.net
     TWILIO_SID: 'AC347857af1bb465179b76b5a273c68e87',
     TWILIO_AUTH_TOKEN: 'fb54bdcc2d5a762269c53b20966ab408',
     TWILIO_PHONE: '+17727636586',
 });
+
+function stripeSecretKeyForCurrentEnvironment() {
+    if (process.env.ENV == 'production') {
+        // return 'pk_live_ZJkoNBROBK0ttmZLDNfNF0Cw00VwQ7JjFw';
+        return 'pk_test_93FPMcPQ4mSaWfjtMWlkGvDr00ytb8KnDJ';
+    } else if (process.env.ENV == 'staging') {
+        return 'pk_test_93FPMcPQ4mSaWfjtMWlkGvDr00ytb8KnDJ';
+    } else if (process.env.ENV == 'dev') {
+        return 'pk_test_93FPMcPQ4mSaWfjtMWlkGvDr00ytb8KnDJ';
+    }
+}

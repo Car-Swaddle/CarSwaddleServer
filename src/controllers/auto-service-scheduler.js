@@ -2,7 +2,6 @@ const constants = require('./constants.js');
 const { Op } = require('sequelize');
 const uuidV1 = require('uuid/v1');
 const stripe = require('stripe')(constants.STRIPE_SECRET_KEY);
-// require('../../stripe-methods/stripe-charge.js')(models);
 const pushService = require('../notifications/pushNotifications.js');
 const distance = require('../routes/distance.js');
 const { DateTime } = require('luxon');
@@ -58,102 +57,12 @@ AutoServiceScheduler.prototype.findAutoServices = function (mechanicID, userID, 
 };
 
 AutoServiceScheduler.prototype.scheduleAutoService = async function (user, status, priceID, scheduledDate, vehicleID, mechanicID, sourceID, serviceEntities, location, locationID, notes, callback) {
-    // if (this.models.AutoService.isValidStatus(status) == false) { callback('Invalid status:' + status, null); }
-    // if (!priceID) { callback('Invalid parameters, priceID', null); }
-    // const price = await models.Price.findById(priceID);
-    // if (!price) { callback('invalid parameters, price', null); }
-    // if (!scheduledDate) { callback('invalid parameters, scheduledDate', null); }
-    // if (!vehicleID) { callback('invalid parameters, vehicleID', null); }
-    // if (!sourceID) { return res.status(422).send('invalid parameters, sourceID'); }
-    // if (serviceEntities.length <= 0) { callback('invalid parameters, at least one serviceEntities', null); }
-
-    // var locationPromise = null;
-    // if (locationID != null) {
-    //     locationPromise = this.models.Location.findById(locationID);
-    // } else if (location != null && location.latitude != null && location.longitude != null) {
-    //     var point = { type: 'Point', coordinates: [location.longitude, location.latitude] };
-    //     locationPromise = this.models.Location.create({
-    //         point: point,
-    //         streetAddress: location.streetAddress,
-    //         id: uuidV1(),
-    //     })
-    // } else {
-    //     callback('invalid parameters, need locationID or location', null);
-    // }
-
-    // if (!mechanicID) {
-    //     callback('invalid parameters, mechanicID', null);
-    // }
-
-    // const location = await locationPromise;
-    // if (!location) { callback('invalid parameters, no location', null); }
-
-    // const mechanic = await this.models.Mechanic.findById(body.mechanicID);
-    // if (!mechanic) { callback('invalid parameters, no location', null); }
-    // const vehicle = await this.models.Vehicle.findById(body.vehicleID);
-    // if (!vehicle) { callback('invalid parameters, no location', null); }
-
-    // const autoService = await this.models.AutoService.create({
-    //     id: uuidV1(),
-    //     status: status,
-    //     notes: notes,
-    //     scheduledDate: scheduledDate,
-    // });
-    // autoService.setMechanic(mechanic, { save: false });
-    // autoService.setUser(user, { save: false });
-    // autoService.setVehicle(vehicle, { save: false });
-    // autoService.setLocation(location, { save: false });
-    // autoService.setPrice(price, { save: false });
-    // const autoService = await autoService.save();
-
     self = this;
     this.createAutoService(user, mechanicID, status, priceID, scheduledDate, vehicleID, sourceID, serviceEntities, locationID, location, notes, async function (err, autoService) {
         if (err) {
             callback(err, null);
             return;
         }
-
-        // var entityTypeToSpecificEntities = {};
-
-        // for (i = 0; i < serviceEntities.length; i++) {
-        //     var val = serviceEntities[i];
-        //     const entityType = val.entityType;
-        //     if (entityTypeToSpecificEntities[entityType] == null) {
-        //         entityTypeToSpecificEntities[entityType] = []
-        //     }
-        //     entityTypeToSpecificEntities[entityType].push(val.specificService);
-        // }
-
-        // var serviceEntityPromises = [];
-        // var keys = Object.keys(entityTypeToSpecificEntities)
-        // for (i = 0; i < keys.length; i++) {
-        //     const key = keys[i];
-        //     var specificServices = entityTypeToSpecificEntities[key];
-        //     for (j = 0; j < specificServices.length; j++) {
-        //         if (key == 'OIL_CHANGE') {
-        //             const specificService = specificServices[j];
-        //             const p = this.models.OilChange.create({
-        //                 id: uuidV1(),
-        //                 oilType: specificService.oilType
-        //             }).then(oilChange => {
-        //                 return this.models.ServiceEntity.create({
-        //                     id: uuidV1(),
-        //                     entityType: key,
-        //                     autoService: autoService,
-        //                     oilChange: oilChange
-        //                 }).then(serviceEntity => {
-        //                     serviceEntity.setOilChange(oilChange);
-        //                     serviceEntity.setAutoService(autoService);
-        //                     return serviceEntity.save();
-        //                 });
-        //             });
-        //             serviceEntityPromises.push(p);
-        //         }
-        //     }
-        // }
-
-        // const values = await Promise.all(serviceEntityPromises);
-
         const charge = await self.stripeCharges.createCharge(sourceID, autoService.id, user);
         if (!charge) {
             callback('unable to create charge', null);
@@ -196,36 +105,6 @@ AutoServiceScheduler.prototype.scheduleAutoService = async function (user, statu
                 callback('unable to save balance or charge', null);
             });
         });
-
-
-
-        // const region = await mechanic.getRegion();
-        // const locationPoint = { latitude: location.point.coordinates[1], longitude: location.point.coordinates[0] };
-        // const regionPoint = { latitude: region.origin.coordinates[1], longitude: region.origin.coordinates[0] };
-        // const meters = distance.metersBetween(locationPoint, regionPoint);
-
-        // const priceParts = await models.PricePart.findAll({
-        //     where: {
-        //         priceID: price.id,
-        //         key: {
-        //             [Op.or]: ['oilChange', 'distance']
-        //         }
-        //     }
-        // });
-
-        // var mechanicCost = 0
-        // priceParts.forEach(function (part) {
-        //     mechanicCost += part.value * 0.7;
-        // });
-
-        // const transactionMetadata = await models.TransactionMetadata.create({ id: uuidV1(), stripeTransactionID: stripeTransactionID, mechanicCost: mechanicCost, drivingDistance: meters });
-        // transactionMetadata.setAutoService(newAutoService, { save: false });
-        // transactionMetadata.setMechanic(mechanic, { save: false });
-        // newAutoService.transactionMetadata = transactionMetadata;
-        // await transactionMetadata.save();
-        // const s = await newAutoService.save();
-        // return res.json(s);
-
     });
 }
 
