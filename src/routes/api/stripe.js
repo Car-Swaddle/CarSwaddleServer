@@ -8,6 +8,7 @@ const uuidV1 = require('uuid/v1');
 
 module.exports = function (router, models) {
 
+    
     router.get('/stripe/account', bodyParser.json(), async (req, res) => {
         const mechanic = await req.user.getMechanic();
         stripe.accounts.retrieve(mechanic.stripeAccountID, (err, account) => {
