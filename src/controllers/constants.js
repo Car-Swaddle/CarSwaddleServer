@@ -15,11 +15,11 @@ module.exports = Object.freeze({
 function stripeSecretKeyForCurrentEnvironment() {
     if (process.env.ENV == 'production') {
         // return 'pk_live_ZJkoNBROBK0ttmZLDNfNF0Cw00VwQ7JjFw';
-        return 'pk_test_93FPMcPQ4mSaWfjtMWlkGvDr00ytb8KnDJ';
-        
+        return 'sk_test_FIXQgdKIimfTs9h2Rk88BFJ200B0WF7pE7';
+
     } else if (process.env.ENV == 'staging') {
-        return 'pk_test_93FPMcPQ4mSaWfjtMWlkGvDr00ytb8KnDJ';
+        return 'sk_test_FIXQgdKIimfTs9h2Rk88BFJ200B0WF7pE7';
     } else if (process.env.ENV == 'dev') {
-        return 'pk_test_93FPMcPQ4mSaWfjtMWlkGvDr00ytb8KnDJ';
+        return 'sk_test_FIXQgdKIimfTs9h2Rk88BFJ200B0WF7pE7';
     }
 }
