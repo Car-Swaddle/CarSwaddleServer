@@ -63,6 +63,18 @@ AccountCreation.prototype.createStripeMechanicAccount = function (mechanic, remo
     });
 }
 
+AccountCreation.prototype.deleteMechanicAccount = function (mechanic, callback) {
+    this.models.Mechanic.destroy({
+        where: {
+            id: mechanic.id
+        }
+    }).then(object => {
+        callback(null);
+    }).catch(err => {
+        callback(err);
+    });
+}
+
 AccountCreation.prototype.findOrCreateMechanic = function (user, callback) {
     this.models.Mechanic.findOrCreate({
         where: { userID: user.id },
@@ -85,9 +97,15 @@ AccountCreation.prototype.completeMechanicCreationOrUpdate = function (user, rem
     this.findOrCreateMechanic(user, function (user, mechanic, created) {
         if (created == true) {
             self.createStripeMechanicAccount(mechanic, remoteAddress, user.email, function (err, stripeAccount) {
-                self.findOrCreateOilChangePricing(mechanic, function (err, oilChangePricing) {
-                    callback(err, mechanic);
-                });
+                if (err) {
+                    self.deleteMechanicAccount(mechanic, function (deleteError) {
+                        callback(err);
+                    });
+                } else {
+                    self.findOrCreateOilChangePricing(mechanic, function (err, oilChangePricing) {
+                        callback(err, mechanic);
+                    });
+                }
             });
         } else {
             self.findOrCreateOilChangePricing(mechanic, function (err, oilChangePricing) {

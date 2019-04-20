@@ -5,7 +5,7 @@ module.exports = Object.freeze({
     DEFAULT_SYNTHETIC_PRICE: 5600, // in cents
     DEFAULT_HIGH_MILEAGE_PRICE: 5850, // in cents
     DEFAULT_CENTS_PER_MILE: 50, // in cents
-    STRIPE_SECRET_KEY: stripeSecretKeyForCurrentEnvironment(),
+    STRIPE_SECRET_KEY: 'sk_test_FIXQgdKIimfTs9h2Rk88BFJ200B0WF7pE7',
     STRIPE_PLATFORM_ACCOUNT_ID: 'acct_1EGAxMDGwCXJzLur', // carswaddle.net
     TWILIO_SID: 'AC347857af1bb465179b76b5a273c68e87',
     TWILIO_AUTH_TOKEN: 'fb54bdcc2d5a762269c53b20966ab408',

@@ -12,7 +12,7 @@ module.exports = function (router, models) {
         var radius = req.body.radius;
         req.user.getMechanic().then(async function (mechanic) {
             const previousRegion = await mechanic.getRegion();
-            if (!previousRegion) {
+            if (previousRegion) {
                 await previousRegion.destroy();
             }
             var point = { type: 'Point', coordinates: [longitude, latitude] };
