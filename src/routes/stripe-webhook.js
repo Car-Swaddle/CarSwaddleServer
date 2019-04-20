@@ -2,8 +2,8 @@ const constants = require('../controllers/constants');
 const stripe = require('stripe')(constants.STRIPE_SECRET_KEY);
 const bodyParser = require('body-parser');
 const pushService = require('../notifications/pushNotifications.js');
-const liveEndpointSecret = 'whsec_w70LXPKXB954f8H41fKnc7HBIwrBHyoT';
-const testEndpointSecret = 'whsec_Mihcejqv5prmk29eoHGuytmCFOwfDqzG';
+const liveEndpointSecret = 'whsec_jVeHLJxhNsz8bfXPrD58FjVgYG1yLpLc';
+const testEndpointSecret = 'whsec_NZ2S54mDSbeRpWB5NDVXOGrVxJpOyEY0';
 const stripeChargesFile = require('../controllers/stripe-charges.js');
 
 module.exports = function (app, models) {

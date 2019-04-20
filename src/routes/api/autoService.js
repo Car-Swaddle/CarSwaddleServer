@@ -200,7 +200,7 @@ module.exports = function (router, models) {
         Promise.all(promises).then(values => {
             models.AutoService.find({
                 where: { id: autoService.id },
-                include: includeDict,
+                include: autoServiceScheduler.includeDict(),
             }).then(newAutoService => {
 
                 if (changedByMechanic == true) {
