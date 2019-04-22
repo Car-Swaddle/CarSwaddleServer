@@ -2085,9 +2085,9 @@ qs@6.5.2, qs@~6.5.2:
   integrity sha512-N5ZAX4/LxJmF+7wN74pUD6qAh9/wnvdQcjq9TZjevvXzSUo7bfmw91saqMjzGS2xq91/odN2dW/WOl7qQHNDGA==
 
 qs@^6.6.0:
-  version "6.6.0"
-  resolved "https://registry.yarnpkg.com/qs/-/qs-6.6.0.tgz#a99c0f69a8d26bf7ef012f871cdabb0aee4424c2"
-  integrity sha512-KIJqT9jQJDQx5h5uAVPimw6yVg2SekOKu959OCtktD3FjzbpvaPr8i4zzg07DOMz+igA4W/aNM7OV8H37pFYfA==
+  version "6.7.0"
+  resolved "https://registry.yarnpkg.com/qs/-/qs-6.7.0.tgz#41dc1a015e3d581f1621776be31afb2876a9b1bc"
+  integrity sha512-VCdBRNFTX1fyE7Nb6FYoURo/SPe62QCaAyzJvUjwRaIsc+NePBEniHlvxFmmX56+HZphIGtV0XeCirBtpDrTyQ==
 
 querystring@0.2.0:
   version "0.2.0"
@@ -2511,9 +2511,9 @@ strip-json-comments@^2.0.1:
   integrity sha1-PFMZQukIwml8DsNEhYwobHygpgo=
 
 stripe@^6.25.1:
-  version "6.25.1"
-  resolved "https://registry.yarnpkg.com/stripe/-/stripe-6.25.1.tgz#b19fce283236107bc52d4a3735d183d1c4957c4c"
-  integrity sha512-e1FCDQgVWzHcyD3HBzMzl9ilhHyl9g/IFl+YlxGIx6l/5nxa0hLPK8dcHqrFyvJDkob37JzvZBaBrn45hJM7Eg==
+  version "6.29.0"
+  resolved "https://registry.yarnpkg.com/stripe/-/stripe-6.29.0.tgz#9f56958b30ae126d1cf383d16e3f5e6651e5afe1"
+  integrity sha512-SsYYztu0W0edx41mHIT1B5eX+hpVqsXUqZhbqXrVSkE7vnLdPzS9O5OjenudVUaRjdgB02ETQNU7utSp5FNGoQ==
   dependencies:
     lodash.isplainobject "^4.0.6"
     qs "^6.6.0"
