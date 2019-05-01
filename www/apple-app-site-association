@@ -1,19 +1,19 @@
 {
    "webcredentials": {
        "apps": [    
-           "MG7WLQ6J4A.CS.CarSwaddle",
-           "MG7WLQ6J4A.CS.CarSwaddleMechanic"
+           "977533WLK8.com.carswaddle.carswaddle",
+           "977533WLK8.com.carswaddle.carswaddle"
         ]
     },
     "applinks": {
         "apps": [],
         "details": [
             {
-                "appID": "MG7WLQ6J4A.CS.CarSwaddle",
+                "appID": "977533WLK8.com.carswaddle.carswaddle",
                 "paths": ["*"]
             },
             {
-                "appID": "MG7WLQ6J4A.CS.CarSwaddleMechanic",
+                "appID": "977533WLK8.com.carswaddle.carswaddlemechanic",
                 "paths": ["*"]
             }
         ]

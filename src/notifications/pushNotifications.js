@@ -4,24 +4,24 @@ var dateFormat = require('dateformat');
 var carSwaddleProductionOptions = {
     token: {
         key: "src/resources/CarSwaddleAPNSKey.p8",
-        keyId: "Y3N72N8FST",
-        teamId: "MG7WLQ6J4A",
+        keyId: "G665BU53V8",
+        teamId: "977533WLK8",
     },
     production: true
-};
+}; // Y3N72N8FST
 
 var carSwaddleDebugOptions = {
     token: {
         key: "src/resources/CarSwaddleAPNSKey.p8",
-        keyId: "Y3N72N8FST",
-        teamId: "MG7WLQ6J4A",
+        keyId: "G665BU53V8",
+        teamId: "977533WLK8",
     },
     production: false
 };
 
 
-const carSwaddleBundleID = "CS.CarSwaddle";
-const carSwaddleMechanicBundleID = "CS.CarSwaddleMechanic";
+const carSwaddleBundleID = "com.carswaddle.carswaddle";
+const carSwaddleMechanicBundleID = "com.carswaddle.carswaddlemechanic";
 
 class PushService {
 
