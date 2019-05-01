@@ -22,6 +22,7 @@ const kyleEmailAddress = 'kyle@carswaddle.com';
 const fromEmailAddress = 'Kyle <' + kyleEmailAddress + '>';
 const host = 'car-swaddle.herokuapp.com';
 
+const allowEmail = false;
 
 class Emailer {
 
@@ -30,10 +31,17 @@ class Emailer {
     }
 
     sendMail(mailOptions) {
+        if (!allowEmail) {
+            return;
+        }
         return transporter.sendMail(mailOptions);
     }
 
     sendUserOilChangeReminderMail(autoService, callback) {
+        if (!allowEmail) {
+            callback('no emails allowed');
+            return;
+        }
         const mailOptions = this.reminderUserEmailOptions(autoService);
         return this.sendMail(mailOptions).then(info => {
             console.log(info);
@@ -51,6 +59,10 @@ class Emailer {
     }
 
     sendEmailVerificationEmail(user, callback) {
+        if (!allowEmail) {
+            callback('no emails allowed');
+            return;
+        }
         var date = new Date();
         var self = this;
         return this.models.Verification.create({
