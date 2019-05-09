@@ -59,10 +59,6 @@ class Emailer {
     }
 
     sendEmailVerificationEmail(user, callback) {
-        if (!allowEmail) {
-            callback('no emails allowed');
-            return;
-        }
         var date = new Date();
         var self = this;
         return this.models.Verification.create({

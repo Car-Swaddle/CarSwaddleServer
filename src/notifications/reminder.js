@@ -1,6 +1,5 @@
 const schedule = require('node-schedule');
 const pushNotification = require('./pushNotifications.js');
-const { DateTime } = require('luxon');
 
 class Reminder {
 
