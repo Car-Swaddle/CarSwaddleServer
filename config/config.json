@@ -4,7 +4,8 @@
     "password": "password",
     "database": "carswaddle",
     "host": "127.0.0.1",
-    "dialect": "postgres"
+    "dialect": "postgres",
+    "port": "3000"
   },
   "staging": {
     "username": "kylekendall",

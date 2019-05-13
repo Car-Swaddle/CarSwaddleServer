@@ -243,7 +243,7 @@ module.exports = function (router, models) {
                 if (didChangeStatus == true &&
                      autoService.status == models.AutoService.STATUS.canceled && 
                      newAutoService.chargeID != null &&
-                     changedByMechanic || (changedByUser && new Date() < dayBeforeDate)) {
+                     (changedByMechanic || (changedByUser && new Date() < dayBeforeDate))) {
                     newAutoService.getPrice().then(price => {
                         if (price.totalPrice) {
                             stripe.refunds.create({
