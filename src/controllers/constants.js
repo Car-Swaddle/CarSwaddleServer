@@ -10,6 +10,7 @@ module.exports = Object.freeze({
     TWILIO_SID: 'AC347857af1bb465179b76b5a273c68e87',
     TWILIO_AUTH_TOKEN: 'fb54bdcc2d5a762269c53b20966ab408',
     TWILIO_PHONE: '+17727636586',
+    ADMIN_SECRET: '169ed15a-e030-4f59-86c7-8684bf6ef628',
 });
 
 function stripeSecretKeyForCurrentEnvironment() {

@@ -183,6 +183,11 @@ module.exports = function (router, models) {
       didChangeUser = true;
     }
 
+    if (body.adminKey != null && body.adminKey == constants.ADMIN_SECRET) {
+      user.adminAttribute = models.User.ADMIN_ATTRIBUTE.admin;
+      didChangeUser = true;
+    }
+
     if (didChangeUser == true) {
       Promise.all(promises).then(values => {
         user.save().then(savedUser => {

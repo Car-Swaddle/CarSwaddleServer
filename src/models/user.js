@@ -24,7 +24,7 @@ const user = function (sequelize, DataTypes) {
         },
         password: {
             type: DataTypes.STRING,
-        }, 
+        },
         stripeCustomerID: {
             type: DataTypes.STRING,
             allowNull: true,
@@ -45,10 +45,15 @@ const user = function (sequelize, DataTypes) {
             type: DataTypes.STRING,
             allowNull: false,
             defaultValue: 'America/Denver'
-        }
+        },
+        adminAttribute: {
+            type: DataTypes.STRING,
+            allowNull: false,
+            defaultValue: 'user'
+        },
     }, {
-        freezeTableName: true,
-    });
+            freezeTableName: true,
+        });
 
     User.associate = models => {
         User.hasMany(models.AutoService, { foreignKey: 'userID' });
@@ -78,7 +83,7 @@ const user = function (sequelize, DataTypes) {
         if (values.origin != null) {
             values.latitude = values.origin.coordinates[1];
             values.longitude = values.origin.coordinates[0];
-        
+
             // values.mechanicID = values.regionID;
 
             delete values.origin;
@@ -91,6 +96,11 @@ const user = function (sequelize, DataTypes) {
     };
 
     User.defaultAttributes = ['firstName', 'lastName', 'id', 'profileImageID', 'email', 'phoneNumber', 'timeZone'];
+
+    User.ADMIN_ATTRIBUTE = {
+        user: 'user',
+        admin: 'admin',
+    };
 
     return User;
 };
