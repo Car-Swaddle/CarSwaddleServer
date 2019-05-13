@@ -7,12 +7,11 @@
     "dialect": "postgres"
   },
   "staging": {
-    "username": "lrsksgoquqnivc",
-    "use_env_variable": "DATABASE_URL",
-    "database": "d11i5sohnkq0io",
-    "host": "ec2-54-235-169-191.compute-1.amazonaws.com",
-    "dialect": "postgres",
-    "port": "5432"
+    "username": "kylekendall",
+    "password": "password",
+    "database": "carswaddle",
+    "host": "127.0.0.1",
+    "dialect": "postgres"
   },
   "production": {
     "username": "lrsksgoquqnivc",
