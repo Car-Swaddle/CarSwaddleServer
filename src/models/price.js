@@ -7,7 +7,7 @@ const price = function (sequelize, DataTypes) {
         },
         totalPrice: {
             type: DataTypes.INTEGER,
-        }
+        },
     }, {
         freezeTableName: true,
     });

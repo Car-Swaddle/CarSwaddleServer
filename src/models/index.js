@@ -4,6 +4,7 @@ const Reminder = require('../notifications/reminder.js');
 var sequelize = null;
 console.log('process.env.DATABASE: ' + process.env.DATABASE_URL);
 console.log('process.env: ' + process.env);
+
 if (process.env.DATABASE_URL) {
   // the application is executed on Heroku
   sequelize = new Sequelize(process.env.DATABASE_URL, {
@@ -14,7 +15,7 @@ if (process.env.DATABASE_URL) {
 } else {
   // the application is executed on the local machine
   sequelize = new Sequelize('carswaddle', 'kylekendall', 'password', {
-    dialect: 'postgres',
+    dialect: 'postgres'
   });
 }
 
@@ -40,6 +41,7 @@ const models = {
   MechanicMonthDebit: sequelize.import('./mechanic-month-debit'),
   MechanicPayoutDebit: sequelize.import('./mechanic-payout-debit'),
   OilChangePricing: sequelize.import('./oilChangePricing'),
+  PasswordReset: sequelize.import('./passwordReset'),
 };
 
 Object.keys(models).forEach(key => {

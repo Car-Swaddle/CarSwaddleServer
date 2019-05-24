@@ -11,6 +11,7 @@ module.exports = function (app, models, passport) {
     const emailFile = require('../notifications/email.js');
     const emailer = new emailFile(models);
     const accountCreation = accountCreationFile(models);
+    const resetPasswordController = require('../controllers/passwordReset')(models);
 
     app.post('/login', bodyParser.urlencoded({ extended: true }), function (req, res, next) {
         passport.authenticate('local-login', { session: false }, (err, user, info) => {
@@ -77,6 +78,40 @@ module.exports = function (app, models, passport) {
                 });
             });
         })(req, res);
+    });
+
+
+    app.post('/api/request-reset-password', bodyParser.urlencoded({ extended: true }), function (req, res) {
+        const email = req.body.email;
+        if (!email) {
+            return res.status(403).send('Must include email');
+        }
+        resetPasswordController.requestResetPassword(email, (err, resetPassword) => {
+            if (!err) {
+                return res.status(200).send({ 'success': true });
+            } else if (err == 404) {
+                return res.status(404).send('error generating password reset');
+            } else {
+                return res.status(403).send('error generating password reset');
+            }
+        });
+    });
+
+    app.post('/api/reset-password', bodyParser.urlencoded({ extended: true }), function (req, res) {
+        const newPassword = req.body.newPassword;
+        const token = req.body.token;
+        if (!newPassword || !token) {
+            return res.status(403).send('Must include email');
+        }
+        resetPasswordController.setNewPassword(token, newPassword, (err, user) => {
+            if (!err) {
+                return res.status(200).send(user);
+            } else if (err == 404) {
+                return res.status(404).send('error generating password reset');
+            } else {
+                return res.status(403).send(err);
+            }
+        });
     });
 
 };

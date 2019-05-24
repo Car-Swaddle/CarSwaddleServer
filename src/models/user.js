@@ -46,11 +46,6 @@ const user = function (sequelize, DataTypes) {
             allowNull: false,
             defaultValue: 'America/Denver'
         },
-        adminAttribute: {
-            type: DataTypes.STRING,
-            allowNull: false,
-            defaultValue: 'user'
-        },
     }, {
             freezeTableName: true,
         });

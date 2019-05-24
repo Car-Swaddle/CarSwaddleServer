@@ -22,7 +22,7 @@ const kyleEmailAddress = 'kyle@carswaddle.com';
 const fromEmailAddress = 'Kyle <' + kyleEmailAddress + '>';
 const host = 'car-swaddle.herokuapp.com';
 
-const allowEmail = false;
+const allowEmail = true;
 
 class Emailer {
 
