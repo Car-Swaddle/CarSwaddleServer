@@ -11,6 +11,7 @@ module.exports = Object.freeze({
     TWILIO_AUTH_TOKEN: 'fb54bdcc2d5a762269c53b20966ab408',
     TWILIO_PHONE: '+17727636586',
     ADMIN_SECRET: '169ed15a-e030-4f59-86c7-8684bf6ef628',
+    CURRENT_DOMAIN: currentDomain(),
 });
 
 function stripeSecretKeyForCurrentEnvironment() {
@@ -22,5 +23,16 @@ function stripeSecretKeyForCurrentEnvironment() {
         return 'sk_test_FIXQgdKIimfTs9h2Rk88BFJ200B0WF7pE7';
     } else if (process.env.ENV == 'dev') {
         return 'sk_test_FIXQgdKIimfTs9h2Rk88BFJ200B0WF7pE7';
+    }
+}
+
+function currentDomain() {
+    if (process.env.ENV == 'production') {
+        // return 'pk_live_ZJkoNBROBK0ttmZLDNfNF0Cw00VwQ7JjFw';
+        return 'www.carswaddle.com';
+    } else if (process.env.ENV == 'staging') {
+        return 'www.safe-ridge-47447.herokuapp.com';
+    } else if (process.env.ENV == 'dev') {
+        return 'localhost';
     }
 }
