@@ -23,7 +23,7 @@ const kyleEmailAddress = 'kyle@carswaddle.com';
 const fromEmailAddress = 'Kyle <' + kyleEmailAddress + '>';
 const host = 'car-swaddle.herokuapp.com';
 
-const unsubscribeURL = 'https://' + constants.CURRENT_DOMAIN + '/api/email-unsubscribe';
+const unsubscribeURL = 'https://' + constants.CURRENT_DOMAIN + '/email-unsubscribe';
 
 const allowEmail = true;
 
