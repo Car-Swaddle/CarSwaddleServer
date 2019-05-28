@@ -42,26 +42,32 @@ class Emailer {
 
     sendUserOilChangeReminderMail(autoService, callback) {
         if (!allowEmail) {
-            callback('no emails allowed');
+            if (callback) {
+                callback('no emails allowed');
+            }
             return;
         }
+        const self = this;
         this.emailsAllowed(autoService.user, function (emailsAllowed) {
             if (!emailsAllowed) {
-                callback(null);
+                if (callback) {
+                    callback(null);
+                }
             }
-            const mailOptions = this.reminderUserEmailOptions(autoService);
-            return this.sendMail(mailOptions).then(info => {
-                console.log(info);
-                if (!callback) {
-                    return;
-                }
-                callback(null);
-            }).catch(err => {
-                console.log(err);
-                if (!callback) {
-                    return;
-                }
-                callback(err);
+            self.reminderUserEmailOptions(autoService, function (err, mailOptions) {
+                self.sendMail(mailOptions).then(info => {
+                    console.log(info);
+                    if (!callback) {
+                        return;
+                    }
+                    callback(null);
+                }).catch(err => {
+                    console.log(err);
+                    if (!callback) {
+                        return;
+                    }
+                    callback(err);
+                });
             });
         });
     }
@@ -97,27 +103,36 @@ class Emailer {
         return this.emailOptions(user.email, subject, text, html);
     }
 
-    async reminderUserEmailOptions(autoService) {
-        const user = autoService.user;
-        const subject = "Car Swaddle Upcoming Oil Change";
-        const dateTime = DateTime.fromJSDate(autoService.scheduledDate, { setZone: true, zone: user.timeZone || 'America/Denver' });
-        const dateString = dateTime.toFormat("cccc LLLL d, h:mm ZZZZ");
-        console.log(dateString);
-        var text = user.firstName + ', you have a Car Swaddle oil change coming up:\n' + dateString;
-        var html = user.firstName + ', you have a Car Swaddle oil change coming up:\n' + dateString;
+    reminderUserEmailOptions(autoService, callback) {
+        const self = this;
+        autoService.getUser().then(user => {
+            const subject = "Car Swaddle Upcoming Oil Change";
+            const dateTime = DateTime.fromJSDate(autoService.scheduledDate, { setZone: true, zone: user.timeZone || 'America/Denver' });
+            const dateString = dateTime.toFormat("cccc LLLL d, h:mm ZZZZ");
+            console.log(dateString);
+            var text = user.firstName + ', you have a Car Swaddle oil change coming up:\n' + dateString;
+            var html = user.firstName + ', you have a Car Swaddle oil change coming up:\n' + dateString;
 
-        const subscriptionSettings = await this.fetchSubscriptionSettings(user.id);
-        const unsubscribeID = subscriptionSettings.unsubscribeID;
-        if (unsubscribeID) {
-            text += '\n\n' + this.unsubscribeLink(unsubscribeID);
-            html += '\n\n' + this.unsubscribeHRef(unsubscribeID);
-        }
+            const self = this;
+            self.fetchSubscriptionSettings(user.id).then(subscriptionSettings => {
+                const unsubscribeID = subscriptionSettings[0].unsubscribeID;
+                if (unsubscribeID) {
+                    text += '\n\n' + self.unsubscribeLink(unsubscribeID);
+                    html += '\n\n' + self.unsubscribeHRef(unsubscribeID);
+                }
 
-        return this.emailOptions(user.email, subject, text, html);
+                const options = self.emailOptions(user.email, subject, text, html);
+                callback(null, options);
+            }).catch(err => {
+                callback(err, null);
+            });
+        }).catch(err => {
+            callback(err, null);
+        })
     }
 
     unsubscribeHRef(unsubscribeID) {
-        return '<a href=' + unsubscribeLink(unsubscribeID) + '>' + 'unsubscribe' + '</a>';
+        return '<a href=' + this.unsubscribeLink(unsubscribeID) + '>' + 'unsubscribe' + '</a>';
     }
 
     unsubscribeLink(unsubscribeID) {
@@ -125,14 +140,14 @@ class Emailer {
     }
 
     fetchSubscriptionSettings(userID) {
-        return this.models.subscriptionSettings.findOrCreate({
+        return this.models.SubscriptionSettings.findOrCreate({
             where: { userID: userID },
             defaults: { id: uuidV1(), userID: userID, sendReminderEmails: true, unsubscribeID: uuidV1() }
         });
     }
 
     emailsAllowed(userID, callback) {
-        this.models.subscriptionSettings.findOrCreate({
+        this.models.SubscriptionSettings.findOrCreate({
             where: { userID: userID },
             defaults: { id: uuidV1(), userID: userID, sendReminderEmails: true, unsubscribeID: uuidV1() }
         }).then(subscriptionSettings => {

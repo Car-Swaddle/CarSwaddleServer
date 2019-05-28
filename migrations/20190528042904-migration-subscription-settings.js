@@ -9,7 +9,7 @@ module.exports = {
       Example:
       return queryInterface.createTable('users', { id: Sequelize.INTEGER });
     */
-    return queryInterface.createTable('passwordReset', {
+    return queryInterface.createTable('subscriptionSettings', {
       createdAt: Sequelize.DATE,
       updatedAt: Sequelize.DATE,
       id: {
@@ -17,17 +17,18 @@ module.exports = {
         primaryKey: true,
         unique: true
       },
-      token: {
+      userID: {
         type: Sequelize.STRING,
         allowNull: false
       },
-      email: {
+      sendReminderEmails: {
+        type: Sequelize.BOOLEAN,
+        allowNull: false,
+        defaultValue: true
+      },
+      unsubscribeID: {
         type: Sequelize.STRING,
         allowNull: false
-      },
-      expirationDate: {
-        type: Sequelize.DATE,
-        allowNull: true
       },
     });
   },
@@ -40,9 +41,6 @@ module.exports = {
       Example:
       return queryInterface.dropTable('users');
     */
-   return queryInterface.dropTable('passwordReset');
-  //  .then(() => {
-  //    return queryInterface.removeColumn( 'address', 'line2');
-  //  });
+   return queryInterface.dropTable('subscriptionSettings');
   }
 };

@@ -9,9 +9,11 @@ module.exports = {
       Example:
       return queryInterface.createTable('users', { id: Sequelize.INTEGER });
     */
-    return queryInterface.addColumn('location', 'mechanicID', {
-      type: Sequelize.UUID, allowNull: true,
-    });
+    return queryInterface.removeColumn('subscriptionSettings', 'unsubscribeID')
+      .then(() => queryInterface.addColumn('subscriptionSettings', 'unsubscribeID', {
+        type: Sequelize.STRING,
+        allowNull: false
+      }));
   },
 
   down: (queryInterface, Sequelize) => {
@@ -22,6 +24,9 @@ module.exports = {
       Example:
       return queryInterface.dropTable('users');
     */
-    return queryInterface.removeColumn('location', 'mechanicID');
+    return queryInterface.addColumn('subscriptionSettings', 'unsubscribeID', {
+      type: Sequelize.STRING,
+      allowNull: false
+    }).then(() => queryInterface.removeColumn('subscriptionSettings', 'unsubscribeID'));
   }
 };

@@ -15,7 +15,7 @@ const subscriptionSettings = function (sequelize, DataTypes) {
             defaultValue: true
         },
         unsubscribeID: {
-            type: DataTypes.DATE,
+            type: DataTypes.STRING,
             allowNull: false
         },
     }, {
