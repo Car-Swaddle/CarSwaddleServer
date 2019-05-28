@@ -295,6 +295,7 @@ module.exports = function (router, models) {
             where: { userID: req.user.id }
         }).then(autoservice => {
             if (!autoservice) {
+                res.status(500).send('no auto service');
                 return;
             }
             emailer.sendUserOilChangeReminderMail(autoservice, function (err) {
