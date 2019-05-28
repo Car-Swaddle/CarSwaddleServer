@@ -10,11 +10,11 @@
         "details": [
             {
                 "appID": "977533WLK8.com.carswaddle.carswaddle",
-                "paths": ["car-swaddle/reset-password"]
+                "paths": ["/car-swaddle/reset-password"]
             },
             {
                 "appID": "977533WLK8.com.carswaddle.carswaddlemechanic",
-                "paths": ["car-swaddle-mechanic/reset-password"]
+                "paths": ["/car-swaddle-mechanic/reset-password"]
             }
         ]
     }
