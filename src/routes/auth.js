@@ -83,10 +83,11 @@ module.exports = function (app, models, passport) {
 
     app.post('/api/request-reset-password', bodyParser.urlencoded({ extended: true }), function (req, res) {
         const email = req.body.email;
+        const appName = req.body.appName || 'car-swaddle';
         if (!email) {
             return res.status(403).send('Must include email');
         }
-        resetPasswordController.requestResetPassword(email, (err, resetPassword) => {
+        resetPasswordController.requestResetPassword(email, appName, (err, resetPassword) => {
             if (!err) {
                 return res.status(200).send({ 'success': true });
             } else if (err == 404) {

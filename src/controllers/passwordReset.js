@@ -4,7 +4,7 @@ const uuidV1 = require('uuid/v1');
 const stripe = require('stripe')(constants.STRIPE_SECRET_KEY);
 const emailFile = require('../notifications/email');
 
-const resetPasswordDomain = 'www.carswaddle.com/reset-password/';
+const resetPasswordDomain = 'reset-password';
 
 module.exports = function (models) {
     return new PasswordResetController(models);
@@ -20,7 +20,7 @@ PasswordResetController.prototype.init = function () {
 
 };
 
-PasswordResetController.prototype.requestResetPassword = async function (email, callback) {
+PasswordResetController.prototype.requestResetPassword = async function (email, appName, callback) {
     if (!email) {
         callback('no email', null);
         return;
@@ -45,7 +45,7 @@ PasswordResetController.prototype.requestResetPassword = async function (email, 
             id: uuidV1(), email: email, token: newToken, expirationDate: tomorrow
         }).then(passwordReset => {
             console.log('created new password reset');
-            self.sendForgotPasswordEmail(email, newToken);
+            self.sendForgotPasswordEmail(email, appName, newToken);
             callback(null, passwordReset);
         }).catch(err => {
             callback(err, null);
@@ -112,12 +112,15 @@ PasswordResetController.prototype.tokenIsValid = function (token, callback) {
     });
 }
 
-PasswordResetController.prototype.sendForgotPasswordEmail = function (email, token) {
-    const text = "Hello from Car Swaddle,\n\nWe've received a request to reset your password. Please click this link to reset your password:\n" + resetPasswordDomain + "?resetToken=" + token + "\n\nIf you didn't request this, you can ignore this.\n\nThanks!";
+PasswordResetController.prototype.sendForgotPasswordEmail = function (email, appName, token) {
+    const text = "Hello from Car Swaddle,\n\nWe've received a request to reset your password. Please click this link to reset your password:\n" + this.resetPasswordDomain(appName, token) + "\n\nIf you didn't request this, you can ignore this.\n\nThanks!";
     const options = this.emailer.emailOptions(email, 'Car Swaddle password reset', text, null);
     this.emailer.sendMail(options);
 }
 
+PasswordResetController.prototype.resetPasswordDomain = function (appName, token) {
+    return constants.CURRENT_DOMAIN + '/' + appName + '/' + resetPasswordDomain + "?resetToken=" + token
+}
 
 PasswordResetController.prototype.sendResetPasswordEmail = function (email) {
     const text = "Hello from Car Swaddle!\n\nYou've successfully changed your password!";
