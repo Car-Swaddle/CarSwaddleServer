@@ -53,6 +53,7 @@ class Emailer {
                 if (callback) {
                     callback(null);
                 }
+                return;
             }
             self.reminderUserEmailOptions(autoService, function (err, mailOptions) {
                 self.sendMail(mailOptions).then(info => {
@@ -99,7 +100,7 @@ class Emailer {
     verificationEmailOptions(user, link) {
         const subject = 'Car Swaddle Email Verification';
         const text = 'Hello from Car Swaddle! Please click on this link to verify your email. ' + link + '\n\n';
-        const html = 'Hello from Car Swaddle!<br>Please Click on this link to verify your email.</br><a href=' + link + '>' + link + '</a>';
+        const html = 'Hello from Car Swaddle!<br>Please Click on this link to verify your email.<br><a href=' + link + '>' + link + '</a>';
         return this.emailOptions(user.email, subject, text, html);
     }
 
@@ -118,7 +119,7 @@ class Emailer {
                 const unsubscribeID = subscriptionSettings[0].unsubscribeID;
                 if (unsubscribeID) {
                     text += '\n\n' + self.unsubscribeLink(unsubscribeID);
-                    html += '\n\n' + self.unsubscribeHRef(unsubscribeID);
+                    html += '<br><br>' + self.unsubscribeHRef(unsubscribeID);
                 }
 
                 const options = self.emailOptions(user.email, subject, text, html);
@@ -132,7 +133,7 @@ class Emailer {
     }
 
     unsubscribeHRef(unsubscribeID) {
-        return '<a href=' + this.unsubscribeLink(unsubscribeID) + '>' + 'unsubscribe' + '</a>';
+        return '<a href=' + this.unsubscribeLink(unsubscribeID) + ' style="color: rgb(66,66,66)" size="-1">' + 'unsubscribe' + '</a>';
     }
 
     unsubscribeLink(unsubscribeID) {
