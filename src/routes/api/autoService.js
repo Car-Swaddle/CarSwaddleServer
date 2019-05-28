@@ -297,7 +297,15 @@ module.exports = function (router, models) {
             if (!autoservice) {
                 return;
             }
-            emailer.sendUserOilChangeReminderMail(autoservice);
+            emailer.sendUserOilChangeReminderMail(autoservice, function (err) {
+                if (err) {
+                    res.status(500).send('unable to send email' + err);
+                } else {
+                    res.status(400).send('successfully sent email');
+                }
+            });
+        }).catch(err => {
+            res.status(500).send('unable to send email' + err);
         });
     });
 
