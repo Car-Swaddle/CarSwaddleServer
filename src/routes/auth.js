@@ -118,21 +118,21 @@ module.exports = function (app, models, passport) {
     app.get('/email-unsubscribe', bodyParser.json(), function (req, res) {
         const unsubscribeID = req.query.unsubscribeID;
         if (!unsubscribeID) {
-          return res.status(422).send('Invalid parameter(s)');
+            return res.status(422).send('Invalid parameter(s)');
         }
-    
+
         return models.SubscriptionSettings.findOne({
-          where: { unsubscribeID: unsubscribeID }
+            where: { unsubscribeID: unsubscribeID }
         }).then(subscriptionSettings => {
-          subscriptionSettings.sendReminderEmails = false
-          subscriptionSettings.save().then(settings => {
-            return res.status(400).send('Successfully Unsubscribed');
-          }).catch(err => {
-            return res.status(403).send('Unable to unsubscribe');
-          })
+            subscriptionSettings.sendReminderEmails = false
+            subscriptionSettings.save().then(settings => {
+                return res.status(400).send('Successfully Unsubscribed');
+            }).catch(err => {
+                return res.status(403).send('Unable to unsubscribe');
+            })
         }).catch(error => {
-          return res.status(403).send('Unable to unsubscribe');
+            return res.status(403).send('Unable to unsubscribe');
         });
-      });
+    });
 
 };
