@@ -43,6 +43,9 @@ const models = {
   OilChangePricing: sequelize.import('./oilChangePricing'),
   PasswordReset: sequelize.import('./passwordReset'),
   SubscriptionSettings: sequelize.import('./subscriptionSettings'),
+  Authority: sequelize.import('./authority'),
+  AuthorityConfirmation: sequelize.import('./authorityConfirmation'),
+  AuthorityRequest: sequelize.import('./authorityRequest'),
 };
 
 Object.keys(models).forEach(key => {

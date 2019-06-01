@@ -19,6 +19,7 @@ module.exports = function (app, models) {
     require('./email-verification.js')(router, models);
     require('./sms.js')(router, models);
     require('./taxes.js')(router, models);
+    require('./authorities.js')(router, models);
 
     return router;
 }

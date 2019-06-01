@@ -23,7 +23,11 @@ const kyleEmailAddress = 'kyle@carswaddle.com';
 const fromEmailAddress = 'Kyle <' + kyleEmailAddress + '>';
 const host = 'car-swaddle.herokuapp.com';
 
-const unsubscribeURL = 'https://' + constants.CURRENT_DOMAIN + '/email-unsubscribe';
+const domain = 'https://' + constants.CURRENT_DOMAIN;
+
+const acceptURL = domain + '/authority/approve';
+const rejectURL = domain + '/authority/reject';
+const unsubscribeURL = domain + '/email-unsubscribe';
 
 const allowEmail = true;
 
@@ -95,6 +99,37 @@ class Emailer {
             console.log(err);
             callback(err);
         });
+    }
+
+    sendAuthorityRequestEmailToAdmin(user, authorityRequest, callback) {
+        const emailOptions = this.authorityRequestEmailOptions(user, authorityRequest);
+        return this.sendMail(emailOptions).then(info => {
+            console.log(info);
+            callback(null);
+        }).catch(err => {
+            console.log(err);
+            callback(err);
+        });
+    }
+
+    authorityRequestEmailOptions(user, authorityRequest) {
+        const subject = 'Car Swaddle Authority Request';
+        const acceptURL = this.authorityAcceptURL(user, authorityRequest);
+        const rejectURL = this.authorityRejectURL(user, authorityRequest);
+        var text = user.displayName + ' wants the authority:\n' + authorityRequest.authorityName;
+        text += '\n\nAccept: ' + acceptURL;
+        text += '\n\nReject: ' + rejectURL;
+        
+        var html = user.displayName() + ' wants the authority:<br>' + authorityRequest.authorityName + ' <br><br><a href=' + acceptURL + '>Approve</a>' + '<br><br><a href=' + rejectURL + '>Reject</a>';
+        return this.emailOptions(user.email, subject, text, html);
+    }
+ 
+    authorityAcceptURL(user, authorityRequest) {
+        return acceptURL + '?email=' + encodeURIComponent(user.email) + '&secretID=' + authorityRequest.secretID;
+    }
+
+    authorityRejectURL(user, authorityRequest) {
+        return rejectURL + '?email=' + encodeURIComponent(user.email) + '&secretID=' + authorityRequest.secretID;
     }
 
     verificationEmailOptions(user, link) {

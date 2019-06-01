@@ -28,11 +28,11 @@ function stripeSecretKeyForCurrentEnvironment() {
 
 function currentDomain() {
     if (process.env.ENV == 'production') {
-        // return 'pk_live_ZJkoNBROBK0ttmZLDNfNF0Cw00VwQ7JjFw';
         return 'www.carswaddle.com';
     } else if (process.env.ENV == 'staging') {
         return 'www.safe-ridge-47447.herokuapp.com';
     } else if (process.env.ENV == 'dev') {
         return 'localhost';
+        // http://[::1]:3000
     }
 }
