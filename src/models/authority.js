@@ -5,10 +5,6 @@ const authority = function (sequelize, DataTypes) {
             primaryKey: true,
             unique: true
         },
-        userID: {
-            type: DataTypes.STRING,
-            allowNull: false
-        },
         authorityName: {
             type: DataTypes.STRING,
             allowNull: false
@@ -21,6 +17,12 @@ const authority = function (sequelize, DataTypes) {
         createCarSwaddleCoupon: 'createCarSwaddleCoupon',
         readAuthorities: 'readAuthorities',
         editAuthorities: 'editAuthorities'
+    };
+
+    Authority.associate = models => {
+        // Authority.hasOne(models.AuthorityConfirmation, { foreignKey: 'authorityID', allowNull: false });
+        // Authority.hasOne(models.AuthorityRequest, { foreignKey: 'authorityID', allowNull: false });
+        Authority.belongsTo(models.User, { foreignKey: 'userID', allowNull: false });
     };
 
     return Authority;

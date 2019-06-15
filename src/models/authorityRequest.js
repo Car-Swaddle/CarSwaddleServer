@@ -11,25 +11,13 @@ const authorityRequest = function (sequelize, DataTypes) {
             allowNull: false
         },
         // A user id of the user that requested the authority
-        requesterID: {
-            type: DataTypes.STRING,
-            allowNull: false
-        },
         // The id of the authority confirmation if it was approved or rejected
-        authorityConfirmationID: {
-            type: DataTypes.STRING,
-            allowNull: true
-        },
         // The authority that was requested
         authorityName: {
             type: DataTypes.STRING,
             allowNull: false
         },
         // The id of the authority, if exists. If this authority was approved then an authorityID must exist. Not vice versa necesarily.
-        authorityID: {
-            type: DataTypes.STRING,
-            allowNull: true
-        },
         expirationDate: {
             type: DataTypes.DATE,
             allowNull: false
@@ -37,6 +25,14 @@ const authorityRequest = function (sequelize, DataTypes) {
     }, {
             freezeTableName: true,
         });
+
+    AuthorityRequest.associate = models => {
+        AuthorityRequest.belongsTo(models.Authority, { foreignKey: 'authorityID', allowNull: true });
+        AuthorityRequest.hasOne(models.AuthorityConfirmation, { foreignKey: 'authorityRequestID', allowNull: true });
+        AuthorityRequest.belongsTo(models.User, { foreignKey: 'requesterID', allowNull: false });
+    };
+
+    AuthorityRequest.defaultAttributes = ['authorityName', 'id', 'expirationDate', 'authorityID', 'requesterID', 'secretID'];
 
     return AuthorityRequest;
 };

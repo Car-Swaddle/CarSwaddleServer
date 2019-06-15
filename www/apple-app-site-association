@@ -2,7 +2,8 @@
    "webcredentials": {
        "apps": [    
            "977533WLK8.com.carswaddle.carswaddle",
-           "977533WLK8.com.carswaddle.carswaddlemechanic"
+           "977533WLK8.com.carswaddle.carswaddlemechanic",
+           "977533WLK8.com.carswaddle.carswaddleadmin"
         ]
     },
     "applinks": {
@@ -15,6 +16,10 @@
             {
                 "appID": "977533WLK8.com.carswaddle.carswaddlemechanic",
                 "paths": ["/car-swaddle-mechanic/reset-password"]
+            },
+            {
+                "appID": "977533WLK8.com.carswaddle.carswaddleadmin",
+                "paths": ["/car-swaddle-admin/reset-password"]
             }
         ]
     }
