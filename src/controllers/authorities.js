@@ -63,7 +63,25 @@ AuthoritiesController.prototype.fetchAuthorityRequests = function (limit, offset
 
     if (pending == "true") {
         options.where = {
-            '$authorityConfirmation$': null
+            '$authorityConfirmation$': null,
+            'expirationDate': {
+                [Op.gt]: new Date()
+            }
+        }
+    } else if (pending == "false") {
+        options.where = {
+            '$authorityConfirmation$': {
+                [Op.ne]: null
+            },
+            'expirationDate': {
+                [Op.gt]: new Date()
+            }
+        }
+    } else {
+        options.where = {
+            'expirationDate': {
+                [Op.gt]: new Date()
+            }
         }
     }
 
@@ -93,12 +111,35 @@ AuthoritiesController.prototype.fetchAuthorities = function (limit, offset, call
         limit: Math.min(limit || 30, 100),
         order: [['createdAt', 'DESC']],
         include: [
-        //     {
-        //     model: this.models.AuthorityConfirmation,
-        //     include: {
-        //         model: this.models.User, attributes: this.models.User.defaultAttributes
-        //     }
-        // }, 
+            {
+            model: this.models.AuthorityConfirmation,
+            include: {
+                model: this.models.User, attributes: this.models.User.defaultAttributes
+            }
+        }, 
+        {
+            model: this.models.User, attributes: this.models.User.defaultAttributes
+        }]
+    }).then(authorities => {
+        callback(null, authorities);
+    }).catch(err => {
+        callback(err, null);
+    });
+};
+
+AuthoritiesController.prototype.fetchAuthoritiesForUser = function (userID, callback) {
+    this.models.Authority.findAll({
+        where: {
+            userID: userID
+        },
+        order: [['createdAt', 'DESC']],
+        include: [
+            {
+            model: this.models.AuthorityConfirmation,
+            include: {
+                model: this.models.User, attributes: this.models.User.defaultAttributes
+            }
+        }, 
         {
             model: this.models.User, attributes: this.models.User.defaultAttributes
         }]

@@ -12,6 +12,7 @@ const authorityRequest = function (sequelize, DataTypes) {
         },
         // A user id of the user that requested the authority
         // The id of the authority confirmation if it was approved or rejected
+
         // The authority that was requested
         authorityName: {
             type: DataTypes.STRING,
@@ -32,7 +33,7 @@ const authorityRequest = function (sequelize, DataTypes) {
         AuthorityRequest.belongsTo(models.User, { foreignKey: 'requesterID', allowNull: false });
     };
 
-    AuthorityRequest.defaultAttributes = ['authorityName', 'id', 'expirationDate', 'authorityID', 'requesterID', 'secretID'];
+    AuthorityRequest.defaultAttributes = ['authorityName', 'id', 'expirationDate', 'authorityID', 'requesterID', 'createdAt', 'secretID']; // TODO: take out secretID
 
     return AuthorityRequest;
 };

@@ -5,23 +5,10 @@ const authorityConfirmation = function (sequelize, DataTypes) {
             primaryKey: true,
             unique: true
         },
-        // authorityRequestID: {
-        //     type: DataTypes.STRING,
-        //     allowNull: false
-        // },
         status: {
             type: DataTypes.STRING,
             allowNull: false
         },
-        // confirmerID: {
-        //     type: DataTypes.STRING,
-        //     allowNull: false
-        // },
-        // The id of the authority if it was accepted
-        // authorityID: {
-        //     type: DataTypes.STRING,
-        //     allowNull: true
-        // },
     },
         {
             freezeTableName: true,
@@ -35,7 +22,7 @@ const authorityConfirmation = function (sequelize, DataTypes) {
     AuthorityConfirmation.associate = models => {
         AuthorityConfirmation.belongsTo(models.Authority, { foreignKey: 'authorityID', allowNull: true });
         AuthorityConfirmation.belongsTo(models.User, { foreignKey: 'confirmerID', allowNull: false });
-        // AuthorityConfirmation.belongsTo(models.AuthorityRequest, { foreignKey: 'authorityRequestID', allowNull: false });
+        AuthorityConfirmation.belongsTo(models.AuthorityRequest, { foreignKey: 'authorityRequestID', allowNull: false });
     };
 
     return AuthorityConfirmation;

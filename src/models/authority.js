@@ -20,8 +20,8 @@ const authority = function (sequelize, DataTypes) {
     };
 
     Authority.associate = models => {
-        // Authority.hasOne(models.AuthorityConfirmation, { foreignKey: 'authorityID', allowNull: false });
-        // Authority.hasOne(models.AuthorityRequest, { foreignKey: 'authorityID', allowNull: false });
+        Authority.hasOne(models.AuthorityConfirmation, { foreignKey: 'authorityID', allowNull: false });
+        Authority.hasOne(models.AuthorityRequest, { foreignKey: 'authorityID', allowNull: false });
         Authority.belongsTo(models.User, { foreignKey: 'userID', allowNull: false });
     };
 

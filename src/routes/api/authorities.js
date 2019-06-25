@@ -45,7 +45,7 @@ module.exports = function (router, models) {
         const authorityConfirmation = await models.AuthorityConfirmation.findOne({ where: { authorityRequestID: authorityRequest.id } });
 
         if (authorityRequest.expirationDate < new Date()) {
-            return res.status(404).send('unable to approve');
+            return res.status(404).send('Request is expired');
         }
 
         // Current user must have authorityApprove authority or currentUser.email == adminEmail
@@ -78,11 +78,8 @@ module.exports = function (router, models) {
             authorityRequest: authorityRequest,
             status: models.AuthorityConfirmation.STATUS.approved,
         }).then(async authorityConfirmation => {
-            // authorityConfirmation.confirmerID = currentUser.id;
             authorityConfirmation.setUser(currentUser, { save: false });
-            // authorityConfirmation.setAuthorityRequest(authorityRequest, { save: false });
             authorityRequest.setAuthorityConfirmation(authorityConfirmation, { save: false });
-            // authorityConfirmation.authorityRequestID = authorityRequest.id;
 
             await authorityConfirmation.save();
             if (!authorityConfirmation) {
@@ -92,27 +89,24 @@ module.exports = function (router, models) {
                     where: { authorityName: authorityRequest.authorityName },
                     defaults: {
                         id: uuidV1(),
-                        userID: currentUser.id,
                         authorityName: authorityRequest.authorityName
                     }
-                }).then(([authority, created]) => {
-                    // authority.setAuthorityConfirmation(authorityConfirmation, { save: false });
-                    authorityConfirmation.setAuthority(authority, { save: false });
-                    authorityConfirmation.save().then(newAuthorityConfirmation => {
-                        models.AuthorityConfirmation.findById(authorityConfirmation.id, {
-                            include: [{
-                                model: models.User, attributes: models.User.defaultAttributes
-                            },{
-                                model: models.Authority
-                            }]
-                        }).then(confirmation => {
-                            return res.json(confirmation).send();
-                        }).catch(err => {
-                            return res.status(400).send();
-                        })
+                }).then(async ([authority, created]) => {
+                    authority.setUser(currentUser, { save: false });
+                    authority.setAuthorityConfirmation(authorityConfirmation, { save: false });
+                    authority.setAuthorityRequest(authorityRequest, { save: false });
+                    await authority.save();
+                    models.AuthorityConfirmation.findById(authorityConfirmation.id, {
+                        include: [{
+                            model: models.User, attributes: models.User.defaultAttributes
+                        }, {
+                            model: models.Authority
+                        }]
+                    }).then(authorityConfirmation => {
+                        return res.json(authorityConfirmation).send();
                     }).catch(err => {
-                        return res.status(400).send('unable to accept');
-                    })
+                        return res.status(400).send();
+                    });
                 }).catch(err => {
                     return res.status(400).send('unable to accept');
                 });
@@ -136,7 +130,7 @@ module.exports = function (router, models) {
         const authorityConfirmation = await models.AuthorityConfirmation.findOne({ where: { authorityRequestID: authorityRequest.id } });
 
         if (authorityRequest.expirationDate < new Date()) {
-            return res.status(404).send('unable to approve');
+            return res.status(404).send('unable to approve expired request');
         }
 
         // Current user must have authorityApprove authority or currentUser.email == adminEmail
@@ -163,25 +157,17 @@ module.exports = function (router, models) {
             if (!authorityConfirmation) {
                 return res.status(400).send('unable to reject');
             } else {
-                authorityRequest.setAuthorityConfirmation(authorityConfirmation, { save: false });
-                authorityConfirmation.set
-                // authorityRequest.confirmerID = req.user.id;
-                // authorityConfirmation.setUser(req.user, { save: false });
-                // req.user.setAuthorityConfirmation(authorityConfirmation, { save: false });
-                authorityRequest.save().then(request => {
-                    models.AuthorityConfirmation.findById(authorityConfirmation.id, {
-                        include: [{
-                            model: models.User, attributes: models.User.defaultAttributes
-                        }, {
-                            model: models.AuthorityRequest
-                        }]
-                    }).then(confirmation => {
-                        return res.json(confirmation).send();
-                    }).catch(err => {
-                        return res.status(400).send();
-                    })
+                await authorityRequest.setAuthorityConfirmation(authorityConfirmation, { save: true });
+                models.AuthorityConfirmation.findById(authorityConfirmation.id, {
+                    include: [{
+                        model: models.User, attributes: models.User.defaultAttributes
+                    }, {
+                        model: models.AuthorityRequest, attributes: models.AuthorityRequest.defaultAttributes
+                    }]
+                }).then(confirmation => {
+                    return res.json(confirmation).send();
                 }).catch(err => {
-                    return res.status(400);
+                    return res.status(400).send();
                 })
             }
         }).catch(err => {
@@ -194,7 +180,6 @@ module.exports = function (router, models) {
         // return requestConfirmation as well for who confirmed the authority and when it happened
         // paged
 
-        const self = this;
         authoritiesController.fetchAuthorityForUser(req.user.id, models.Authority.NAME.readAuthorities, function (err, authority) {
             if (!authority) {
                 return res.status(403).send('unauthorized to view authorities');
@@ -202,7 +187,7 @@ module.exports = function (router, models) {
             if (err) {
                 return res.status(400).send('unable to determine access');
             }
-            authoritiesController.fetchAuthorities(req.query.limit, req.query.offset, function (err, authorities) {
+            authoritiesController.fetchAuthorities(req.query.limit || 30, req.query.offset || 0, function (err, authorities) {
                 if (err) {
                     return res.status(400).send('error fetching authorities');
                 } else {
@@ -216,11 +201,21 @@ module.exports = function (router, models) {
         // gets all authority requests sorted by creationDate
         // paged
 
-        authoritiesController.fetchAuthorityRequests(req.query.limit, req.query.offset, req.query.pending || false, req.user.id, function (err, authorityRequests) {
+        authoritiesController.fetchAuthorityRequests(req.query.limit || 30, req.query.offset || 0, req.query.pending || false, req.user.id, function (err, authorityRequests) {
             if (err) {
                 return res.status(400).send('error fetching authorities');
             } else {
                 return res.status(200).json(authorityRequests);
+            }
+        });
+    });
+
+    router.get('/authorities/user', bodyParser.json(), async function (req, res) {
+        authoritiesController.fetchAuthoritiesForUser(req.user.id, function (err, authorities) {
+            if (err) {
+                return res.status(400).send('error fetching authorities');
+            } else {
+                return res.status(200).json(authorities);
             }
         });
     });
