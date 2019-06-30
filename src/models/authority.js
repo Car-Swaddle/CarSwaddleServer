@@ -16,7 +16,9 @@ const authority = function (sequelize, DataTypes) {
     Authority.NAME = {
         createCarSwaddleCoupon: 'createCarSwaddleCoupon',
         readAuthorities: 'readAuthorities',
-        editAuthorities: 'editAuthorities'
+        editAuthorities: 'editAuthorities',
+        editMechanics: 'editMechanics',
+        readMechanics: 'readMechanics'
     };
 
     Authority.associate = models => {

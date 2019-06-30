@@ -159,3 +159,9 @@ AuthoritiesController.prototype.fetchAuthorityForUser = function (userID, author
         callback(err, null);
     })
 }
+
+AuthoritiesController.prototype.fetchAuthorityForUserPromise = function (userID, authority) {
+    return this.models.Authority.findOne({
+        where: { userID: userID, authorityName: authority }
+    });
+}

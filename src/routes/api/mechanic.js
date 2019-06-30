@@ -12,6 +12,9 @@ module.exports = function (router, models) {
 
     require('../stats.js')(models);
 
+    const authoritiesControllerFile = require('../../controllers/authorities.js');
+    const authoritiesController = new authoritiesControllerFile(models);
+
     router.get('/current-mechanic', bodyParser.json(), async function (req, res) {
         const mechanic = await req.user.getMechanic();
         return res.json(mechanic);
@@ -60,6 +63,26 @@ module.exports = function (router, models) {
         }).then(users => {
             return res.json(users);
         });
+    });
+
+    router.post('/update-mechanic/corperate', bodyParser.json(), async function (req, res) {
+        const mechanicID = req.query.mechanicID;
+        if (!mechanicID) {
+            return res.status(400).send('Invalid parameters');
+        }
+        const authority = await authoritiesController.fetchAuthorityForUserPromise(req.user.id, models.Authority.NAME.editMechanics);
+        if (!authority) {
+            return res.status(401).send('You need the required authority');
+        }
+        const mechanic = await models.Mechanic.findById(mechanicID);
+        if (!mechanic) {
+            return res.status(400).send('Invalid parameter');
+        }
+        if (req.body.isAllowed) {
+            mechanic.isAllowed = req.body.isAllowed;
+        }
+        await mechanic.save();
+        return res.status(200).send(mechanic);
     });
 
     router.patch('/update-mechanic', bodyParser.json(), function (req, res) {
@@ -291,6 +314,34 @@ module.exports = function (router, models) {
             }
         });
     });
+
+    router.get('/mechanics', bodyParser.json(), function (req, res) {
+
+        var orderKey = 'createdAt';
+        var sortType = 'DESC';
+
+        if (req.query.sortType == 'ascending') {
+            sortType = 'ASC';
+        }
+
+        authoritiesController.fetchAuthorityForUser(req.user.id, models.Authority.NAME.readMechanics, function (err, authority) {
+            if (err || !authority) {
+                return res.status(400).send();
+            }
+            models.Mechanic.findAll({
+                offset: Math.min(req.query.offset || 30, 100),
+                limit: Math.min(req.query.limit || 30, 100),
+                order: [[orderKey, sortType]]
+            }).then(mechanics => {
+                return res.send(mechanics)
+            }).catch(err => {
+                return res.status(400).send('unable to fetch mechanics');
+            });
+        })
+
+
+    });
+
 
     return router;
 };
