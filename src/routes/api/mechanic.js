@@ -78,7 +78,7 @@ module.exports = function (router, models) {
         if (!mechanic) {
             return res.status(400).send('Invalid parameter');
         }
-        if (req.body.isAllowed) {
+         if (req.body.isAllowed) {
             mechanic.isAllowed = req.body.isAllowed;
         }
         await mechanic.save();
@@ -331,7 +331,10 @@ module.exports = function (router, models) {
             models.Mechanic.findAll({
                 offset: Math.min(req.query.offset || 30, 100),
                 limit: Math.min(req.query.limit || 30, 100),
-                order: [[orderKey, sortType]]
+                order: [[orderKey, sortType]],
+                include: {
+                    model: models.User, attributes: models.User.defaultAttributes
+                }
             }).then(mechanics => {
                 return res.send(mechanics)
             }).catch(err => {
