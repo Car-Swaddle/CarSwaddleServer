@@ -26,42 +26,42 @@ const stripeConnectProcessPercentage = 0.025;
 const stripeProcessTransactionFee = 30;
 
 module.exports = function (router, models) {
+    const stripeChargesFile = require('../../controllers/stripe-charges.js')(models);
 
-    router.post('/price', bodyParser.json(), async function (req, res) {
-
-        const body = req.body;
-
-        if (body.oilType == null || body.mechanicID == null) {
-            return res.status(422).send();
-        }
-
-        const oilType = body.oilType;
-        const mechanicID = body.mechanicID;
-
-        var promises = [];
-        var locationPromise;
-        if (body.locationID != null) {
-            locationPromise = models.Location.findById(body.locationID);
-            promises.push(locationPromise);
-        } else if (body.location != null && body.location.latitude != null && body.location.longitude != null) {
-            var point = { type: 'Point', coordinates: [body.location.longitude, body.location.latitude] };
-            locationPromise = models.Location.create({
-                point: point,
-                streetAddress: body.location.streetAddress,
+    async function findLocation({ locationID, location }) {
+        if (locationID) {
+            return models.Location.findById(locationID);
+        } else if (location != null && location.latitude != null && location.longitude != null) {
+            return models.Location.create({
+                point: {
+                    type: 'Point',
+                    coordinates: [
+                        location.longitude, location.latitude
+                    ]
+                },
+                streetAddress: location.streetAddress,
                 id: uuidV1(),
             });
-            promises.push(locationPromise);
-        } else {
+        }
+    }
+
+    router.post('/price', bodyParser.json(), async function (req, res) {
+        const { oilType, mechanicID, coupon } = req.body;
+        const { stripeCustomerID } = req.user;
+
+        if (!oilType || !mechanicID) {
             return res.status(422).send();
         }
 
-        var mechanicPromise = models.Mechanic.findById(mechanicID);
-
-        promises.push(mechanicPromise);
-
-        const values = await Promise.all(promises);
-        const location = values[0];
-        const mechanic = values[1];
+        const [
+            location,
+            mechanic,
+            oilChangePricing,
+        ] = await Promise.all([
+            findLocation(req.body),
+            models.Mechanic.findById(mechanicID),
+            models.OilChangePricing.findOne({ where: { mechanicID } }),
+        ]);
 
         if (location == null || mechanic == null) {
             return res.status(422).send();
@@ -73,69 +73,26 @@ module.exports = function (router, models) {
         const meters = distance.metersBetween(locationPoint, regionPoint);
         const miles = meters / metersToMilesConstant;
 
-        const oilChangePricing = await models.OilChangePricing.findOne({
-            where: {
-                mechanicID: mechanic.id
-            }
-        });
+        const centsPerMile = (oilChangePricing && oilChangePricing.centsPerMile) || constants.DEFAULT_CENTS_PER_MILE;
+        const oilChangePrice = centsForOilType(oilType, oilChangePricing) || constants.DEFAULT_CENTS_PER_MILE;
+        const distancePrice =  Math.round((centsPerMile * miles) * 2);
+        const subtotalPrice = oilChangePrice + distancePrice;
 
-        var centsPerMile = (oilChangePricing && oilChangePricing.centsPerMile) || constants.DEFAULT_CENTS_PER_MILE;
-        var oilChangePrice = centsForOilType(oilType, oilChangePricing) || constants.DEFAULT_CENTS_PER_MILE;
-
-        var subtotalPromise = [];
-
-        var laborPrice = models.PricePart.create({
-            key: 'oilChange', value: Math.round(oilChangePrice), id: uuidV1()
-        });
-        subtotalPromise.push(laborPrice);
-        var distancePrice = models.PricePart.create({
-            key: 'distance', value: Math.round((centsPerMile * miles) * 2), id: uuidV1()
-        });
-        subtotalPromise.push(distancePrice);
-
-        const subPrices = await Promise.all(subtotalPromise);
-        var prices = [];
-        Array.prototype.push.apply(prices, subPrices);
-
-        var subtotal = 0;
-        for (var i = 0; i < subPrices.length; i++) {
-            const value = Number(subPrices[i].value);
-            subtotal += value;
-        }
-
-        var totalPricePromises = []
-        var subtotalPricePromise = models.PricePart.create({
-            key: 'subtotal', value: Math.round(subtotal), id: uuidV1()
-        });
-        totalPricePromises.push(subtotalPricePromise);
-        var bookingFeePricePromise = models.PricePart.create({
-            key: 'bookingFee', value: Math.round(constants.BOOKING_FEE_PERCENTAGE * Math.round(subtotal)), id: uuidV1()
-        });
-        totalPricePromises.push(bookingFeePricePromise);
-
-        const processingFee = calculateProcessingFee(subtotal);
-
-        var processingFeePricePromise = models.PricePart.create({
-            key: 'processingFee', value: Math.round(processingFee), id: uuidV1()
-        });
-        totalPricePromises.push(processingFeePricePromise);
-
-        const totalPrices = await Promise.all(totalPricePromises);
-        var total = 0;
-        for (var i = 0; i < totalPrices.length; i++) {
-            const value = Number(totalPrices[i].value);
-            // console.log(value);
-            total += value;
-        }
-        Array.prototype.push.apply(prices, totalPrices);
-
-        const price = await models.Price.create({ id: uuidV1(), totalPrice: Math.round(total) });
-        const result = await price.setPriceParts(prices); 
-        const fullPrice = await models.Price.findOne({
-            where: { id: price.id },
-            include: [{ model: models.PricePart, attributes: ['key', 'value'] }]
-        });
-        return res.json(fullPrice);
+        const prices = await stripeChargesFile.updateDraft(stripeCustomerID, {
+            oilChange: oilChangePrice,
+            distance: distancePrice,
+            bookingFee: Math.round(constants.BOOKING_FEE_PERCENTAGE * subtotalPrice),
+            processingFee: Math.round(calculateProcessingFee(subtotalPrice)), // TODO: this should include bookingfree and taxes.
+            subtotal: subtotalPrice,
+        }, {
+            oilType,
+            mechanicID,
+            coupon,
+            locationID: location.id,
+            transferAmount: subtotalPrice,
+        }, coupon);
+        
+        return res.json(prices);
     });
 
     function calculateProcessingFee(subtotal) {

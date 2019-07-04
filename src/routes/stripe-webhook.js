@@ -120,6 +120,14 @@ module.exports = function (app, models) {
                 pushService.sendMechanicNotification(mechanic, alert, null, null, title);
                 return res.json({ received: true });
             }
+        } else if(event.type == eventTypes.TRANSFER_PAID) {
+            const { amount, destination } = event.data.object;
+
+            if (amount) {
+                const mechanic = await findMechanicWithStripeID(destination);
+
+                await stripeCharges.performDebit(mechanic, amount);
+            }
         }
 
         return res.json({ received: true });
@@ -160,6 +168,7 @@ module.exports = function (app, models) {
         PAYOUT_UPDATED: 'payout.updated',
         ACCOUNT_UPDATED: 'account.updated',
         CHARGE_SUCCEEDED: 'charge.succeeded',
+        TRANSFER_PAID: 'transfer.paid',
     }
 
     const payoutFailures = {

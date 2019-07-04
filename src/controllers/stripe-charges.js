@@ -72,52 +72,121 @@ StripeCharges.prototype.monthlyDebitFee = function (mechanicPayment) {
     return stripeConnectMonthlyDebit;
 }
 
-StripeCharges.prototype.createCharge = async function(sourceID, autoServiceID, user) {
+StripeCharges.prototype.payInvoices = async function(sourceID, autoServiceID) {
     if (sourceID == null || autoServiceID == null) {
         return res.status(422).send();
     }
 
-    var autoService = await this.models.AutoService.findById(autoServiceID);
-    var mechanic = await autoService.getMechanic();
-    var price = await autoService.getPrice();
-    var priceParts = await price.getPriceParts();
+    const autoService = await this.models.AutoService.findById(autoServiceID);
+    const mechanic = await autoService.getMechanic();
 
-    if (price == null || priceParts == null || mechanic == null || autoService == null) {
+    if (mechanic == null || autoService == null) {
         return res.status(422).send();
     }
 
-    const destinationAmount = this.generateDestinationAmount(priceParts);
-
-    return stripe.charges.create({
-        amount: Math.floor(price.totalPrice),
-        currency: "usd",
+    const invoice = await stripe.invoices.pay(autoService.invoiceID, {
         source: sourceID,
-        customer: user.stripeCustomerID,
-        description: "Oil Change from Car Swaddle",
-        statement_descriptor: "Car Swaddle Oil Change",
-        transfer_data: {
-            amount: Math.floor(destinationAmount),
-            destination: mechanic.stripeAccountID,
-        },
-        receipt_email: user.email,
+    });
+
+    const transfer = await stripe.transfers.create({
+        amount: parseInt(invoice.metadata.transferAmount, 10),
+        currency: "usd",
+        destination: mechanic.stripeAccountID,
+        source_transaction: invoice.charge,
+    });
+
+    await stripe.invoices.update(invoice.id, {
         metadata: {
-            mechanicID: mechanic.id,
-            userID: user.id,
-            priceID: price.id,
-            autoServiceID: autoServiceID,
+            transfer: transfer.id,
         }
     });
+
+    return { invoice, transfer };
 };
 
-StripeCharges.prototype.generateDestinationAmount = function (priceParts) {
-    for (var i = 0; i < priceParts.length; i++) {
-        var pricePart = priceParts[i];
-        if (pricePart.key == 'subtotal') {
-            return pricePart.value
+StripeCharges.prototype.updateDraft = async function(customer, prices, metadata, coupon) {
+    const allPossiblePriceTypes = ['oilChange', 'distance', 'bookingFee', 'processingFee', 'bookingFeeDiscount'];
+    const invoiceUpdates = {
+        customer,
+        default_tax_rates: ['txr_1EsKFiDGwCXJzLurboddwtFb'],
+        description: "Oil Change from Car Swaddle",
+        statement_descriptor: "Car Swaddle Oil Change",
+        metadata,
+        coupon,
+    };
+    const invoices = await stripe.invoices.list({
+        status: 'draft',
+        customer
+    });
+    var finalInvoice;
+
+    if(coupon) {
+        const couponData = await stripe.coupons.retrieve(coupon);
+
+        if(couponData.metadata.noBookingFee) {
+            prices.bookingFeeDiscount = -prices.bookingFee;
         }
     }
 
-    return subtotalPricePart.value
+    if(!invoices.data[0]) {
+        for(var i = 0; i < allPossiblePriceTypes.length; i++) {
+            const priceType = allPossiblePriceTypes[i];
+            const amount = prices[priceType];
+
+            if(amount != null) {
+                await stripe.invoiceItems.create({
+                    customer,
+                    amount,
+                    currency: "usd",
+                    description: invoiceLineDescription(priceType),
+                    metadata: {
+                        priceType,
+                    }
+                });
+            }
+        }
+
+        finalInvoice = await stripe.invoices.create(invoiceUpdates)
+    } else {
+        const invoice = invoices.data[0];
+        const existingLines = invoice.lines.data;
+        
+        for(let i = 0; i < allPossiblePriceTypes.length; i++) {
+            const priceType = allPossiblePriceTypes[i];
+            const existingLine = existingLines.find(line => line.metadata.priceType === priceType);
+            const amount = prices[priceType];
+    
+            if(existingLine && existingLine.amount !== amount) {
+                if(amount == null) {
+                    await stripe.invoiceItems.del(existingLine.id);
+                } else {
+                    await stripe.invoiceItems.update(
+                        existingLine.id,
+                        { amount }
+                    );
+                }
+            } else if(!existingLine && amount != null) {
+                await stripe.invoiceItems.create({
+                    invoice: invoice.id,
+                    amount,
+                    currency: "usd",
+                    description: invoiceLineDescription(priceType),
+                    metadata: {
+                        priceType,
+                    }
+                });
+            }
+        }
+
+        delete invoiceUpdates.customer;
+
+        finalInvoice = await stripe.invoices.update(invoice.id, invoiceUpdates);
+    }
+
+    prices.taxes = finalInvoice.tax || 0;
+    prices.total = finalInvoice.total;
+
+    return prices;
 };
 
 /**
@@ -196,6 +265,23 @@ StripeCharges.prototype.performPayoutDebits = function (mechanic, callback) {
             });
         });
     });
+}
+
+function invoiceLineDescription(priceType) {
+    switch(priceType) {
+        case 'oilChange':
+            return 'Oil Change';
+        case 'distance':
+            return 'Travel Time';
+        case 'bookingFee':
+            return 'Car Swaddle Booking Fee';
+        case 'processingFee':
+            return 'Processing Fee';
+        case 'bookingFeeDiscount':
+            return 'Car Swaddle Booking Fee Discount';
+        default:
+            return '';
+    }
 }
 
 function unfeedPayouts(payouts, payoutDebits) {

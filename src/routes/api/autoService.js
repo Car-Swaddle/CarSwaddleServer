@@ -247,23 +247,16 @@ module.exports = function (router, models) {
                     autoService.status == models.AutoService.STATUS.canceled &&
                     newAutoService.chargeID != null &&
                     (changedByMechanic || (changedByUser && new Date() < dayBeforeDate))) {
-                    newAutoService.getPrice().then(price => {
-                        if (price.totalPrice) {
-                            stripe.refunds.create({
-                                charge: autoService.chargeID,
-                                amount: price.totalPrice,
-                                reverse_transfer: true,
-                            }).then(refund => {
-                                if (refund) {
-                                    newAutoService.refundID = refund.id;
-                                    newAutoService.save().then(savedAutoService => {
-                                        return res.json(savedAutoService);
-                                    });
-                                } else {
-                                    return res.json(newAutoService);
-                                }
-                            }).catch(error => {
-                                return res.json(newAutoService);
+
+                    stripe.refunds.create({
+                        charge: autoService.chargeID,
+                        reverse_transfer: true,
+                        refund_application_fee: true,
+                    }).then(refund => {
+                        if (refund) {
+                            newAutoService.refundID = refund.id;
+                            newAutoService.save().then(savedAutoService => {
+                                return res.json(savedAutoService);
                             });
                         } else {
                             return res.json(newAutoService);

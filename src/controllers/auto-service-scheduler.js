@@ -63,8 +63,10 @@ AutoServiceScheduler.prototype.scheduleAutoService = async function (user, statu
             callback(err, null);
             return;
         }
-        const charge = await self.stripeCharges.createCharge(sourceID, autoService.id, user);
-        if (!charge) {
+
+        const { invoice, transfer } = await self.stripeCharges.payInvoices(sourceID, autoService.id);
+
+        if (!invoice) {
             callback('unable to create charge', null);
             return
         }
@@ -79,18 +81,8 @@ AutoServiceScheduler.prototype.scheduleAutoService = async function (user, statu
             self.sendNotification(user, mechanic);
             self.reminder.scheduleRemindersForAutoService(fetchedAutoService);
 
-            const newCharge = await stripe.charges.retrieve(charge.id, {
-                expand: ["transfer.destination_payment"]
-            });
-
-            if (newCharge.transfer.destination_payment.amount) {
-                const mechanicPayment = newCharge.transfer.destination_payment.amount;
-                await self.stripeCharges.performDebit(mechanic, mechanicPayment);
-            }
-
-            const stripeTransactionID = newCharge.transfer.destination_payment.balance_transaction;
-            fetchedAutoService.balanceTransactionID = stripeTransactionID;
-            fetchedAutoService.chargeID = newCharge.id;
+            fetchedAutoService.balanceTransactionID = transfer.id;
+            fetchedAutoService.chargeID = invoice.charge;
 
             fetchedAutoService.save().then(async value => {
                 const price = await self.models.Price.findById(priceID);
