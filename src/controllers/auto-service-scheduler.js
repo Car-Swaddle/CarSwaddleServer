@@ -56,45 +56,41 @@ AutoServiceScheduler.prototype.findAutoServices = function (mechanicID, userID, 
     });
 };
 
-AutoServiceScheduler.prototype.scheduleAutoService = async function (user, status, priceID, scheduledDate, vehicleID, mechanicID, sourceID, serviceEntities, location, locationID, notes, callback) {
-    self = this;
-    this.createAutoService(user, mechanicID, status, priceID, scheduledDate, vehicleID, sourceID, serviceEntities, locationID, location, notes, async function (err, autoService) {
+AutoServiceScheduler.prototype.scheduleAutoService = async function (user, status, invoiceID, scheduledDate, vehicleID, mechanicID, sourceID, serviceEntities, location, locationID, notes, callback) {
+    this.createAutoService(user, mechanicID, status, invoiceID, scheduledDate, vehicleID, sourceID, serviceEntities, locationID, location, notes, async (err, autoService) => {
         if (err) {
             callback(err, null);
             return;
         }
 
-        const { invoice, transfer } = await self.stripeCharges.payInvoices(sourceID, autoService.id);
+        const { invoice, transfer } = await this.stripeCharges.payInvoices(sourceID, autoService.id);
 
         if (!invoice) {
             callback('unable to create charge', null);
             return
         }
 
-        self.setupServiceEntities(serviceEntities, autoService, async function (err, serviceEntities) {
-            const fetchedAutoService = await self.models.AutoService.findOne({
+        this.setupServiceEntities(serviceEntities, autoService, async (err, serviceEntities) => {
+            const fetchedAutoService = await this.models.AutoService.findOne({
                 where: { id: autoService.id },
-                include: self.includeDict(),
+                include: this.includeDict(),
             });
 
-            const mechanic = await self.models.Mechanic.findById(mechanicID);
-            self.sendNotification(user, mechanic);
-            self.reminder.scheduleRemindersForAutoService(fetchedAutoService);
+            const mechanic = await this.models.Mechanic.findById(mechanicID);
+            this.sendNotification(user, mechanic);
+            this.reminder.scheduleRemindersForAutoService(fetchedAutoService);
 
-            fetchedAutoService.balanceTransactionID = transfer.id;
+            fetchedAutoService.balanceTransactionID = transfer && transfer.id;
             fetchedAutoService.chargeID = invoice.charge;
+            await fetchedAutoService.save()
 
-            fetchedAutoService.save().then(async value => {
-                const price = await self.models.Price.findById(priceID);
-                self.createTransactionMetadata(mechanic, fetchedAutoService.location, price, fetchedAutoService, stripeTransactionID, async function (err, transactionMetadata) {
-                    const lastAutoService = await self.models.AutoService.findOne({
-                        where: { id: fetchedAutoService.id },
-                        include: self.includeDict(),
-                    });
-                    callback(err, lastAutoService);
+            this.createTransactionMetadata(mechanic, fetchedAutoService.location, invoice, fetchedAutoService, fetchedAutoService.balanceTransactionID, async (err, transactionMetadata) => {
+                const lastAutoService = await this.models.AutoService.findOne({
+                    where: { id: fetchedAutoService.id },
+                    include: this.includeDict(),
                 });
-            }).catch(err => {
-                callback('unable to save balance or charge', null);
+
+                callback(err, lastAutoService);
             });
         });
     });
@@ -156,11 +152,9 @@ AutoServiceScheduler.prototype.createOilChange = function (service, key, autoSer
     })
 }
 
-AutoServiceScheduler.prototype.createAutoService = async function (user, mechanicID, status, priceID, scheduledDate, vehicleID, sourceID, serviceEntities, locationID, location, notes, callback) {
+AutoServiceScheduler.prototype.createAutoService = async function (user, mechanicID, status, invoiceID, scheduledDate, vehicleID, sourceID, serviceEntities, locationID, location, notes, callback) {
     if (this.models.AutoService.isValidStatus(status) == false) { callback('Invalid status:' + status, null); return; }
-    if (!priceID) { callback('Invalid parameters, priceID', null); return; }
-    const price = await this.models.Price.findById(priceID);
-    if (!price) { callback('invalid parameters, price', null); return; }
+    if (!invoiceID) { callback('Invalid parameters, invoiceID', null); return; }
     if (!scheduledDate) { callback('invalid parameters, scheduledDate', null); return; }
 
     const inTimeSlot = await this.isDateInMechanicSlot(scheduledDate, user, mechanicID);
@@ -204,12 +198,12 @@ AutoServiceScheduler.prototype.createAutoService = async function (user, mechani
         status: status,
         notes: notes,
         scheduledDate: scheduledDate,
+        invoiceID,
     });
     autoService.setMechanic(mechanic, { save: false });
     autoService.setUser(user, { save: false });
     autoService.setVehicle(vehicle, { save: false });
     autoService.setLocation(fetchedLocation, { save: false });
-    autoService.setPrice(price, { save: false });
     const newAutoService = await autoService.save();
     callback(null, newAutoService);
 }
@@ -275,7 +269,7 @@ AutoServiceScheduler.prototype.isDateInMechanicSlot = async function (scheduledD
     return timeSpan != null
 }
 
-AutoServiceScheduler.prototype.createTransactionMetadata = async function (mechanic, location, price, autoService, stripeTransactionID, callback) {
+AutoServiceScheduler.prototype.createTransactionMetadata = async function (mechanic, location, invoice, autoService, stripeTransactionID, callback) {
     const region = await mechanic.getRegion();
     if (!region) { callback('unable to get region', null) }
     const locationPoint = { latitude: location.point.coordinates[1], longitude: location.point.coordinates[0] };

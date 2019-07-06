@@ -120,14 +120,6 @@ StripeCharges.prototype.updateDraft = async function(customer, prices, metadata,
     });
     var finalInvoice;
 
-    if(coupon) {
-        const couponData = await stripe.coupons.retrieve(coupon);
-
-        if(couponData.metadata.noBookingFee === 'YES') {
-            prices.bookingFeeDiscount = -prices.bookingFee;
-        }
-    }
-
     if(!invoices.data[0]) {
         for(var i = 0; i < allPossiblePriceTypes.length; i++) {
             const priceType = allPossiblePriceTypes[i];
@@ -186,7 +178,7 @@ StripeCharges.prototype.updateDraft = async function(customer, prices, metadata,
     prices.taxes = finalInvoice.tax || 0;
     prices.total = finalInvoice.total;
 
-    return prices;
+    return { prices, invoice: finalInvoice.id };
 };
 
 StripeCharges.prototype.createCoupon = function(userId, coupon) {

@@ -4,6 +4,12 @@ const coupon = function (sequelize, DataTypes) {
             type: DataTypes.STRING,
             primaryKey: true,
             unique: true,
+            notEmpty: true,
+        },
+        code: {
+            type: DataTypes.STRING,
+            allowNull: false,
+            notEmpty: true,
         },
         amountOff: {
             type: DataTypes.INTEGER,
@@ -36,6 +42,12 @@ const coupon = function (sequelize, DataTypes) {
     Coupon.associate = models => {
         Coupon.belongsTo(models.User, { foreignKey: 'userID', allowNull: true });
     };
+
+    Coupon.findByCode = code => {
+        return Coupon.findOne({
+            where: { code }
+        });
+    }
 
     return Coupon;
 };

@@ -274,7 +274,7 @@ module.exports = function (router, models) {
 
     router.post('/auto-service', bodyParser.json(), async function (req, res) {
         const b = req.body;
-        autoServiceScheduler.scheduleAutoService(req.user, b.status, b.priceID, b.scheduledDate, b.vehicleID, b.mechanicID, b.sourceID, b.serviceEntities, b.location, b.locationId, b.notes, function (err, autoService) {
+        autoServiceScheduler.scheduleAutoService(req.user, b.status, b.invoiceID, b.scheduledDate, b.vehicleID, b.mechanicID, b.sourceID, b.serviceEntities, b.location, b.locationId, b.notes, function (err, autoService) {
             if (!err) {
                 return res.json(autoService);
             } else {

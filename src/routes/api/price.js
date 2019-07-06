@@ -46,7 +46,7 @@ module.exports = function (router, models) {
     }
 
     router.post('/price', bodyParser.json(), async function (req, res) {
-        const { oilType, mechanicID, coupon } = req.body;
+        const { oilType, mechanicID, couponCode } = req.body;
         const { stripeCustomerID } = req.user;
 
         if (!oilType || !mechanicID) {
@@ -77,38 +77,51 @@ module.exports = function (router, models) {
         const oilChangePrice = centsForOilType(oilType, oilChangePricing) || constants.DEFAULT_CENTS_PER_MILE;
         const distancePrice =  Math.round((centsPerMile * miles) * 2);
         const subtotalPrice = oilChangePrice + distancePrice;
+        const bookingFeePrice = Math.round(constants.BOOKING_FEE_PERCENTAGE * subtotalPrice);
+        var transferAmount = subtotalPrice;
 
-        const prices = await stripeChargesFile.updateDraft(stripeCustomerID, {
+        var couponId;
+        var bookingFeeDiscount = null;
+
+        if(couponCode) {
+            const coupon = models.Coupon.findByCode(couponCode);
+
+            if(coupon) {
+                invoiceUpdates.coupon = coupon.id;
+
+                if(coupon.discountBookingFee) {
+                    prices.bookingFeeDiscount = -prices.bookingFee;
+                }
+
+                // If the coupon is attached to a mechanic's userId then adjust the transferAmount by the coupon amount.
+                if(coupon.userId) {
+                    if(coupon.percentOff) {
+                        transferAmount -= Math.round(transferAmount * coupon.percentOff);
+                    } else if(coupon.amountOff) {
+                        transferAmount -= coupon.amountOff;
+                    }
+                }
+            }
+        }
+
+        const { prices, invoice } = await stripeChargesFile.updateDraft(stripeCustomerID, {
             oilChange: oilChangePrice,
             distance: distancePrice,
-            bookingFee: Math.round(constants.BOOKING_FEE_PERCENTAGE * subtotalPrice),
-            processingFee: Math.round(calculateProcessingFee(subtotalPrice)), // TODO: this should include bookingfree and taxes.
+            bookingFee: bookingFeePrice,
+            bookingFeeDiscount,
             subtotal: subtotalPrice,
         }, {
             oilType,
             mechanicID,
-            coupon,
             locationID: location.id,
-            transferAmount: subtotalPrice,
-        }, coupon);
+            transferAmount,
+        }, couponId);
         
-        return res.json(prices);
+        return res.json({
+            prices,
+            invoice,
+        });
     });
-
-    function calculateProcessingFee(subtotal) {
-        // d = ((s+b)+0.30)/(1-0.029)
-        // fee = d - (s+b)
-        // The mechanic will make a little bit more than what we will take out for the stripeConnectProcessFee because we add
-        // the product of the stripeConectFee and the entire total instead of just what the mechanic gets. The profit goes to
-        // the mechanic.
-
-        var connectFee = subtotal / (1.0 - (stripeConnectProcessPercentage));
-        connectFee = connectFee - subtotal;
-
-        const basePrice = subtotal + (subtotal * constants.BOOKING_FEE_PERCENTAGE) + connectFee;
-        const total = (basePrice + stripeProcessTransactionFee) / (1.0 - (stripeProcessPercentage));
-        return total - basePrice;
-    }
 
     function oilChangeKeyForOilType(oilType) {
         if (oilType == 'CONVENTIONAL') {
