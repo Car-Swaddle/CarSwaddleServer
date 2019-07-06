@@ -70,7 +70,7 @@ module.exports = function (router, models) {
         if (!mechanicID) {
             return res.status(400).send('Invalid parameters');
         }
-        const authority = await authoritiesController.fetchAuthorityForUserPromise(req.user.id, models.Authority.NAME.editMechanics);
+        const authority = await authoritiesController.fetchAuthorityForUser(req.user.id, models.Authority.NAME.editMechanics);
         if (!authority) {
             return res.status(401).send('You need the required authority');
         }
@@ -315,7 +315,7 @@ module.exports = function (router, models) {
         });
     });
 
-    router.get('/mechanics', bodyParser.json(), function (req, res) {
+    router.get('/mechanics', async function (req, res) {
 
         var orderKey = 'createdAt';
         var sortType = 'DESC';
@@ -324,25 +324,26 @@ module.exports = function (router, models) {
             sortType = 'ASC';
         }
 
-        authoritiesController.fetchAuthorityForUser(req.user.id, models.Authority.NAME.readMechanics, function (err, authority) {
-            if (err || !authority) {
+        try {
+            const authority = await authoritiesController.fetchAuthorityForUser(req.user.id, models.Authority.NAME.readMechanics);
+
+            if (!authority) {
                 return res.status(400).send();
             }
-            models.Mechanic.findAll({
+
+            const mechanics = await models.Mechanic.findAll({
                 offset: Math.min(req.query.offset || 30, 100),
                 limit: Math.min(req.query.limit || 30, 100),
                 order: [[orderKey, sortType]],
                 include: {
                     model: models.User, attributes: models.User.defaultAttributes
                 }
-            }).then(mechanics => {
-                return res.send(mechanics)
-            }).catch(err => {
-                return res.status(400).send('unable to fetch mechanics');
             });
-        })
 
-
+            res.send(mechanics);
+        } catch(e) {
+            res.status(400).send('unable to fetch mechanics');
+        }
     });
 
 

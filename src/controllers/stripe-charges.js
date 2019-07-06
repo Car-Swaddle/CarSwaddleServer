@@ -123,7 +123,7 @@ StripeCharges.prototype.updateDraft = async function(customer, prices, metadata,
     if(coupon) {
         const couponData = await stripe.coupons.retrieve(coupon);
 
-        if(couponData.metadata.noBookingFee) {
+        if(couponData.metadata.noBookingFee === 'YES') {
             prices.bookingFeeDiscount = -prices.bookingFee;
         }
     }
@@ -188,6 +188,26 @@ StripeCharges.prototype.updateDraft = async function(customer, prices, metadata,
 
     return prices;
 };
+
+StripeCharges.prototype.createCoupon = function(userId, coupon) {
+    return stripe.coupons.create({
+        duration: 'once',
+        amount_off: coupon.amountOff,
+        currency: 'usd',
+        max_redemptions: coupon.maxRedemptions,
+        metadata: {
+            user_id: userId,
+            noBookingFee: coupon.discountBookingFee ? 'YES' : null,
+        },
+        name: coupon.name,
+        percent_off: coupon.percentOff,
+        redeem_by: new Date(coupon.redeemBy),
+    });
+};
+
+StripeCharges.prototype.removeCoupon = function(couponId) {
+    return stripe.coupons.del(couponId);
+}
 
 /**
  * Performs a debit on an auto service. If the montly stripe debit is required, this method will perform that debit as well.

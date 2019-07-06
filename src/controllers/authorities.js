@@ -46,8 +46,7 @@ AuthoritiesController.prototype.createAuthorityRequest = async function (userID,
     })
 };
 
-AuthoritiesController.prototype.fetchAuthorityRequests = function (limit, offset, pending, currentUserID, callback) {
-
+AuthoritiesController.prototype.fetchAuthorityRequests = async function (limit, offset, pending, currentUserID, callback) {
     var options = {
         offset: offset || 0,
         limit: Math.min(limit || 30, 100),
@@ -85,21 +84,17 @@ AuthoritiesController.prototype.fetchAuthorityRequests = function (limit, offset
         }
     }
 
-    const self = this;
-    this.fetchAuthorityForUser(currentUserID, this.models.Authority.NAME.editAuthorities, function (err, authority) {
+    const authority = await this.fetchAuthorityForUser(currentUserID, this.models.Authority.NAME.editAuthorities);
 
-        var attributes = self.models.AuthorityRequest.defaultAttributes;
-        if (authority) {
-            attributes.push('secretID');
-        }
-        options.attributes = attributes;
+    var attributes = this.models.AuthorityRequest.defaultAttributes;
+    if (authority) {
+        attributes.push('secretID');
+    }
+    options.attributes = attributes;
 
-        self.models.AuthorityRequest.findAll(options).then(authorityRequests => {
-            callback(null, authorityRequests);
-        }).catch(err => {
-            callback(err, null);
-        });
-    });
+    const authorityRequests = await this.models.AuthorityRequest.findAll(options);
+
+    callback(null, authorityRequests);
 
     // Include secretID if current user has editAuthorit
 };
@@ -150,17 +145,7 @@ AuthoritiesController.prototype.fetchAuthoritiesForUser = function (userID, call
     });
 };
 
-AuthoritiesController.prototype.fetchAuthorityForUser = function (userID, authority, callback) {
-    this.models.Authority.findOne({
-        where: { userID: userID, authorityName: authority }
-    }).then(authority => {
-        callback(null, authority);
-    }).catch(err => {
-        callback(err, null);
-    })
-}
-
-AuthoritiesController.prototype.fetchAuthorityForUserPromise = function (userID, authority) {
+AuthoritiesController.prototype.fetchAuthorityForUser = function (userID, authority) {
     return this.models.Authority.findOne({
         where: { userID: userID, authorityName: authority }
     });

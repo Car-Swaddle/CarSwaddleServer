@@ -175,18 +175,18 @@ module.exports = function (router, models) {
         });
     });
 
-    router.get('/authorities', bodyParser.json(), async function (req, res) {
+    router.get('/authorities', async function (req, res) {
         // gets all authorities sorted by creationDate, 
         // return requestConfirmation as well for who confirmed the authority and when it happened
         // paged
 
-        authoritiesController.fetchAuthorityForUser(req.user.id, models.Authority.NAME.readAuthorities, function (err, authority) {
+        try {
+            const authority = await authoritiesController.fetchAuthorityForUser(req.user.id, models.Authority.NAME.readAuthorities);
+
             if (!authority) {
                 return res.status(403).send('unauthorized to view authorities');
             }
-            if (err) {
-                return res.status(400).send('unable to determine access');
-            }
+
             authoritiesController.fetchAuthorities(req.query.limit || 30, req.query.offset || 0, function (err, authorities) {
                 if (err) {
                     return res.status(400).send('error fetching authorities');
@@ -194,7 +194,9 @@ module.exports = function (router, models) {
                     return res.status(200).json(authorities);
                 }
             });
-        });
+        } catch(e) {
+            res.status(400).send('unable to determine access');
+        }
     });
 
     router.get('/authorityRequests', bodyParser.json(), async function (req, res) {

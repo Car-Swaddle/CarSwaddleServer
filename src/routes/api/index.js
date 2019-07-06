@@ -20,6 +20,7 @@ module.exports = function (app, models) {
     require('./sms.js')(router, models);
     require('./taxes.js')(router, models);
     require('./authorities.js')(router, models);
+    require('./coupons')(router, models);
 
     return router;
 }
