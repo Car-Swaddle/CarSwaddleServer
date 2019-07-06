@@ -6,6 +6,9 @@ const stripe = require('stripe')(constants.STRIPE_SECRET_KEY);
 const ALL_PRICE_TYPES = ['oilChange', 'distance', 'bookingFee', 'processingFee', 'bookingFeeDiscount'];
 const PROCESSING_FEE_PRICE_TYPES = ['oilChange', 'distance', 'bookingFee', 'bookingFeeDiscount'];
 
+const TAX_RATE_ID = 'txr_1EsKFiDGwCXJzLurboddwtFb';
+const TAX_RATE_PERCENTAGE = 0.0715;
+
 const stripeConnectProcessPercentage = 0.0025;
 const stripeConnectAccountDebitPercentage = 0.015;
 const stripeConnectMonthlyDebit = 200;
@@ -109,7 +112,7 @@ StripeCharges.prototype.payInvoices = async function(sourceID, autoServiceID) {
 StripeCharges.prototype.updateDraft = async function(customer, prices, metadata, coupon) {
     const invoiceUpdates = {
         customer,
-        default_tax_rates: ['txr_1EsKFiDGwCXJzLurboddwtFb'],
+        default_tax_rates: [TAX_RATE_ID],
         description: "Oil Change from Car Swaddle",
         statement_descriptor: "Car Swaddle Oil Change",
         metadata,
@@ -121,12 +124,14 @@ StripeCharges.prototype.updateDraft = async function(customer, prices, metadata,
     });
     var finalInvoice;
 
-    prices.processingFee = calculateProcessingFee(prices);
+    prices.processingFee = calculateProcessingFee(prices, TAX_RATE_PERCENTAGE);
 
     if(!invoices.data[0]) {
         for(var i = 0; i < ALL_PRICE_TYPES.length; i++) {
             const priceType = ALL_PRICE_TYPES[i];
             const amount = prices[priceType];
+
+            // TODO: Look for pending line items.
 
             if(amount != null) {
                 await stripe.invoiceItems.create({
@@ -332,7 +337,7 @@ function currentMonth() {
 }
 
 
-function calculateProcessingFee(prices) {
+function calculateProcessingFee(prices, taxPercentage) {
     // d = ((s+b)+0.30)/(1-0.029)
     // fee = d - (s+b)
     // The mechanic will make a little bit more than what we will take out for the stripeConnectProcessFee because we add
@@ -347,8 +352,8 @@ function calculateProcessingFee(prices) {
 
     const feeTotal = Object.keys(prices)
     .filter(type => PROCESSING_FEE_PRICE_TYPES.indexOf(type) !== -1)
-    .reduce((amount, type) => amount + prices[type], 0);
-    const estimatedTaxes = Math.round(feeTotal * 0.0715);
+    .reduce((amount, type) => amount + (prices[type] || 0), 0);
+    const estimatedTaxes = Math.round(feeTotal * taxPercentage);
     const subtotal = feeTotal + estimatedTaxes;
 
     var connectFee = subtotal / (1.0 - (stripeConnectProcessPercentage));
@@ -357,5 +362,5 @@ function calculateProcessingFee(prices) {
     const basePrice = subtotal + (subtotal * constants.BOOKING_FEE_PERCENTAGE) + connectFee;
     const total = (basePrice + stripeProcessTransactionFee) / (1.0 - (stripeProcessPercentage));
 
-    return total - basePrice;
+    return Math.round(total - basePrice);
 }
