@@ -19,12 +19,6 @@ const distance = require('../distance.js');
 
 const metersToMilesConstant = 1609.344;
 
-// Covers Stripe charge fee %3 and the connect payout volume %0.25 fee 
-const stripeProcessPercentage = 0.029;
-const stripeConnectProcessPercentage = 0.025;
-// in cents
-const stripeProcessTransactionFee = 30;
-
 module.exports = function (router, models) {
     const stripeChargesFile = require('../../controllers/stripe-charges.js')(models);
 
@@ -104,7 +98,7 @@ module.exports = function (router, models) {
             }
         }
 
-        const { prices, invoice } = await stripeChargesFile.updateDraft(stripeCustomerID, {
+        const prices = await stripeChargesFile.updateDraft(stripeCustomerID, {
             oilChange: oilChangePrice,
             distance: distancePrice,
             bookingFee: bookingFeePrice,
@@ -117,10 +111,7 @@ module.exports = function (router, models) {
             transferAmount,
         }, couponId);
         
-        return res.json({
-            prices,
-            invoice,
-        });
+        return res.json({ prices });
     });
 
     function oilChangeKeyForOilType(oilType) {

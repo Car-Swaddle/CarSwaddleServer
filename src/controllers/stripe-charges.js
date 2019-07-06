@@ -3,6 +3,8 @@ const { Op } = require('sequelize');
 const uuidV1 = require('uuid/v1');
 const stripe = require('stripe')(constants.STRIPE_SECRET_KEY);
 
+const ALL_PRICE_TYPES = ['oilChange', 'distance', 'bookingFee', 'processingFee', 'bookingFeeDiscount'];
+const PROCESSING_FEE_PRICE_TYPES = ['oilChange', 'distance', 'bookingFee', 'bookingFeeDiscount'];
 
 const stripeConnectProcessPercentage = 0.0025;
 const stripeConnectAccountDebitPercentage = 0.015;
@@ -105,7 +107,6 @@ StripeCharges.prototype.payInvoices = async function(sourceID, autoServiceID) {
 };
 
 StripeCharges.prototype.updateDraft = async function(customer, prices, metadata, coupon) {
-    const allPossiblePriceTypes = ['oilChange', 'distance', 'bookingFee', 'processingFee', 'bookingFeeDiscount'];
     const invoiceUpdates = {
         customer,
         default_tax_rates: ['txr_1EsKFiDGwCXJzLurboddwtFb'],
@@ -120,9 +121,11 @@ StripeCharges.prototype.updateDraft = async function(customer, prices, metadata,
     });
     var finalInvoice;
 
+    prices.processingFee = calculateProcessingFee(prices);
+
     if(!invoices.data[0]) {
-        for(var i = 0; i < allPossiblePriceTypes.length; i++) {
-            const priceType = allPossiblePriceTypes[i];
+        for(var i = 0; i < ALL_PRICE_TYPES.length; i++) {
+            const priceType = ALL_PRICE_TYPES[i];
             const amount = prices[priceType];
 
             if(amount != null) {
@@ -143,8 +146,8 @@ StripeCharges.prototype.updateDraft = async function(customer, prices, metadata,
         const invoice = invoices.data[0];
         const existingLines = invoice.lines.data;
         
-        for(let i = 0; i < allPossiblePriceTypes.length; i++) {
-            const priceType = allPossiblePriceTypes[i];
+        for(let i = 0; i < ALL_PRICE_TYPES.length; i++) {
+            const priceType = ALL_PRICE_TYPES[i];
             const existingLine = existingLines.find(line => line.metadata.priceType === priceType);
             const amount = prices[priceType];
     
@@ -178,7 +181,7 @@ StripeCharges.prototype.updateDraft = async function(customer, prices, metadata,
     prices.taxes = finalInvoice.tax || 0;
     prices.total = finalInvoice.total;
 
-    return { prices, invoice: finalInvoice.id };
+    return prices;
 };
 
 StripeCharges.prototype.createCoupon = function(userId, coupon) {
@@ -326,4 +329,33 @@ function currentYear() {
 function currentMonth() {
     const currentDate = new Date();
     return currentDate.getMonth();
+}
+
+
+function calculateProcessingFee(prices) {
+    // d = ((s+b)+0.30)/(1-0.029)
+    // fee = d - (s+b)
+    // The mechanic will make a little bit more than what we will take out for the stripeConnectProcessFee because we add
+    // the product of the stripeConectFee and the entire total instead of just what the mechanic gets. The profit goes to
+    // the mechanic.
+    
+    // Covers Stripe charge fee %3 and the connect payout volume %0.25 fee 
+    const stripeProcessPercentage = 0.029;
+    const stripeConnectProcessPercentage = 0.025;
+    // in cents
+    const stripeProcessTransactionFee = 30;
+
+    const feeTotal = Object.keys(prices)
+    .filter(type => PROCESSING_FEE_PRICE_TYPES.indexOf(type) !== -1)
+    .reduce((amount, type) => amount + prices[type], 0);
+    const estimatedTaxes = Math.round(feeTotal * 0.0715);
+    const subtotal = feeTotal + estimatedTaxes;
+
+    var connectFee = subtotal / (1.0 - (stripeConnectProcessPercentage));
+    connectFee = connectFee - subtotal;
+
+    const basePrice = subtotal + (subtotal * constants.BOOKING_FEE_PERCENTAGE) + connectFee;
+    const total = (basePrice + stripeProcessTransactionFee) / (1.0 - (stripeProcessPercentage));
+
+    return total - basePrice;
 }
