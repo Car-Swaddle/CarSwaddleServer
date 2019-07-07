@@ -98,6 +98,7 @@ StripeCharges.prototype.payInvoices = async function(sourceID, autoServiceID) {
         currency: "usd",
         destination: mechanic.stripeAccountID,
         source_transaction: invoice.charge,
+        expand: ['destination_payment'],
     });
 
     await stripe.invoices.update(invoice.id, {
@@ -109,6 +110,15 @@ StripeCharges.prototype.payInvoices = async function(sourceID, autoServiceID) {
     return { invoice, transfer };
 };
 
+StripeCharges.prototype.retrieveDraftInvoice = async function(customer) {
+    const invoices = await stripe.invoices.list({
+        status: 'draft',
+        customer
+    });
+
+    return invoices.data[0];
+}
+
 StripeCharges.prototype.updateDraft = async function(customer, prices, metadata, coupon) {
     const invoiceUpdates = {
         customer,
@@ -118,15 +128,12 @@ StripeCharges.prototype.updateDraft = async function(customer, prices, metadata,
         metadata,
         coupon,
     };
-    const invoices = await stripe.invoices.list({
-        status: 'draft',
-        customer
-    });
+    const draftInvoice = await this.retrieveDraftInvoice(customer);
     var finalInvoice;
 
     prices.processingFee = calculateProcessingFee(prices, TAX_RATE_PERCENTAGE);
 
-    if(!invoices.data[0]) {
+    if(!draftInvoice) {
         for(var i = 0; i < ALL_PRICE_TYPES.length; i++) {
             const priceType = ALL_PRICE_TYPES[i];
             const amount = prices[priceType];
@@ -148,8 +155,7 @@ StripeCharges.prototype.updateDraft = async function(customer, prices, metadata,
 
         finalInvoice = await stripe.invoices.create(invoiceUpdates)
     } else {
-        const invoice = invoices.data[0];
-        const existingLines = invoice.lines.data;
+        const existingLines = draftInvoice.lines.data;
         
         for(let i = 0; i < ALL_PRICE_TYPES.length; i++) {
             const priceType = ALL_PRICE_TYPES[i];
@@ -180,7 +186,7 @@ StripeCharges.prototype.updateDraft = async function(customer, prices, metadata,
 
         delete invoiceUpdates.customer;
 
-        finalInvoice = await stripe.invoices.update(invoice.id, invoiceUpdates);
+        finalInvoice = await stripe.invoices.update(draftInvoice.id, invoiceUpdates);
     }
 
     prices.taxes = finalInvoice.tax || 0;
