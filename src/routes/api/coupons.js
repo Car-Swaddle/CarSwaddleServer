@@ -14,7 +14,7 @@ module.exports = function (router, models) {
             authority,
         ] = await Promise.all([
             models.Coupon.findById(id),
-            authoritiesController.fetchAuthorityForUser(req.user.id, models.Authority.NAME.createCarSwaddleCoupon, false),
+            authoritiesController.fetchAuthorityForUser(req.user.id, models.Authority.NAME.editCarSwaddleCoupon, false),
         ]);
 
         if(!coupon || (coupon.userId !== req.user.id && !authority)) {
@@ -30,7 +30,7 @@ module.exports = function (router, models) {
     });
 
     router.post('/coupons', bodyParser.json(), async function (req, res) {
-        const authority = await authoritiesController.fetchAuthorityForUser(req.user.id, models.Authority.NAME.createCarSwaddleCoupon, false);
+        const authority = await authoritiesController.fetchAuthorityForUser(req.user.id, models.Authority.NAME.editCarSwaddleCoupon, false);
 
         if(!authority) {
             return res.status(403).send('Permission Denied');
@@ -52,7 +52,7 @@ module.exports = function (router, models) {
 
     router.get('/coupons', async function (req, res) {
         const { skip } = req.query;
-        const authority = await authoritiesController.fetchAuthorityForUser(req.user.id, models.Authority.NAME.createCarSwaddleCoupon, false);
+        const authority = await authoritiesController.fetchAuthorityForUser(req.user.id, models.Authority.NAME.editCarSwaddleCoupon, false);
 
         if(!authority) {
             return res.status(403).send('Permission Denied');

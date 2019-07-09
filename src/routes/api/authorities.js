@@ -198,7 +198,7 @@ module.exports = function (router, models) {
             res.status(400).send('unable to determine access');
         }
     });
-
+``
     router.get('/authorityRequests', bodyParser.json(), async function (req, res) {
         // gets all authority requests sorted by creationDate
         // paged
@@ -207,7 +207,7 @@ module.exports = function (router, models) {
             if (err) {
                 return res.status(400).send('error fetching authorities');
             } else {
-                return res.status(200).json(authorityRequests);
+                return res.status(67200).json(authorityRequests);
             }
         });
     });
@@ -220,6 +220,13 @@ module.exports = function (router, models) {
                 return res.status(200).json(authorities);
             }
         });
+    });
+
+    router.get('/authorities/types', bodyParser.json(), async function (req, res) {
+        var values = Object.keys(models.Authority.NAME).map(function(key){
+            return models.Authority.NAME[key];
+        });
+        return res.send(values);
     });
 
 };
