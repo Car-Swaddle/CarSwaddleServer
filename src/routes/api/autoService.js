@@ -1,24 +1,24 @@
 const express = require('express');
 const uuidV1 = require('uuid/v1');
+const asyncMiddleware = require('../../lib/middleware/async-middleware');
 const pushService = require('../../notifications/pushNotifications.js');
 const bodyParser = require('body-parser');
 const constants = require('../../controllers/constants');
 const stripe = require('stripe')(constants.STRIPE_SECRET_KEY);
 const distance = require('../distance.js');
-const stripeChargesFile = require('../../controllers/stripe-charges.js');
-const autoServiceSchedulerFile = require('../../controllers/auto-service-scheduler.js');
 
 module.exports = function (router, models) {
 
     const emailFile = require('../../notifications/email.js');
     const emailer = new emailFile(models);
 
-    // require('../../stripe-methods/stripe-charge.js')(models);
-    const stripeCharges = stripeChargesFile(models);
+    const autoServiceScheduler = require('../../controllers/auto-service-scheduler.js')(models);
+    const stripeChargesFile = require('../../controllers/stripe-charges.js')(models);
+    const billingCalculations = require('../../controllers/billing-calculations')(models);
+    const taxes = require('../../controllers/taxes')(models);
 
     const reminderFile = require('../../notifications/reminder.js');
     const reminder = new reminderFile(models);
-    const autoServiceScheduler = new autoServiceSchedulerFile(models);
 
     const Op = models.Sequelize.Op;
 
@@ -50,7 +50,7 @@ module.exports = function (router, models) {
         });
     });
 
-    router.patch('/auto-service', bodyParser.json(), async function (req, res) {
+    router.patch('/auto-service', bodyParser.json(), asyncMiddleware(async function (req, res) {
 
         const autoServiceID = req.query.autoServiceID;
         const body = req.body;
@@ -269,19 +269,52 @@ module.exports = function (router, models) {
                 }
             });
         });
-    });
+    }));
 
+    router.post('/auto-service', bodyParser.json(), asyncMiddleware(async function (req, res) {
+        const {
+            status,
+            scheduledDate,
+            vehicleID,
+            mechanicID,
+            sourceID,
+            serviceEntities,
+            location: address,
+            locationID,
+            notes,
+            oilType,
+            couponID,
+        } = req.body;
 
-    router.post('/auto-service', bodyParser.json(), async function (req, res) {
-        const b = req.body;
-        autoServiceScheduler.scheduleAutoService(req.user, b.status, b.invoiceID, b.scheduledDate, b.vehicleID, b.mechanicID, b.sourceID, b.serviceEntities, b.location, b.locationId, b.notes, function (err, autoService) {
+        const [
+            location,
+            mechanic,
+            coupon,
+        ] = await Promise.all([
+            models.Location.findBySearch(locationID, address),
+            models.Mechanic.findById(mechanicID),
+            models.Coupon.redeem(couponID)
+        ]);
+
+        if (location == null || mechanic == null || (couponID && !coupon)) {
+            return res.status(422).send();
+        }
+
+        const taxRate = await taxes.taxRateForLocation(location);
+        const prices = await billingCalculations.calculatePrices(mechanic, location, oilType, coupon, taxRate);
+
+        const invoice = await stripeChargesFile.updateDraft(req.user.stripeCustomerID, prices, {
+            transferAmount: prices.transferAmount,
+        }, taxRate);
+
+        autoServiceScheduler.scheduleAutoService(req.user, status, scheduledDate, vehicleID, mechanicID, invoice, sourceID, serviceEntities, address, locationID, notes, function (err, autoService) {
             if (!err) {
                 return res.json(autoService);
             } else {
                 return res.status(400).send(err);
             }
         });
-    });
+    }));
 
     router.post('/email/auto-service', bodyParser.json(), function (req, res) {
         models.AutoService.findOne({

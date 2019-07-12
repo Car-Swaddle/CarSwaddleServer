@@ -1,68 +1,80 @@
 const bodyParser = require('body-parser');
-const uuidV1 = require('uuid/v1');
+const asyncMiddleware = require('../../lib/middleware/async-middleware');
 
 module.exports = function (router, models) {
 
-    const stripeCharges = require('../../controllers/stripe-charges')(models);
     const authoritiesController = require('../../controllers/authorities')(models);
 
-    router.delete('/coupons/:id', async function (req, res) {
+    router.delete('/coupons/:id', asyncMiddleware(async function (req, res) {
         const { id } = req.params;
 
         const [
             coupon,
             authority,
+            authorityCorporate,
         ] = await Promise.all([
             models.Coupon.findById(id),
             authoritiesController.fetchAuthorityForUser(req.user.id, models.Authority.NAME.editCarSwaddleCoupon, false),
+            authoritiesController.fetchAuthorityForUser(req.user.id, models.Authority.NAME.editCorporateCarSwaddleCoupon, false),
         ]);
 
-        if(!coupon || (coupon.userId !== req.user.id && !authority)) {
+        const canDelete = coupon && ((!coupon.userId && authorityCorporate) || (coupon.userId && coupon.userId === req.user.id && authority));
+
+        if(!coupon || !canDelete) {
             return res.status(403).send('Unable to delete this coupon');
         }
 
-        await Promise.all([
-            coupon.destroy(),
-            stripeCharges.removeCoupon(id),
-        ]);
+        await coupon.destroy();
 
         return res.send({ success: true });
-    });
+    }));
 
-    router.post('/coupons', bodyParser.json(), async function (req, res) {
-        const authority = await authoritiesController.fetchAuthorityForUser(req.user.id, models.Authority.NAME.editCarSwaddleCoupon, false);
+    router.post('/coupons', bodyParser.json(), asyncMiddleware(async function (req, res) {
+        const [
+            authority,
+            authorityCorporate,
+        ] = await Promise.all([
+            authoritiesController.fetchAuthorityForUser(req.user.id, models.Authority.NAME.editCarSwaddleCoupon, false),
+            authoritiesController.fetchAuthorityForUser(req.user.id, models.Authority.NAME.editCorporateCarSwaddleCoupon, false),
+        ]);
 
-        if(!authority) {
+        if(!authority && !authorityCorporate) {
             return res.status(403).send('Permission Denied');
         }
-        
-        if(req.body.id) {
-            return res.status(400).send('Unable to update coupons');
-        }
 
-        const stripeCoupon = await stripeCharges.createCoupon(req.user.id, req.body);
+        req.body.id = (req.body.id || '').replace(/\W/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '').toLowerCase();
 
+        const couponUserID = authorityCorporate ? null : req.user.id;
         const coupon = await models.Coupon.create({
             ...req.body,
-            id: stripeCoupon.id,
+            userID: couponUserID,
+            redemptions: 0,
         });
 
         return res.send({ coupon });
-    });
+    }));
 
-    router.get('/coupons', async function (req, res) {
+    router.get('/coupons', asyncMiddleware(async function (req, res) {
         const { skip } = req.query;
-        const authority = await authoritiesController.fetchAuthorityForUser(req.user.id, models.Authority.NAME.editCarSwaddleCoupon, false);
+        
+        const [
+            authority,
+            authorityCorporate,
+        ] = await Promise.all([
+            authoritiesController.fetchAuthorityForUser(req.user.id, models.Authority.NAME.editCarSwaddleCoupon, false),
+            authoritiesController.fetchAuthorityForUser(req.user.id, models.Authority.NAME.editCorporateCarSwaddleCoupon, false),
+        ]);
 
-        if(!authority) {
+        if(!authority && !authorityCorporate) {
             return res.status(403).send('Permission Denied');
         }
 
         const coupons = await models.Coupon.findAll({
+            where: authorityCorporate ? {} : { userId: req.user.id },
             offset: parseInt(skip, 10) || 0,
             limit: 25,
         });
 
         return res.send({ coupons });
-    });
+    }));
 };

@@ -101,3 +101,12 @@ Taxes.prototype.endOfYear = function (year) {
     date.setHours(23, 59, 59, 99)
     return date
 };
+
+Taxes.prototype.taxRateForLocation = async function(location) {
+    // TODO: Use spatial data to lookup tax rates for regions or use taxjar.
+
+    return {
+        id: 'txr_1EsKFiDGwCXJzLurboddwtFb',
+        rate: 0.0715,
+    };
+}

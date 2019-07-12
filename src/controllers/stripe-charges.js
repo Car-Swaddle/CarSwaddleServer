@@ -1,13 +1,8 @@
 const constants = require('./constants.js');
-const { Op } = require('sequelize');
 const uuidV1 = require('uuid/v1');
 const stripe = require('stripe')(constants.STRIPE_SECRET_KEY);
 
-const ALL_PRICE_TYPES = ['oilChange', 'distance', 'bookingFee', 'processingFee', 'bookingFeeDiscount'];
-const PROCESSING_FEE_PRICE_TYPES = ['oilChange', 'distance', 'bookingFee', 'bookingFeeDiscount'];
-
-const TAX_RATE_ID = 'txr_1EsKFiDGwCXJzLurboddwtFb';
-const TAX_RATE_PERCENTAGE = 0.0715;
+const ALL_PRICE_TYPES = ['discount', 'oilChange', 'distance', 'bookingFee', 'processingFee', 'bookingFeeDiscount'];
 
 const stripeConnectProcessPercentage = 0.0025;
 const stripeConnectAccountDebitPercentage = 0.015;
@@ -97,12 +92,13 @@ StripeCharges.prototype.payInvoices = async function(sourceID, autoServiceID) {
         amount: parseInt(invoice.metadata.transferAmount, 10),
         currency: "usd",
         destination: mechanic.stripeAccountID,
-        source_transaction: invoice.charge,
+        source_transaction: invoice.charge, // TODO: Can we get away with not using this? It fails if the transfer amount is more than the charge amount.
         expand: ['destination_payment'],
     });
 
     await stripe.invoices.update(invoice.id, {
         metadata: {
+            autoServiceId: autoService.id,
             transfer: transfer.id,
         }
     });
@@ -119,101 +115,75 @@ StripeCharges.prototype.retrieveDraftInvoice = async function(customer) {
     return invoices.data[0];
 }
 
-StripeCharges.prototype.updateDraft = async function(customer, prices, metadata, coupon) {
+StripeCharges.prototype.listUpcomingLineItems = function(customer) {
+    return stripe.invoices.listUpcomingLineItems({ customer, limit: 100 })
+    .then(res => res.data)
+    .catch(err => {
+        return err.code === 'invoice_upcoming_none'
+            ? []
+            : Promise.reject(err);
+    });
+}
+
+StripeCharges.prototype.updateDraft = async function(customer, prices, metadata, taxRate) {
+    const draftInvoice = await this.retrieveDraftInvoice(customer);
+    const existingLines = draftInvoice
+        ? draftInvoice.lines.data
+        : await this.listUpcomingLineItems(customer);
+    
+    for(let i = 0; i < ALL_PRICE_TYPES.length; i++) {
+        const priceType = ALL_PRICE_TYPES[i];
+        const existingLine = existingLines.find(line => line.metadata.priceType === priceType);
+        const amount = prices[priceType];
+
+        if(existingLine) {
+            existingLines.splice(existingLines.indexOf(existingLine), 1);
+        }
+
+        if(existingLine && existingLine.amount !== amount) {
+            if(amount == null) {
+                await stripe.invoiceItems.del(existingLine.id);
+            } else {
+                await stripe.invoiceItems.update(
+                    existingLine.id,
+                    { amount }
+                );
+            }
+        } else if(!existingLine && amount != null) {
+            await stripe.invoiceItems.create({
+                customer,
+                invoice: draftInvoice && draftInvoice.id,
+                amount,
+                currency: "usd",
+                description: invoiceLineDescription(priceType),
+                metadata: {
+                    priceType,
+                }
+            });
+        }
+    }
+
+    for(let i = 0; i < existingLines.length; i++) {
+        await stripe.invoiceItems.del(existingLines[i].id);
+    }
+
     const invoiceUpdates = {
-        customer,
-        default_tax_rates: [TAX_RATE_ID],
+        customer: draftInvoice ? undefined : customer,
+        default_tax_rates: taxRate ? [taxRate.id] : [],
         description: "Oil Change from Car Swaddle",
         statement_descriptor: "Car Swaddle Oil Change",
         metadata,
-        coupon,
     };
-    const draftInvoice = await this.retrieveDraftInvoice(customer);
-    var finalInvoice;
 
-    prices.processingFee = calculateProcessingFee(prices, TAX_RATE_PERCENTAGE);
-
-    if(!draftInvoice) {
-        for(var i = 0; i < ALL_PRICE_TYPES.length; i++) {
-            const priceType = ALL_PRICE_TYPES[i];
-            const amount = prices[priceType];
-
-            // TODO: Look for pending line items.
-
-            if(amount != null) {
-                await stripe.invoiceItems.create({
-                    customer,
-                    amount,
-                    currency: "usd",
-                    description: invoiceLineDescription(priceType),
-                    metadata: {
-                        priceType,
-                    }
-                });
-            }
-        }
-
-        finalInvoice = await stripe.invoices.create(invoiceUpdates)
-    } else {
-        const existingLines = draftInvoice.lines.data;
-        
-        for(let i = 0; i < ALL_PRICE_TYPES.length; i++) {
-            const priceType = ALL_PRICE_TYPES[i];
-            const existingLine = existingLines.find(line => line.metadata.priceType === priceType);
-            const amount = prices[priceType];
-    
-            if(existingLine && existingLine.amount !== amount) {
-                if(amount == null) {
-                    await stripe.invoiceItems.del(existingLine.id);
-                } else {
-                    await stripe.invoiceItems.update(
-                        existingLine.id,
-                        { amount }
-                    );
-                }
-            } else if(!existingLine && amount != null) {
-                await stripe.invoiceItems.create({
-                    invoice: invoice.id,
-                    amount,
-                    currency: "usd",
-                    description: invoiceLineDescription(priceType),
-                    metadata: {
-                        priceType,
-                    }
-                });
-            }
-        }
-
-        delete invoiceUpdates.customer;
-
-        finalInvoice = await stripe.invoices.update(draftInvoice.id, invoiceUpdates);
-    }
+    const finalInvoice = draftInvoice
+        ? await stripe.invoices.update(draftInvoice.id, invoiceUpdates)
+        : await stripe.invoices.create(invoiceUpdates);
 
     prices.taxes = finalInvoice.tax || 0;
     prices.total = finalInvoice.total;
 
-    return prices;
+    return finalInvoice;
 };
-
-StripeCharges.prototype.createCoupon = function(userId, coupon) {
-    return stripe.coupons.create({
-        duration: 'once',
-        amount_off: coupon.amountOff,
-        currency: 'usd',
-        max_redemptions: coupon.maxRedemptions,
-        metadata: {
-            user_id: userId,
-            noBookingFee: coupon.discountBookingFee ? 'YES' : null,
-        },
-        name: coupon.name,
-        percent_off: coupon.percentOff,
-        redeem_by: new Date(coupon.redeemBy),
-    });
-};
-
-StripeCharges.prototype.removeCoupon = function(couponId) {
-    return stripe.coupons.del(couponId);
-}
 
 /**
  * Performs a debit on an auto service. If the montly stripe debit is required, this method will perform that debit as well.
@@ -305,6 +275,8 @@ function invoiceLineDescription(priceType) {
             return 'Processing Fee';
         case 'bookingFeeDiscount':
             return 'Car Swaddle Booking Fee Discount';
+        case 'discount':
+            return 'Discount from coupon';
         default:
             return '';
     }
@@ -340,33 +312,4 @@ function currentYear() {
 function currentMonth() {
     const currentDate = new Date();
     return currentDate.getMonth();
-}
-
-
-function calculateProcessingFee(prices, taxPercentage) {
-    // d = ((s+b)+0.30)/(1-0.029)
-    // fee = d - (s+b)
-    // The mechanic will make a little bit more than what we will take out for the stripeConnectProcessFee because we add
-    // the product of the stripeConectFee and the entire total instead of just what the mechanic gets. The profit goes to
-    // the mechanic.
-    
-    // Covers Stripe charge fee %3 and the connect payout volume %0.25 fee 
-    const stripeProcessPercentage = 0.029;
-    const stripeConnectProcessPercentage = 0.025;
-    // in cents
-    const stripeProcessTransactionFee = 30;
-
-    const feeTotal = Object.keys(prices)
-    .filter(type => PROCESSING_FEE_PRICE_TYPES.indexOf(type) !== -1)
-    .reduce((amount, type) => amount + (prices[type] || 0), 0);
-    const estimatedTaxes = Math.round(feeTotal * taxPercentage);
-    const subtotal = feeTotal + estimatedTaxes;
-
-    var connectFee = subtotal / (1.0 - (stripeConnectProcessPercentage));
-    connectFee = connectFee - subtotal;
-
-    const basePrice = subtotal + (subtotal * constants.BOOKING_FEE_PERCENTAGE) + connectFee;
-    const total = (basePrice + stripeProcessTransactionFee) / (1.0 - (stripeProcessPercentage));
-
-    return Math.round(total - basePrice);
 }

@@ -1,6 +1,6 @@
 const bodyParser = require('body-parser');
 const uuidV1 = require('uuid/v1');
-
+const asyncMiddleware = require('../../lib/middleware/async-middleware');
 
 const adminEmail = 'kyle@carswaddle.com';
 
@@ -31,7 +31,7 @@ module.exports = function (router, models) {
         });
     });
 
-    router.post('/authorities/approve', bodyParser.json(), async function (req, res) {
+    router.post('/authorities/approve', bodyParser.json(), asyncMiddleware(async function (req, res) {
         const secretID = req.body.secretID;
 
         if (!secretID) {
@@ -114,9 +114,9 @@ module.exports = function (router, models) {
         }).catch(err => {
             res.status(400).send('unable to accept');
         });
-    });
+    }));
 
-    router.post('/authorities/reject', bodyParser.json(), async function (req, res) {
+    router.post('/authorities/reject', bodyParser.json(), asyncMiddleware(async function (req, res) {
         const secretID = req.body.secretID;
 
         if (!secretID) {
@@ -173,9 +173,9 @@ module.exports = function (router, models) {
         }).catch(err => {
             res.status(400).send('unable to reject');
         });
-    });
+    }));
 
-    router.get('/authorities', async function (req, res) {
+    router.get('/authorities', asyncMiddleware(async function (req, res) {
         // gets all authorities sorted by creationDate, 
         // return requestConfirmation as well for who confirmed the authority and when it happened
         // paged
@@ -197,9 +197,9 @@ module.exports = function (router, models) {
         } catch(e) {
             res.status(400).send('unable to determine access');
         }
-    });
+    }));
 ``
-    router.get('/authorityRequests', bodyParser.json(), async function (req, res) {
+    router.get('/authorityRequests', bodyParser.json(), asyncMiddleware(async function (req, res) {
         // gets all authority requests sorted by creationDate
         // paged
 
@@ -210,9 +210,9 @@ module.exports = function (router, models) {
                 return res.status(67200).json(authorityRequests);
             }
         });
-    });
+    }));
 
-    router.get('/authorities/user', bodyParser.json(), async function (req, res) {
+    router.get('/authorities/user', bodyParser.json(), asyncMiddleware(async function (req, res) {
         authoritiesController.fetchAuthoritiesForUser(req.user.id, function (err, authorities) {
             if (err) {
                 return res.status(400).send('error fetching authorities');
@@ -220,7 +220,7 @@ module.exports = function (router, models) {
                 return res.status(200).json(authorities);
             }
         });
-    });
+    }));
 
     router.get('/authorities/types', bodyParser.json(), async function (req, res) {
         var values = Object.keys(models.Authority.NAME).map(function(key){

@@ -56,8 +56,8 @@ AutoServiceScheduler.prototype.findAutoServices = function (mechanicID, userID, 
     });
 };
 
-AutoServiceScheduler.prototype.scheduleAutoService = async function (user, status, invoiceID, scheduledDate, vehicleID, mechanicID, sourceID, serviceEntities, location, locationID, notes, callback) {
-    this.createAutoService(user, mechanicID, status, scheduledDate, vehicleID, sourceID, serviceEntities, locationID, location, notes, async (err, autoService) => {
+AutoServiceScheduler.prototype.scheduleAutoService = async function (user, status, scheduledDate, vehicleID, mechanicID, invoice, sourceID, serviceEntities, location, locationID, notes, callback) {
+    this.createAutoService(user, mechanicID, status, scheduledDate, vehicleID, invoice, sourceID, serviceEntities, locationID, location, notes, async (err, autoService) => {
         if (err) {
             callback(err, null);
             return;
@@ -152,7 +152,7 @@ AutoServiceScheduler.prototype.createOilChange = function (service, key, autoSer
     })
 }
 
-AutoServiceScheduler.prototype.createAutoService = async function (user, mechanicID, status, scheduledDate, vehicleID, sourceID, serviceEntities, locationID, location, notes, callback) {
+AutoServiceScheduler.prototype.createAutoService = async function (user, mechanicID, status, scheduledDate, vehicleID, invoice, sourceID, serviceEntities, locationID, location, notes, callback) {
     if (this.models.AutoService.isValidStatus(status) == false) { callback('Invalid status:' + status, null); return; }
     if (!scheduledDate) { callback('invalid parameters, scheduledDate', null); return; }
 
@@ -165,6 +165,7 @@ AutoServiceScheduler.prototype.createAutoService = async function (user, mechani
     }
 
     if (!vehicleID) { callback('invalid parameters, vehicleID', null); return; }
+    if (!invoice) { callback('invalid parameters, invoice'); return; }
     if (!sourceID) { callback('invalid parameters, sourceID'); return; }
     if (serviceEntities.length <= 0) { callback('invalid parameters, at least one serviceEntities', null); return; }
 
@@ -185,9 +186,6 @@ AutoServiceScheduler.prototype.createAutoService = async function (user, mechani
 
     if (!mechanicID) { callback('invalid parameters, mechanicID', null); return; }
 
-    const draftInvoice = await this.stripeCharges.retrieveDraftInvoice(user.stripeCustomerID);
-    if (!draftInvoice) { callback('invalid parameters, draftInvoice', null); return; }
-
     const fetchedLocation = await locationPromise;
     if (!fetchedLocation) { callback('invalid parameters, no location', null); return; }
     const mechanic = await this.models.Mechanic.findById(mechanicID);
@@ -200,7 +198,7 @@ AutoServiceScheduler.prototype.createAutoService = async function (user, mechani
         status: status,
         notes: notes,
         scheduledDate: scheduledDate,
-        invoiceID: draftInvoice.id,
+        invoiceID: invoice.id,
     });
     autoService.setMechanic(mechanic, { save: false });
     autoService.setUser(user, { save: false });

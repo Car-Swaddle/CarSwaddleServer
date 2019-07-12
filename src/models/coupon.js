@@ -6,11 +6,6 @@ const coupon = function (sequelize, DataTypes) {
             unique: true,
             notEmpty: true,
         },
-        code: {
-            type: DataTypes.STRING,
-            allowNull: false,
-            notEmpty: true,
-        },
         amountOff: {
             type: DataTypes.INTEGER,
             allowNull: true,
@@ -18,6 +13,9 @@ const coupon = function (sequelize, DataTypes) {
         percentOff: {
             type: DataTypes.FLOAT,
             allowNull: true,
+        },
+        redemptions: {
+            type: DataTypes.INTEGER,
         },
         maxRedemptions: {
             type: DataTypes.INTEGER,
@@ -43,11 +41,56 @@ const coupon = function (sequelize, DataTypes) {
         Coupon.belongsTo(models.User, { foreignKey: 'userID', allowNull: true });
     };
 
-    Coupon.findByCode = code => {
-        return Coupon.findOne({
-            where: { code }
-        });
+    const { Op } = sequelize;
+
+    function redeemableQuery(couponId) {
+        return {
+            where: {
+                id: couponId,
+                [Op.and]: [{
+                    [Op.or]: [{
+                        maxRedemptions: null
+                    }, {
+                        redemptions: {
+                            [Op.lt]: {
+                                [Op.col]: 'maxRedemptions'
+                            }
+                        }
+                    }]
+                }, {
+                    [Op.or]: [{
+                        redeemBy: null
+                    }, {
+                        redeemBy: {
+                            [Op.gt]: new Date(),
+                        }
+                    }]
+                }]
+            }
+        };
     }
+
+    Coupon.findRedeemable = (couponId) => {
+        return Coupon.findOne(
+            redeemableQuery(couponId)
+        );
+    }
+
+    Coupon.undoRedeem = (couponId) => {
+
+    };
+
+    Coupon.redeem = (couponId) => {
+        const update = Coupon.update({
+            redemptions: sequelize.literal('redemptions + 1')
+        }, redeemableQuery(couponId));
+
+        return update.then(res => {
+            return res[0] === 1
+                ? Coupon.findById(couponId)
+                : null;
+        });
+    };
 
     return Coupon;
 };
