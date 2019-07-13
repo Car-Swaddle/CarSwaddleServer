@@ -41,13 +41,14 @@ const autoService = function (sequelize, DataTypes) {
   AutoService.associate = models => {
     AutoService.belongsTo(models.User, { foreignKey: 'userID' });
     AutoService.belongsTo(models.Mechanic, { foreignKey: 'mechanicID' });
+    AutoService.belongsTo(models.Coupon, { foreignKey: 'couponID' });
     AutoService.hasOne(models.Location, { foreignKey: 'autoServiceID' });
     AutoService.hasOne(models.Review, { foreignKey: 'autoServiceIDFromUser', as: 'reviewFromUser' });
     AutoService.hasOne(models.Review, { foreignKey: 'autoServiceIDFromMechanic', as: 'reviewFromMechanic' });
     AutoService.belongsTo(models.Vehicle, { foreignKey: 'vehicleID' });
     AutoService.hasOne(models.Price, { foreignKey: 'autoServiceID' });
     AutoService.hasMany(models.ServiceEntity, { foreignKey: 'autoServiceID' });
-    AutoService.hasMany(models.TransactionMetadata, { foreignKey: 'autoServiceID' });;
+    AutoService.hasMany(models.TransactionMetadata, { foreignKey: 'autoServiceID' });
   };
 
   AutoService.STATUS = {

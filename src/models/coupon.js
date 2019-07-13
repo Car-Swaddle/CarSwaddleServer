@@ -33,12 +33,16 @@ const coupon = function (sequelize, DataTypes) {
             type: DataTypes.BOOLEAN,
             allowNull: false,
         },
+        isCorporate: {
+            type: DataTypes.BOOLEAN,
+            allowNull: false,
+        }
     }, {
         freezeTableName: true,
     });
 
     Coupon.associate = models => {
-        Coupon.belongsTo(models.User, { foreignKey: 'userID', allowNull: true });
+        Coupon.belongsTo(models.User, { foreignKey: 'createdByUserId' });
     };
 
     const { Op } = sequelize;
@@ -77,10 +81,22 @@ const coupon = function (sequelize, DataTypes) {
     }
 
     Coupon.undoRedeem = (couponId) => {
+        if(!couponId) {
+            return Promise.resolve();
+        }
 
+        return Coupon.update({
+            redemptions: sequelize.literal('redemptions - 1')
+        }, {
+            id: couponId
+        });
     };
 
     Coupon.redeem = (couponId) => {
+        if(!couponId) {
+            return Promise.resolve(null);
+        }
+
         const update = Coupon.update({
             redemptions: sequelize.literal('redemptions + 1')
         }, redeemableQuery(couponId));

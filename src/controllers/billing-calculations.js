@@ -16,11 +16,11 @@ const constants = require('./constants');
 
 const METERS_TO_MILES = 1609.344;
 
-function BillingCals(models) {
+function BillingCalculations(models) {
     this.models = models;
 }
 
-BillingCals.prototype.calculateCouponDiscount = function(coupon, subTotal) {
+BillingCalculations.prototype.calculateCouponDiscount = function(coupon, subTotal) {
     if(coupon.amountOff) {
         return subTotal > coupon.amountOff ? -coupon.amountOff : -subTotal;
     } else if(coupon.percentOff) {
@@ -30,7 +30,7 @@ BillingCals.prototype.calculateCouponDiscount = function(coupon, subTotal) {
     }
 }
 
-BillingCals.prototype.calculatePrices = async function(mechanic, location, oilType, coupon, taxRate) {
+BillingCalculations.prototype.calculatePrices = async function(mechanic, location, oilType, coupon, taxRate) {
     const [
         region,
         oilChangePricing,
@@ -55,7 +55,7 @@ BillingCals.prototype.calculatePrices = async function(mechanic, location, oilTy
     const processingFeePrice = calculateProcessingFee(oilChangePrice, distancePrice, bookingFeePrice, bookingFeeDiscountPrice, taxRate);
     var transferAmountPrice = subtotalPrice;
 
-    if(coupon && coupon.userId) {
+    if(coupon && !coupon.isCorporate) {
         transferAmountPrice += discountPrice;
     }
 
@@ -107,5 +107,5 @@ function centsForOilType(oilType, oilChangePricing) {
 }
 
 module.exports = function (models) {
-    return new BillingCals(models);
+    return new BillingCalculations(models);
 };

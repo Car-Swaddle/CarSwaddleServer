@@ -10,15 +10,15 @@ module.exports = function (router, models) {
 
         const [
             coupon,
-            authority,
-            authorityCorporate,
+            editCorporateCarSwaddleCouponAuthory,
+            editCarSwaddleCouponAuthory,
         ] = await Promise.all([
             models.Coupon.findById(id),
-            authoritiesController.fetchAuthorityForUser(req.user.id, models.Authority.NAME.editCarSwaddleCoupon, false),
             authoritiesController.fetchAuthorityForUser(req.user.id, models.Authority.NAME.editCorporateCarSwaddleCoupon, false),
+            authoritiesController.fetchAuthorityForUser(req.user.id, models.Authority.NAME.editCarSwaddleCoupon, false),
         ]);
 
-        const canDelete = coupon && ((!coupon.userId && authorityCorporate) || (coupon.userId && coupon.userId === req.user.id && authority));
+        const canDelete = coupon && (coupon.createdByUserId === req.user.id || editCorporateCarSwaddleCouponAuthory || editCarSwaddleCouponAuthory);
 
         if(!coupon || !canDelete) {
             return res.status(403).send('Unable to delete this coupon');
@@ -43,13 +43,11 @@ module.exports = function (router, models) {
         }
 
         req.body.id = (req.body.id || '').replace(/\W/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '').toLowerCase();
+        req.body.isCorporate = authorityCorporate ? !!req.body.isCorporate : false;
+        req.body.createdByUserId = req.user.id;
+        req.body.redemptions = 0;
 
-        const couponUserID = authorityCorporate ? null : req.user.id;
-        const coupon = await models.Coupon.create({
-            ...req.body,
-            userID: couponUserID,
-            redemptions: 0,
-        });
+        const coupon = await models.Coupon.create(req.body);
 
         return res.send({ coupon });
     }));

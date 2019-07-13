@@ -56,8 +56,8 @@ AutoServiceScheduler.prototype.findAutoServices = function (mechanicID, userID, 
     });
 };
 
-AutoServiceScheduler.prototype.scheduleAutoService = async function (user, status, scheduledDate, vehicleID, mechanicID, invoice, sourceID, serviceEntities, location, locationID, notes, callback) {
-    this.createAutoService(user, mechanicID, status, scheduledDate, vehicleID, invoice, sourceID, serviceEntities, locationID, location, notes, async (err, autoService) => {
+AutoServiceScheduler.prototype.scheduleAutoService = async function (user, status, scheduledDate, vehicleID, mechanicID, invoice, sourceID, serviceEntities, location, locationID, couponID, notes, callback) {
+    this.createAutoService(user, mechanicID, status, scheduledDate, vehicleID, invoice, sourceID, serviceEntities, locationID, location, couponID, notes, async (err, autoService) => {
         if (err) {
             callback(err, null);
             return;
@@ -152,7 +152,7 @@ AutoServiceScheduler.prototype.createOilChange = function (service, key, autoSer
     })
 }
 
-AutoServiceScheduler.prototype.createAutoService = async function (user, mechanicID, status, scheduledDate, vehicleID, invoice, sourceID, serviceEntities, locationID, location, notes, callback) {
+AutoServiceScheduler.prototype.createAutoService = async function (user, mechanicID, status, scheduledDate, vehicleID, invoice, sourceID, serviceEntities, locationID, location, couponID, notes, callback) {
     if (this.models.AutoService.isValidStatus(status) == false) { callback('Invalid status:' + status, null); return; }
     if (!scheduledDate) { callback('invalid parameters, scheduledDate', null); return; }
 
@@ -199,6 +199,7 @@ AutoServiceScheduler.prototype.createAutoService = async function (user, mechani
         notes: notes,
         scheduledDate: scheduledDate,
         invoiceID: invoice.id,
+        couponID,
     });
     autoService.setMechanic(mechanic, { save: false });
     autoService.setUser(user, { save: false });

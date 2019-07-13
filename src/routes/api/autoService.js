@@ -283,7 +283,7 @@ module.exports = function (router, models) {
             locationID,
             notes,
             oilType,
-            couponID,
+            couponID = 'test',
         } = req.body;
 
         const [
@@ -296,7 +296,11 @@ module.exports = function (router, models) {
             models.Coupon.redeem(couponID)
         ]);
 
-        if (location == null || mechanic == null || (couponID && !coupon)) {
+        if(couponID && !coupon) {
+            return res.status(422).send({ code: 'COUPON_NOT_FOUND' });
+        }
+
+        if (location == null || mechanic == null) {
             return res.status(422).send();
         }
 
@@ -307,10 +311,12 @@ module.exports = function (router, models) {
             transferAmount: prices.transferAmount,
         }, taxRate);
 
-        autoServiceScheduler.scheduleAutoService(req.user, status, scheduledDate, vehicleID, mechanicID, invoice, sourceID, serviceEntities, address, locationID, notes, function (err, autoService) {
+        autoServiceScheduler.scheduleAutoService(req.user, status, scheduledDate, vehicleID, mechanicID, invoice, sourceID, serviceEntities, address, locationID, couponID, notes, function (err, autoService) {
             if (!err) {
                 return res.json(autoService);
             } else {
+                models.Coupon.undoRedeem(couponID);
+
                 return res.status(400).send(err);
             }
         });
