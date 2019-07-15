@@ -45,7 +45,7 @@ BillingCalculations.prototype.calculatePrices = async function(mechanic, locatio
     const miles = meters / METERS_TO_MILES;
 
     const centsPerMile = (oilChangePricing && oilChangePricing.centsPerMile) || constants.DEFAULT_CENTS_PER_MILE;
-    const oilChangePrice = centsForOilType(oilType, oilChangePricing) || constants.DEFAULT_CENTS_PER_MILE;
+    const oilChangePrice = centsForOilType(oilType, oilChangePricing) || constants.DEFAULT_CONVENTIONAL_PRICE;
     const distancePrice =  Math.round((centsPerMile * miles) * 2);
     const subtotalPrice = oilChangePrice + distancePrice;
     const discountPrice = coupon ? this.calculateCouponDiscount(coupon, subtotalPrice) : null;
@@ -53,6 +53,7 @@ BillingCalculations.prototype.calculatePrices = async function(mechanic, locatio
     const bookingFeeDiscountPrice = coupon && coupon.discountBookingFee ? -bookingFeePrice : null;
 
     const processingFeePrice = calculateProcessingFee(oilChangePrice, distancePrice, bookingFeePrice, bookingFeeDiscountPrice, taxRate);
+    const mechanicCostPrice = Math.round(subtotalPrice * .7);
     var transferAmountPrice = subtotalPrice;
 
     if(coupon && !coupon.isCorporate) {
@@ -68,6 +69,7 @@ BillingCalculations.prototype.calculatePrices = async function(mechanic, locatio
         subtotal: subtotalPrice,
         processingFee: processingFeePrice,
         transferAmount: transferAmountPrice,
+        mechanicCost: mechanicCostPrice,
     };
 }
 

@@ -16,7 +16,6 @@ const authority = function (sequelize, DataTypes) {
     Authority.NAME = {
         readCarSwaddleCoupon: 'readCarSwaddleCoupon',
         editCarSwaddleCoupon: 'editCarSwaddleCoupon',
-        editCorporateCarSwaddleCoupon: 'editCorporateCarSwaddleCoupon',
         readAuthorities: 'readAuthorities',
         editAuthorities: 'editAuthorities',
         editMechanics: 'editMechanics',

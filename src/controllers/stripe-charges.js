@@ -72,38 +72,22 @@ StripeCharges.prototype.monthlyDebitFee = function (mechanicPayment) {
     return stripeConnectMonthlyDebit;
 }
 
-StripeCharges.prototype.payInvoices = async function(sourceID, autoServiceID) {
-    if (sourceID == null || autoServiceID == null) {
+StripeCharges.prototype.payInvoices = async function(invoiceID, sourceID, mechanicID) {
+    const mechanic = await this.models.Mechanic.findById(mechanicID);
+
+    if (sourceID == null || invoiceID == null || mechanic == null) {
         return res.status(422).send();
     }
 
-    const autoService = await this.models.AutoService.findById(autoServiceID);
-    const mechanic = await autoService.getMechanic();
+    try {
+        const invoice = await stripe.invoices.pay(invoiceID, {
+            source: sourceID,
+        });
 
-    if (mechanic == null || autoService == null) {
-        return res.status(422).send();
+        return invoice;
+    } catch(e) {
+        return null;
     }
-
-    const invoice = await stripe.invoices.pay(autoService.invoiceID, {
-        source: sourceID,
-    });
-
-    const transfer = await stripe.transfers.create({
-        amount: parseInt(invoice.metadata.transferAmount, 10),
-        currency: "usd",
-        destination: mechanic.stripeAccountID,
-        source_transaction: invoice.charge, // TODO: Can we get away with not using this? It fails if the transfer amount is more than the charge amount.
-        expand: ['destination_payment'],
-    });
-
-    await stripe.invoices.update(invoice.id, {
-        metadata: {
-            autoServiceId: autoService.id,
-            transfer: transfer.id,
-        }
-    });
-
-    return { invoice, transfer };
 };
 
 StripeCharges.prototype.retrieveDraftInvoice = async function(customer) {

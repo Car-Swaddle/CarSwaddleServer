@@ -14,6 +14,10 @@ const autoService = function (sequelize, DataTypes) {
     status: {
       type: DataTypes.STRING // ENUM('scheduled', 'inProgress', 'completed', 'canceled'),
     },
+    transferID: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
     balanceTransactionID: {
       type: DataTypes.STRING,
       allowNull: true
@@ -41,7 +45,7 @@ const autoService = function (sequelize, DataTypes) {
   AutoService.associate = models => {
     AutoService.belongsTo(models.User, { foreignKey: 'userID' });
     AutoService.belongsTo(models.Mechanic, { foreignKey: 'mechanicID' });
-    AutoService.belongsTo(models.Coupon, { foreignKey: 'couponID' });
+    AutoService.belongsTo(models.Coupon, { foreignKey: 'couponID', allowNull: true });
     AutoService.hasOne(models.Location, { foreignKey: 'autoServiceID' });
     AutoService.hasOne(models.Review, { foreignKey: 'autoServiceIDFromUser', as: 'reviewFromUser' });
     AutoService.hasOne(models.Review, { foreignKey: 'autoServiceIDFromMechanic', as: 'reviewFromMechanic' });
@@ -60,6 +64,12 @@ const autoService = function (sequelize, DataTypes) {
 
   /// Order of this matters, the client can't change from a later status to an earlier status
   AutoService.allStatus = ['scheduled', 'inProgress', 'completed', 'canceled'];
+
+  AutoService.findByChargeId = function (chargeID) {
+    return AutoService.findOne({
+      where: { chargeID },
+    });
+  }
 
   AutoService.isValidStatus = function (status) {
     if (AutoService.allStatus.includes(status) == true) {

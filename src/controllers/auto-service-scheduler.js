@@ -56,18 +56,18 @@ AutoServiceScheduler.prototype.findAutoServices = function (mechanicID, userID, 
     });
 };
 
-AutoServiceScheduler.prototype.scheduleAutoService = async function (user, status, scheduledDate, vehicleID, mechanicID, invoice, sourceID, serviceEntities, location, locationID, couponID, notes, callback) {
+AutoServiceScheduler.prototype.scheduleAutoService = async function (user, status, scheduledDate, vehicleID, mechanicID, invoiceID, sourceID, serviceEntities, location, locationID, couponID, notes, callback) {
+    const invoice = await this.stripeCharges.payInvoices(invoiceID, sourceID, mechanicID);
+
+    if (!invoice) {
+        callback('unable to create charge', null);
+        return
+    }
+
     this.createAutoService(user, mechanicID, status, scheduledDate, vehicleID, invoice, sourceID, serviceEntities, locationID, location, couponID, notes, async (err, autoService) => {
         if (err) {
             callback(err, null);
             return;
-        }
-
-        const { invoice, transfer } = await this.stripeCharges.payInvoices(sourceID, autoService.id);
-
-        if (!invoice) {
-            callback('unable to create charge', null);
-            return
         }
 
         this.setupServiceEntities(serviceEntities, autoService, async (err, serviceEntities) => {
@@ -80,11 +80,12 @@ AutoServiceScheduler.prototype.scheduleAutoService = async function (user, statu
             this.sendNotification(user, mechanic);
             this.reminder.scheduleRemindersForAutoService(fetchedAutoService);
 
-            fetchedAutoService.balanceTransactionID = transfer && transfer.destination_payment.balance_transaction;
             fetchedAutoService.chargeID = invoice.charge;
-            await fetchedAutoService.save()
+            await fetchedAutoService.save();
 
-            this.createTransactionMetadata(mechanic, fetchedAutoService.location, transfer, fetchedAutoService, fetchedAutoService.balanceTransactionID, async (err, transactionMetadata) => {
+            const mechanicCost = parseInt(invoice.metadata.mechanicCost, 10);
+
+            this.createTransactionMetadata(mechanic, fetchedAutoService.location, mechanicCost, fetchedAutoService, fetchedAutoService.balanceTransactionID, async (err, transactionMetadata) => {
                 const lastAutoService = await this.models.AutoService.findOne({
                     where: { id: fetchedAutoService.id },
                     include: this.includeDict(),
@@ -270,14 +271,12 @@ AutoServiceScheduler.prototype.isDateInMechanicSlot = async function (scheduledD
     return timeSpan != null
 }
 
-AutoServiceScheduler.prototype.createTransactionMetadata = async function (mechanic, location, transfer, autoService, stripeTransactionID, callback) {
+AutoServiceScheduler.prototype.createTransactionMetadata = async function (mechanic, location, mechanicCost, autoService, stripeTransactionID, callback) {
     const region = await mechanic.getRegion();
     if (!region) { callback('unable to get region', null) }
     const locationPoint = { latitude: location.point.coordinates[1], longitude: location.point.coordinates[0] };
     const regionPoint = { latitude: region.origin.coordinates[1], longitude: region.origin.coordinates[0] };
     const meters = distance.metersBetween(locationPoint, regionPoint);
-
-    const mechanicCost = Math.round(transfer.amount * .7);
 
     const transactionMetadata = await this.models.TransactionMetadata.create({ id: uuidV1(), stripeTransactionID: stripeTransactionID, mechanicCost: mechanicCost, drivingDistance: meters });
     if (!transactionMetadata) { callback('unable to get transactionMetadata', null) }

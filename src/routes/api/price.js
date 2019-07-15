@@ -9,7 +9,7 @@ module.exports = function (router, models) {
     const taxes = require('../../controllers/taxes')(models);
 
     router.post('/price', bodyParser.json(), async function (req, res) {
-        const { oilType, mechanicID, couponID, locationID, location: address } = req.body;
+        const { oilType, mechanicID, coupon, locationID, location: address } = req.body;
         const { stripeCustomerID } = req.user;
 
         if (!oilType || !mechanicID) {
@@ -19,19 +19,23 @@ module.exports = function (router, models) {
         const [
             location,
             mechanic,
-            coupon,
+            couponEntity,
         ] = await Promise.all([
             models.Location.findBySearch(locationID, address),
             models.Mechanic.findById(mechanicID),
-            models.Coupon.findRedeemable(couponID),
+            models.Coupon.findRedeemable(coupon, mechanicID),
         ]);
+
+        if(coupon && !couponEntity) {
+            return res.status(422).send({ code: 'COUPON_NOT_FOUND' });
+        }
 
         if (location == null || mechanic == null) {
             return res.status(422).send();
         }
 
         const taxRate = await taxes.taxRateForLocation(location);
-        const prices = await billingCalculations.calculatePrices(mechanic, location, oilType, coupon, taxRate);
+        const prices = await billingCalculations.calculatePrices(mechanic, location, oilType, couponEntity, taxRate);
         const meta = { oilType, mechanicID, locationID: location.id };
 
         await stripeChargesFile.updateDraft(stripeCustomerID, prices, meta, taxRate);

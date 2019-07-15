@@ -282,25 +282,39 @@ module.exports = function (router, models) {
             location: address,
             locationID,
             notes,
-            oilType,
             couponID,
         } = req.body;
+
+        const oilChangeService = serviceEntities.find(x => x.entityType === 'OIL_CHANGE');
+        const oilType = oilChangeService && oilChangeService.specificService.oilType;
 
         const [
             location,
             mechanic,
             coupon,
+            inTimeSlot,
+            isAlreadyScheduled,
         ] = await Promise.all([
             models.Location.findBySearch(locationID, address),
             models.Mechanic.findById(mechanicID),
-            models.Coupon.redeem(couponID)
+            models.Coupon.redeem(couponID, mechanicID),
+            autoServiceScheduler.isDateInMechanicSlot(scheduledDate, req.user, mechanicID),
+            autoServiceScheduler.isDatePreviouslyScheduled(scheduledDate, req.user, mechanicID)
         ]);
+
+        if (autoServiceScheduler.isValidScheduledDate(scheduledDate, req.user) == false || inTimeSlot == false || isAlreadyScheduled == true) {
+            models.Coupon.undoRedeem(coupon);
+
+            return res.status(422).send({ code: 'MECHANIC_TIME_ALREADY_RESERVED' });
+        }
 
         if(couponID && !coupon) {
             return res.status(422).send({ code: 'COUPON_NOT_FOUND' });
         }
 
         if (location == null || mechanic == null) {
+            models.Coupon.undoRedeem(coupon);
+
             return res.status(422).send();
         }
 
@@ -309,13 +323,16 @@ module.exports = function (router, models) {
 
         const invoice = await stripeChargesFile.updateDraft(req.user.stripeCustomerID, prices, {
             transferAmount: prices.transferAmount,
+            mechanicCost: prices.mechanicCost,
+            mechanicID,
+            oilType,
         }, taxRate);
 
-        autoServiceScheduler.scheduleAutoService(req.user, status, scheduledDate, vehicleID, mechanicID, invoice, sourceID, serviceEntities, address, locationID, couponID, notes, function (err, autoService) {
+        autoServiceScheduler.scheduleAutoService(req.user, status, scheduledDate, vehicleID, mechanicID, invoice.id, sourceID, serviceEntities, address, locationID, couponID, notes, function (err, autoService) {
             if (!err) {
                 return res.json(autoService);
             } else {
-                models.Coupon.undoRedeem(couponID);
+                models.Coupon.undoRedeem(coupon);
 
                 return res.status(400).send(err);
             }

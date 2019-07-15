@@ -42,16 +42,23 @@ const coupon = function (sequelize, DataTypes) {
     });
 
     Coupon.associate = models => {
-        Coupon.belongsTo(models.User, { foreignKey: 'createdByUserId' });
+        Coupon.belongsTo(models.User, { foreignKey: 'createdByUserID' });
+        Coupon.belongsTo(models.Mechanic, { foreignKey: 'createdByMechanicID' });
     };
 
     const { Op } = sequelize;
 
-    function redeemableQuery(couponId) {
+    function redeemableQuery(couponId, mechanicId) {
         return {
             where: {
                 id: couponId,
                 [Op.and]: [{
+                    [Op.or]: [{
+                        isCorporate: true
+                    }, {
+                        createdByMechanicID: mechanicId,
+                    }]
+                }, {
                     [Op.or]: [{
                         maxRedemptions: null
                     }, {
@@ -74,32 +81,34 @@ const coupon = function (sequelize, DataTypes) {
         };
     }
 
-    Coupon.findRedeemable = (couponId) => {
+    Coupon.findRedeemable = (couponId, mechanicId) => {
         return Coupon.findOne(
-            redeemableQuery(couponId)
+            redeemableQuery(couponId, mechanicId)
         );
     }
 
-    Coupon.undoRedeem = (couponId) => {
-        if(!couponId) {
+    Coupon.undoRedeem = (coupon) => {
+        if(!coupon) {
             return Promise.resolve();
         }
 
         return Coupon.update({
             redemptions: sequelize.literal('redemptions - 1')
         }, {
-            id: couponId
+            where: {
+                id: coupon.id
+            }
         });
     };
 
-    Coupon.redeem = (couponId) => {
+    Coupon.redeem = (couponId, mechanicId) => {
         if(!couponId) {
             return Promise.resolve(null);
         }
 
         const update = Coupon.update({
             redemptions: sequelize.literal('redemptions + 1')
-        }, redeemableQuery(couponId));
+        }, redeemableQuery(couponId, mechanicId));
 
         return update.then(res => {
             return res[0] === 1

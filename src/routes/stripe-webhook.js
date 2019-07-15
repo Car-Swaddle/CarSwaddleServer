@@ -3,18 +3,22 @@ const stripe = require('stripe')(constants.STRIPE_SECRET_KEY);
 const bodyParser = require('body-parser');
 const pushService = require('../notifications/pushNotifications.js');
 const liveEndpointSecret = 'whsec_jVeHLJxhNsz8bfXPrD58FjVgYG1yLpLc';
-const testEndpointSecret = 'whsec_NZ2S54mDSbeRpWB5NDVXOGrVxJpOyEY0';
+const liveEndpointSecretCorp = '';
+const testEndpointSecret = 'whsec_fYufTNtz4JulYaLJBEqC4NtDO0sn16I0';
+const testEndpointSecretCorp = 'whsec_fYufTNtz4JulYaLJBEqC4NtDO0sn16I0';
 const stripeChargesFile = require('../controllers/stripe-charges.js');
 
 module.exports = function (app, models) {
 
     const stripeCharges = stripeChargesFile(models);
 
-    function secret() {
-        if (process.env.DATABASE_URL && false) {
-            return liveEndpointSecret;
+    function secret(isCorp) {
+        const useLiveKey = process.env.DATABASE_URL && false;
+
+        if(isCorp) {
+            return useLiveKey ? liveEndpointSecretCorp : testEndpointSecretCorp;
         } else {
-            return testEndpointSecret;
+            return useLiveKey ? liveEndpointSecret : testEndpointSecret;
         }
     }
 
@@ -120,13 +124,56 @@ module.exports = function (app, models) {
                 pushService.sendMechanicNotification(mechanic, alert, null, null, title);
                 return res.json({ received: true });
             }
-        } else if(event.type == eventTypes.TRANSFER_PAID) {
+        }
+
+        return res.json({ received: true });
+    });
+
+    app.post('/stripe-webhook-corp', bodyParser.raw({ type: '*/*' }), async function (req, res) {
+        var event = eventFromReq(req, true);
+        // var event = req.body
+
+        console.log('stripe webhook');
+        console.log(event);
+
+        if (event == null) {
+            return res.status(200).send();
+        }
+
+        if(event.type == eventTypes.TRANSFER_PAID) {
             const { amount, destination } = event.data.object;
 
             if (amount) {
                 const mechanic = await findMechanicWithStripeID(destination);
 
                 await stripeCharges.performDebit(mechanic, amount);
+            }
+        } else if(event.type == eventTypes.INVOICE_PAYMENT_SUCCEEDED) {
+            const { metadata, amount_paid, charge, id } = event.data.object;
+            const transferAmount = parseInt(metadata.transferAmount, 10);
+            const mechanic = await models.Mechanic.findById(metadata.mechanicID);
+            const fetchedAutoService = await models.AutoService.findByChargeId(charge);
+
+            if(!fetchedAutoService.transferID) {
+                const transfer = transferAmount > 0
+                    ? await stripe.transfers.create({
+                        amount: transferAmount,
+                        currency: "usd",
+                        destination: mechanic.stripeAccountID,
+                        source_transaction: transferAmount > amount_paid ? undefined : charge,
+                        expand: ['destination_payment'],
+                    })
+                    : null;
+
+                fetchedAutoService.transferID = transfer && transfer.id;
+                fetchedAutoService.balanceTransactionID = transfer && transfer.destination_payment.balance_transaction;
+                await fetchedAutoService.save();
+
+                await stripe.invoices.update(id, {
+                    metadata: {
+                        transfer: transfer ? transfer.id : null,
+                    }
+                });
             }
         }
 
@@ -135,14 +182,14 @@ module.exports = function (app, models) {
 
     const isLocal = false
 
-    function eventFromReq(req) {
+    function eventFromReq(req, isCorp) {
         if (isLocal) {
             return req.body;
         } else {
             var sig = req.headers["stripe-signature"];
             var body = req.body;
             try {
-                return stripe.webhooks.constructEvent(body, sig, secret());
+                return stripe.webhooks.constructEvent(body, sig, secret(isCorp));
             } catch (err) {
                 console.log(err);
                 return null;
@@ -169,6 +216,7 @@ module.exports = function (app, models) {
         ACCOUNT_UPDATED: 'account.updated',
         CHARGE_SUCCEEDED: 'charge.succeeded',
         TRANSFER_PAID: 'transfer.paid',
+        INVOICE_PAYMENT_SUCCEEDED: 'invoice.payment_succeeded',
     }
 
     const payoutFailures = {

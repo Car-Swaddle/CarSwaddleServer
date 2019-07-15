@@ -10,17 +10,15 @@ module.exports = function (router, models) {
 
         const [
             coupon,
-            editCorporateCarSwaddleCouponAuthory,
             editCarSwaddleCouponAuthory,
         ] = await Promise.all([
             models.Coupon.findById(id),
-            authoritiesController.fetchAuthorityForUser(req.user.id, models.Authority.NAME.editCorporateCarSwaddleCoupon, false),
             authoritiesController.fetchAuthorityForUser(req.user.id, models.Authority.NAME.editCarSwaddleCoupon, false),
         ]);
 
-        const canDelete = coupon && (coupon.createdByUserId === req.user.id || editCorporateCarSwaddleCouponAuthory || editCarSwaddleCouponAuthory);
+        const canDelete = coupon && (coupon.createdByUserID === req.user.id || editCarSwaddleCouponAuthory);
 
-        if(!coupon || !canDelete) {
+        if(!coupon || !canDelete || coupon.redemptions > 0) {
             return res.status(403).send('Unable to delete this coupon');
         }
 
@@ -32,19 +30,20 @@ module.exports = function (router, models) {
     router.post('/coupons', bodyParser.json(), asyncMiddleware(async function (req, res) {
         const [
             authority,
-            authorityCorporate,
+            mechanic,
         ] = await Promise.all([
             authoritiesController.fetchAuthorityForUser(req.user.id, models.Authority.NAME.editCarSwaddleCoupon, false),
-            authoritiesController.fetchAuthorityForUser(req.user.id, models.Authority.NAME.editCorporateCarSwaddleCoupon, false),
+            req.user.getMechanic(),
         ]);
 
-        if(!authority && !authorityCorporate) {
+        if(!authority && !mechanic) {
             return res.status(403).send('Permission Denied');
         }
 
         req.body.id = (req.body.id || '').replace(/\W/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '').toLowerCase();
-        req.body.isCorporate = authorityCorporate ? !!req.body.isCorporate : false;
-        req.body.createdByUserId = req.user.id;
+        req.body.isCorporate = !!authority;
+        req.body.createdByUserID = req.user.id;
+        req.body.createdByMechanicID = authority ? null : mechanic.id;
         req.body.redemptions = 0;
 
         const coupon = await models.Coupon.create(req.body);
@@ -57,18 +56,16 @@ module.exports = function (router, models) {
         
         const [
             authority,
-            authorityCorporate,
         ] = await Promise.all([
-            authoritiesController.fetchAuthorityForUser(req.user.id, models.Authority.NAME.editCarSwaddleCoupon, false),
-            authoritiesController.fetchAuthorityForUser(req.user.id, models.Authority.NAME.editCorporateCarSwaddleCoupon, false),
+            authoritiesController.fetchAuthorityForUser(req.user.id, models.Authority.NAME.readCarSwaddleCoupon, false),
         ]);
 
-        if(!authority && !authorityCorporate) {
+        if(!authority) {
             return res.status(403).send('Permission Denied');
         }
 
         const coupons = await models.Coupon.findAll({
-            where: authorityCorporate ? {} : { userId: req.user.id },
+            where: {},
             offset: parseInt(skip || 25, 10) || 0,
             limit: parseInt(limit || 25, 25),
         });
