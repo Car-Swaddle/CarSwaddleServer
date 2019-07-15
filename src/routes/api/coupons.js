@@ -53,7 +53,7 @@ module.exports = function (router, models) {
     }));
 
     router.get('/coupons', asyncMiddleware(async function (req, res) {
-        const { skip } = req.query;
+        const { skip, limit } = req.query;
         
         const [
             authority,
@@ -69,8 +69,8 @@ module.exports = function (router, models) {
 
         const coupons = await models.Coupon.findAll({
             where: authorityCorporate ? {} : { userId: req.user.id },
-            offset: parseInt(skip, 10) || 0,
-            limit: 25,
+            offset: parseInt(skip || 25, 10) || 0,
+            limit: parseInt(limit || 25, 25),
         });
 
         return res.send({ coupons });

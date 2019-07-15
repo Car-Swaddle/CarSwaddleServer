@@ -283,7 +283,7 @@ module.exports = function (router, models) {
             locationID,
             notes,
             oilType,
-            couponID = 'test',
+            couponID,
         } = req.body;
 
         const [
