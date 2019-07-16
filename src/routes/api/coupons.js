@@ -66,8 +66,8 @@ module.exports = function (router, models) {
 
         const coupons = await models.Coupon.findAll({
             where: {},
-            offset: parseInt(skip || 25, 10) || 0,
-            limit: parseInt(limit || 25, 25),
+            offset: parseInt(skip, 10) || 0,
+            limit: parseInt(limit, 10) || 25,
         });
 
         return res.send({ coupons });

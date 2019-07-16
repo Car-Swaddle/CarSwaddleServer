@@ -26,9 +26,9 @@ module.exports = function (router, models) {
             models.Coupon.findRedeemable(coupon, mechanicID),
         ]);
 
-        if(coupon && !couponEntity) {
-            return res.status(422).send({ code: 'COUPON_NOT_FOUND' });
-        }
+        // if(coupon && !couponEntity) {
+        //     return res.status(422).send({ code: 'COUPON_NOT_FOUND' });
+        // }
 
         if (location == null || mechanic == null) {
             return res.status(422).send();
