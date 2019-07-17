@@ -52,12 +52,13 @@ BillingCalculations.prototype.calculatePrices = async function(mechanic, locatio
     const bookingFeePrice = Math.round(constants.BOOKING_FEE_PERCENTAGE * subtotalPrice);
     const bookingFeeDiscountPrice = coupon && coupon.discountBookingFee ? -bookingFeePrice : null;
 
-    const processingFeePrice = calculateProcessingFee(oilChangePrice, distancePrice, bookingFeePrice, bookingFeeDiscountPrice, taxRate);
-    const mechanicCostPrice = Math.round(subtotalPrice * .7);
+    const processingFeePrice = calculateProcessingFee(oilChangePrice, distancePrice, discountPrice, bookingFeePrice, bookingFeeDiscountPrice, taxRate);
+    var mechanicCostPrice = Math.round(subtotalPrice * .7);
     var transferAmountPrice = subtotalPrice;
 
     if(coupon && !coupon.isCorporate) {
         transferAmountPrice += discountPrice;
+        mechanicCostPrice = Math.round((subtotalPrice + discountPrice) * .7)
     }
 
     return {
@@ -73,7 +74,7 @@ BillingCalculations.prototype.calculatePrices = async function(mechanic, locatio
     };
 }
 
-function calculateProcessingFee(oilChange, distance, bookingFee, bookingFeeDiscount, taxRate) {
+function calculateProcessingFee(oilChange, distance, discountPrice, bookingFee, bookingFeeDiscount, taxRate) {
     // d = ((s+b)+0.30)/(1-0.029)
     // fee = d - (s+b)
     // The mechanic will make a little bit more than what we will take out for the stripeConnectProcessFee because we add
@@ -85,13 +86,13 @@ function calculateProcessingFee(oilChange, distance, bookingFee, bookingFeeDisco
     const stripeConnectProcessPercentage = 0.025;
     const stripeProcessTransactionFee = 30; // In Centss
 
-    const feeTotal = (oilChange || 0) + (distance || 0) + (bookingFee || 0) + (bookingFeeDiscount || 0);
+    const feeTotal = (oilChange || 0) + (distance || 0) + (discountPrice || 0) + (bookingFee || 0) + (bookingFeeDiscount || 0);
     const estimatedTaxes = taxRate ? Math.round(feeTotal * taxRate.rate) : 0;
     const totalPlusTax = feeTotal + estimatedTaxes;
 
-    const connectFee = (totalPlusTax / (1.0 - (stripeConnectProcessPercentage))) - totalPlusTax;
-    const basePrice = totalPlusTax + (totalPlusTax * constants.BOOKING_FEE_PERCENTAGE) + connectFee;
-    const total = (basePrice + stripeProcessTransactionFee) / (1.0 - (stripeProcessPercentage));
+    const connectFee = totalPlusTax ? (totalPlusTax / (1.0 - (stripeConnectProcessPercentage))) - totalPlusTax : 0;
+    const basePrice = totalPlusTax ? totalPlusTax + (totalPlusTax * constants.BOOKING_FEE_PERCENTAGE) + connectFee : 0;
+    const total = totalPlusTax ? (basePrice + stripeProcessTransactionFee) / (1.0 - (stripeProcessPercentage)) : 0;
 
     return Math.round(total - basePrice);
 }
