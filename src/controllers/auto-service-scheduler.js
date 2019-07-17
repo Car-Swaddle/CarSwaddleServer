@@ -56,8 +56,8 @@ AutoServiceScheduler.prototype.findAutoServices = function (mechanicID, userID, 
     });
 };
 
-AutoServiceScheduler.prototype.scheduleAutoService = async function (user, status, scheduledDate, vehicleID, mechanicID, invoiceID, sourceID, serviceEntities, location, locationID, couponID, notes, callback) {
-    const invoice = await this.stripeCharges.payInvoices(invoiceID, sourceID, mechanicID);
+AutoServiceScheduler.prototype.scheduleAutoService = async function (user, status, scheduledDate, vehicleID, mechanicID, invoiceID, sourceID, transferAmount, serviceEntities, location, locationID, couponID, notes, callback) {
+    const { invoice, transfer } = await this.stripeCharges.payInvoices(invoiceID, sourceID, mechanicID, transferAmount);
 
     if (!invoice) {
         callback('unable to create charge', null);
@@ -81,6 +81,8 @@ AutoServiceScheduler.prototype.scheduleAutoService = async function (user, statu
             this.reminder.scheduleRemindersForAutoService(fetchedAutoService);
 
             fetchedAutoService.chargeID = invoice.charge;
+            fetchedAutoService.transferID = transfer && transfer.id;
+            fetchedAutoService.balanceTransactionID = transfer && transfer.destination_payment.balance_transaction;
             await fetchedAutoService.save();
 
             const mechanicCost = parseInt(invoice.metadata.mechanicCost, 10);

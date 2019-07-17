@@ -34,6 +34,10 @@ const autoService = function (sequelize, DataTypes) {
       type: DataTypes.STRING,
       allowNull: true
     },
+    transferReversalID: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
     notes: {
       type: DataTypes.STRING,
       allowNull: true

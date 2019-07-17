@@ -248,19 +248,20 @@ module.exports = function (router, models) {
                     newAutoService.chargeID != null &&
                     (changedByMechanic || (changedByUser && new Date() < dayBeforeDate))) {
 
-                    stripe.refunds.create({
-                        charge: autoService.chargeID,
-                        reverse_transfer: true,
-                        refund_application_fee: true,
-                    }).then(refund => {
-                        if (refund) {
-                            newAutoService.refundID = refund.id;
-                            newAutoService.save().then(savedAutoService => {
-                                return res.json(savedAutoService);
-                            });
-                        } else {
-                            return res.json(newAutoService);
-                        }
+                    Promise.all([
+                        stripe.refunds.create({
+                            charge: autoService.chargeID,
+                        }),
+                        autoService.transferID && stripe.transfers.createReversal(
+                            autoService.transferID,
+                            { refund_application_fee: true }
+                        ),
+                    ]).then(refunds => {
+                        newAutoService.refundID = refunds[0] && refunds[0].id;
+                        newAutoService.transferReversalID = refunds[1] && refunds[1].id;
+                        newAutoService.save().then(savedAutoService => {
+                            return res.json(savedAutoService);
+                        });
                     }).catch(error => {
                         return res.json(newAutoService);
                     });
@@ -328,7 +329,7 @@ module.exports = function (router, models) {
             oilType,
         }, taxRate);
 
-        autoServiceScheduler.scheduleAutoService(req.user, status, scheduledDate, vehicleID, mechanicID, invoice.id, sourceID, serviceEntities, address, locationID, couponID, notes, function (err, autoService) {
+        autoServiceScheduler.scheduleAutoService(req.user, status, scheduledDate, vehicleID, mechanicID, invoice.id, sourceID, prices.transferAmount, serviceEntities, address, locationID, couponID, notes, function (err, autoService) {
             if (!err) {
                 return res.json(autoService);
             } else {

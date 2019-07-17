@@ -72,22 +72,42 @@ StripeCharges.prototype.monthlyDebitFee = function (mechanicPayment) {
     return stripeConnectMonthlyDebit;
 }
 
-StripeCharges.prototype.payInvoices = async function(invoiceID, sourceID, mechanicID) {
+StripeCharges.prototype.payInvoices = async function(invoiceID, sourceID, mechanicID, transferAmount) {
     const mechanic = await this.models.Mechanic.findById(mechanicID);
 
     if (sourceID == null || invoiceID == null || mechanic == null) {
         return res.status(422).send();
     }
 
+    var invoice = null, transfer = null;
+
     try {
-        const invoice = await stripe.invoices.pay(invoiceID, {
+        invoice = await stripe.invoices.pay(invoiceID, {
             source: sourceID,
         });
+    } catch(e) { }
 
-        return invoice;
+    try {
+        if(invoice && transferAmount > 0) {
+            transfer = await stripe.transfers.create({
+                amount: transferAmount,
+                currency: "usd",
+                destination: mechanic.stripeAccountID,
+                source_transaction: transferAmount > invoice.amount_paid ? undefined : invoice.charge,
+                expand: ['destination_payment'],
+            });
+        }
+
+        await stripe.invoices.update(invoiceID, {
+            metadata: {
+                transfer: transfer ? transfer.id : null,
+            }
+        });
     } catch(e) {
-        return null;
+        // TODO: Send admin email for transfer failures.
     }
+
+    return { invoice, transfer };
 };
 
 StripeCharges.prototype.retrieveDraftInvoice = async function(customer) {

@@ -3,20 +3,20 @@ const stripe = require('stripe')(constants.STRIPE_SECRET_KEY);
 const bodyParser = require('body-parser');
 const pushService = require('../notifications/pushNotifications.js');
 const liveEndpointSecret = 'whsec_jVeHLJxhNsz8bfXPrD58FjVgYG1yLpLc';
-const liveEndpointSecretCorp = '';
+const liveEndpointSecretConnect = 'whsec_6Ow0KxEn4hqBvi77tAAdets83KNAZRO5';
 const testEndpointSecret = 'whsec_fYufTNtz4JulYaLJBEqC4NtDO0sn16I0';
-const testEndpointSecretCorp = 'whsec_fYufTNtz4JulYaLJBEqC4NtDO0sn16I0';
+const testEndpointSecretConnect = 'whsec_fYufTNtz4JulYaLJBEqC4NtDO0sn16I0';
 const stripeChargesFile = require('../controllers/stripe-charges.js');
 
 module.exports = function (app, models) {
 
     const stripeCharges = stripeChargesFile(models);
 
-    function secret(isCorp) {
+    function secret(isConnect) {
         const useLiveKey = process.env.DATABASE_URL && false;
 
-        if(isCorp) {
-            return useLiveKey ? liveEndpointSecretCorp : testEndpointSecretCorp;
+        if(isConnect) {
+            return useLiveKey ? liveEndpointSecretConnect : testEndpointSecretConnect;
         } else {
             return useLiveKey ? liveEndpointSecret : testEndpointSecret;
         }
@@ -25,8 +25,8 @@ module.exports = function (app, models) {
     // bodyParser.json()
     // bodyParser.raw({ type: '*/*' })
 
-    app.post('/stripe-webhook', bodyParser.raw({ type: '*/*' }), async function (req, res) {
-        var event = eventFromReq(req);
+    app.post('/stripe-webhook-connect', bodyParser.raw({ type: '*/*' }), async function (req, res) {
+        var event = eventFromReq(req, true);
         // var event = req.body
 
         console.log('stripe webhook');
@@ -129,8 +129,8 @@ module.exports = function (app, models) {
         return res.json({ received: true });
     });
 
-    app.post('/stripe-webhook-corp', bodyParser.raw({ type: '*/*' }), async function (req, res) {
-        var event = eventFromReq(req, true);
+    app.post('/stripe-webhook', bodyParser.raw({ type: '*/*' }), async function (req, res) {
+        var event = eventFromReq(req, false);
         // var event = req.body
 
         console.log('stripe webhook');
@@ -148,33 +148,6 @@ module.exports = function (app, models) {
 
                 await stripeCharges.performDebit(mechanic, amount);
             }
-        } else if(event.type == eventTypes.INVOICE_PAYMENT_SUCCEEDED) {
-            const { metadata, amount_paid, charge, id } = event.data.object;
-            const transferAmount = parseInt(metadata.transferAmount, 10);
-            const mechanic = await models.Mechanic.findById(metadata.mechanicID);
-            const fetchedAutoService = await models.AutoService.findByChargeId(charge);
-
-            if(!fetchedAutoService.transferID) {
-                const transfer = transferAmount > 0
-                    ? await stripe.transfers.create({
-                        amount: transferAmount,
-                        currency: "usd",
-                        destination: mechanic.stripeAccountID,
-                        source_transaction: transferAmount > amount_paid ? undefined : charge,
-                        expand: ['destination_payment'],
-                    })
-                    : null;
-
-                fetchedAutoService.transferID = transfer && transfer.id;
-                fetchedAutoService.balanceTransactionID = transfer && transfer.destination_payment.balance_transaction;
-                await fetchedAutoService.save();
-
-                await stripe.invoices.update(id, {
-                    metadata: {
-                        transfer: transfer ? transfer.id : null,
-                    }
-                });
-            }
         }
 
         return res.json({ received: true });
@@ -182,14 +155,14 @@ module.exports = function (app, models) {
 
     const isLocal = false
 
-    function eventFromReq(req, isCorp) {
+    function eventFromReq(req, isConnect) {
         if (isLocal) {
             return req.body;
         } else {
             var sig = req.headers["stripe-signature"];
             var body = req.body;
             try {
-                return stripe.webhooks.constructEvent(body, sig, secret(isCorp));
+                return stripe.webhooks.constructEvent(body, sig, secret(isConnect));
             } catch (err) {
                 console.log(err);
                 return null;
