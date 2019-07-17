@@ -81,10 +81,29 @@ const coupon = function (sequelize, DataTypes) {
         };
     }
 
-    Coupon.findRedeemable = (couponId, mechanicId) => {
-        return Coupon.findOne(
+    Coupon.findRedeemable = async (couponId, mechanicId) => {
+        const redeemableCoupon = await Coupon.findOne(
             redeemableQuery(couponId, mechanicId)
         );
+        var error = null;
+
+        if(!redeemableCoupon) {
+            const coupon = await Coupon.findById(couponId);
+
+            if(!coupon) {
+                error = 'INCORRECT_CODE';
+            } else if(coupon.redeemBy && coupon.redeemBy.getTime() < Date.now()) {
+                error = 'EXPIRED';
+            } else if(!coupon.isCorporate && coupon.createdByMechanicID !== mechanicId) {
+                error = 'INCORRECT_MECHANIC';
+            } else if(coupon.redemptions >= coupon.maxRedemptions) {
+                error = 'DEPLETED_REDEMPTIONS';
+            } else {
+                error = 'OTHER';
+            }
+        }
+
+        return { coupon: redeemableCoupon, error };
     }
 
     Coupon.undoRedeem = (coupon) => {

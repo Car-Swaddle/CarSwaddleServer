@@ -19,16 +19,16 @@ module.exports = function (router, models) {
         const [
             location,
             mechanic,
-            couponEntity,
+            { coupon: couponEntity, error: couponError },
         ] = await Promise.all([
             models.Location.findBySearch(locationID, address),
             models.Mechanic.findById(mechanicID),
             models.Coupon.findRedeemable(coupon, mechanicID),
         ]);
 
-        // if(coupon && !couponEntity) {
-        //     return res.status(422).send({ code: 'COUPON_NOT_FOUND' });
-        // }
+        if(coupon && !couponEntity) {
+            return res.status(422).send({ code: couponError });
+        }
 
         if (location == null || mechanic == null) {
             return res.status(422).send();
