@@ -40,6 +40,10 @@ module.exports = function (router, models) {
             return res.status(403).send('Permission Denied');
         }
 
+        if(req.body.percentOff && req.body.percentOff > 1) {
+            return res.status(422).send();
+        }
+
         req.body.id = (req.body.id || '').replace(/\W/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '').toLowerCase();
         req.body.isCorporate = !!authority;
         req.body.createdByUserID = req.user.id;

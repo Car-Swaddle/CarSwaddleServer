@@ -21,13 +21,17 @@ function BillingCalculations(models) {
 }
 
 BillingCalculations.prototype.calculateCouponDiscount = function(coupon, subTotal) {
+    var discount;
+
     if(coupon.amountOff) {
-        return subTotal > coupon.amountOff ? -coupon.amountOff : -subTotal;
+        discount = -coupon.amountOff;
     } else if(coupon.percentOff) {
-        return Math.round(subTotal * -coupon.percentOff);
+        discount = subTotal * -coupon.percentOff;
     } else {
-        return 0;
+        discount = 0;
     }
+
+    return Math.max(Math.round(discount), -subTotal);
 }
 
 BillingCalculations.prototype.calculatePrices = async function(mechanic, location, oilType, coupon, taxRate) {
