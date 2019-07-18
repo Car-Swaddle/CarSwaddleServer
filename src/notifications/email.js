@@ -44,6 +44,12 @@ class Emailer {
         return transporter.sendMail(mailOptions);
     }
 
+    sendAdminEmail(subject, contents) {
+        const options = this.emailOptions(fromEmailAddress, subject, contents);
+
+        this.sendMail(options);
+    }
+
     sendUserOilChangeReminderMail(autoService, callback) {
         if (!allowEmail) {
             if (callback) {

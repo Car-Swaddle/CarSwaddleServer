@@ -22,6 +22,10 @@ const autoService = function (sequelize, DataTypes) {
       type: DataTypes.STRING,
       allowNull: true
     },
+    transferAmount: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
     invoiceID: {
       type: DataTypes.STRING,
       allowNull: true

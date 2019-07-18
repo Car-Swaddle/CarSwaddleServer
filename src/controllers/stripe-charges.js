@@ -1,6 +1,7 @@
 const constants = require('./constants.js');
 const uuidV1 = require('uuid/v1');
 const stripe = require('stripe')(constants.STRIPE_SECRET_KEY);
+const Email = require('../notifications/email');
 
 const ALL_PRICE_TYPES = ['discount', 'oilChange', 'distance', 'bookingFee', 'processingFee', 'bookingFeeDiscount'];
 
@@ -15,6 +16,7 @@ module.exports = function (models) {
 
 function StripeCharges(models) {
     this.models = models;
+    this.emails = new Email(models);
     this.init();
 }
 
@@ -104,7 +106,7 @@ StripeCharges.prototype.payInvoices = async function(invoiceID, sourceID, mechan
             }
         });
     } catch(e) {
-        // TODO: Send admin email for transfer failures.
+        this.emails.sendAdminEmail('MISSED TRANSFER', `invoice id ${invoice.id} for amount ${transferAmount} mechanicId ${mechanicID}`);
     }
 
     return { invoice, transfer };

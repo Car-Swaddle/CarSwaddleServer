@@ -64,7 +64,7 @@ AutoServiceScheduler.prototype.scheduleAutoService = async function (user, statu
         return
     }
 
-    this.createAutoService(user, mechanicID, status, scheduledDate, vehicleID, invoice, sourceID, serviceEntities, locationID, location, couponID, notes, async (err, autoService) => {
+    this.createAutoService(user, mechanicID, status, scheduledDate, vehicleID, invoice, transfer, transferAmount, sourceID, serviceEntities, locationID, location, couponID, notes, async (err, autoService) => {
         if (err) {
             callback(err, null);
             return;
@@ -79,11 +79,6 @@ AutoServiceScheduler.prototype.scheduleAutoService = async function (user, statu
             const mechanic = await this.models.Mechanic.findById(mechanicID);
             this.sendNotification(user, mechanic);
             this.reminder.scheduleRemindersForAutoService(fetchedAutoService);
-
-            fetchedAutoService.chargeID = invoice.charge;
-            fetchedAutoService.transferID = transfer && transfer.id;
-            fetchedAutoService.balanceTransactionID = transfer && transfer.destination_payment.balance_transaction;
-            await fetchedAutoService.save();
 
             const mechanicCost = parseInt(invoice.metadata.mechanicCost, 10);
 
@@ -155,7 +150,7 @@ AutoServiceScheduler.prototype.createOilChange = function (service, key, autoSer
     })
 }
 
-AutoServiceScheduler.prototype.createAutoService = async function (user, mechanicID, status, scheduledDate, vehicleID, invoice, sourceID, serviceEntities, locationID, location, couponID, notes, callback) {
+AutoServiceScheduler.prototype.createAutoService = async function (user, mechanicID, status, scheduledDate, vehicleID, invoice, transfer, transferAmount, sourceID, serviceEntities, locationID, location, couponID, notes, callback) {
     if (this.models.AutoService.isValidStatus(status) == false) { callback('Invalid status:' + status, null); return; }
     if (!scheduledDate) { callback('invalid parameters, scheduledDate', null); return; }
 
@@ -202,6 +197,10 @@ AutoServiceScheduler.prototype.createAutoService = async function (user, mechani
         notes: notes,
         scheduledDate: scheduledDate,
         invoiceID: invoice.id,
+        chargeID: invoice.charge,
+        transferID: transfer && transfer.id,
+        balanceTransactionID: transfer && transfer.destination_payment.balance_transaction,
+        transferAmount,
         couponID,
     });
     autoService.setMechanic(mechanic, { save: false });
