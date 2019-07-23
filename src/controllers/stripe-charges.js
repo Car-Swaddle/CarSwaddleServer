@@ -106,7 +106,7 @@ StripeCharges.prototype.payInvoices = async function(invoiceID, sourceID, mechan
             }
         });
     } catch(e) {
-        this.emails.sendAdminEmail('MISSED TRANSFER', `invoice id ${invoice.id} for amount ${transferAmount} mechanicId ${mechanicID}`);
+        this.emails.sendAdminEmail('MISSED TRANSFER', `invoice id ${invoice.id} for amount ${transferAmount} mechanicId ${mechanicID}\n\n${e.stack}`);
     }
 
     return { invoice, transfer };
