@@ -140,7 +140,7 @@ module.exports = function (app, models) {
             return res.status(200).send();
         }
 
-        if(event.type == eventTypes.TRANSFER_PAID) {
+        if(event.type == eventTypes.TRANSFER_CREATED) {
             const { amount, destination } = event.data.object;
 
             if (amount) {
@@ -148,6 +148,8 @@ module.exports = function (app, models) {
 
                 await stripeCharges.performDebit(mechanic, amount);
             }
+        } else if(event.type == eventTypes.TRANSFER_REVERSED) {
+            // const { amount_reversed, destination } = event.data.object;
         }
 
         return res.json({ received: true });
@@ -188,7 +190,8 @@ module.exports = function (app, models) {
         PAYOUT_UPDATED: 'payout.updated',
         ACCOUNT_UPDATED: 'account.updated',
         CHARGE_SUCCEEDED: 'charge.succeeded',
-        TRANSFER_PAID: 'transfer.paid',
+        TRANSFER_CREATED: 'transfer.created',
+        TRANSFER_REVERSED: 'transfer.reversed',
         INVOICE_PAYMENT_SUCCEEDED: 'invoice.payment_succeeded',
     }
 
