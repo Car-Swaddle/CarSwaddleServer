@@ -207,7 +207,7 @@ module.exports = function (router, models) {
             if (err) {
                 return res.status(400).send('error fetching authorities');
             } else {
-                return res.status(67200).json(authorityRequests);
+                return res.status(200).json(authorityRequests);
             }
         });
     }));
