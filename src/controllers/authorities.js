@@ -19,13 +19,13 @@ AuthoritiesController.prototype.init = function () {
 };
 
 AuthoritiesController.prototype.createAuthorityRequest = async function (userID, authority, callback) {
-    var tomorrow = new Date(new Date().getTime() + (24 * 60 * 60 * 1000));
+    var oneWeekFromNow = new Date(new Date().getTime() + (7 * 24 * 60 * 60 * 1000));
     const self = this;
     this.models.AuthorityRequest.create({
         id: uuidV1(),
         secretID: uuidV1(),
         authorityName: authority,
-        expirationDate: tomorrow
+        expirationDate: oneWeekFromNow
     }).then(async authorityRequest => {
         const user = await self.models.User.findById(userID);
         await authorityRequest.setUser(user, { save: true })
