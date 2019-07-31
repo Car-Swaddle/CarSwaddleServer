@@ -2,10 +2,6 @@ const constants = require('../controllers/constants');
 const stripe = require('stripe')(constants.STRIPE_SECRET_KEY);
 const bodyParser = require('body-parser');
 const pushService = require('../notifications/pushNotifications.js');
-const liveEndpointSecret = '';
-const liveEndpointSecretConnect = '';
-const testEndpointSecret = 'whsec_6Ow0KxEn4hqBvi77tAAdets83KNAZRO5';
-const testEndpointSecretConnect = 'whsec_NZ2S54mDSbeRpWB5NDVXOGrVxJpOyEY0';
 const stripeChargesFile = require('../controllers/stripe-charges.js');
 
 module.exports = function (app, models) {
@@ -13,13 +9,7 @@ module.exports = function (app, models) {
     const stripeCharges = stripeChargesFile(models);
 
     function secret(isConnect) {
-        const useLiveKey = process.env.DATABASE_URL && false;
-
-        if(isConnect) {
-            return useLiveKey ? liveEndpointSecretConnect : testEndpointSecretConnect;
-        } else {
-            return useLiveKey ? liveEndpointSecret : testEndpointSecret;
-        }
+        return isConnect ? constants.STRIPE_WEBHOOK_KEY_CONNECT : constants.STRIPE_WEBHOOK_KEY;
     }
 
     // bodyParser.json()
