@@ -15,7 +15,7 @@ bodyParser.limit = '500mb';
 const app = express();
 app.use(express.static(__dirname + '/www'));
 
-const port = process.env.PORT;
+var port = process.env.PORT;
 if (port == null || port == "") {
     port = 3000;
 }
