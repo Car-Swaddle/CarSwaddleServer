@@ -106,7 +106,18 @@ Taxes.prototype.taxRateForLocation = async function(location) {
     // TODO: Use spatial data to lookup tax rates for regions or use taxjar.
 
     return {
-        id: 'txr_1EsKFiDGwCXJzLurboddwtFb',
+        id: utahTaxRate(),
         rate: 0.0715,
     };
 }
+
+function utahTaxRate() {
+    if (process.env.ENV == 'production') {
+        return 'txr_1F2D92DGwCXJzLur7MiO7w4u';
+    } else if (process.env.ENV == 'staging') {
+        return 'txr_1EsKFiDGwCXJzLurboddwtFb';
+    } else if (process.env.ENV == 'dev') {
+        return 'txr_1EsKFiDGwCXJzLurboddwtFb';
+    }
+}
+
