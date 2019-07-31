@@ -32,7 +32,7 @@ const mechanic = function (sequelize, DataTypes) {
         isAllowed: {
             type: DataTypes.BOOLEAN,
             allowNull: false,
-            defaultValue: true
+            defaultValue: false
         },
         hasSetAvailability: {
             type: DataTypes.BOOLEAN,
