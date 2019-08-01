@@ -22,7 +22,7 @@ function currentDomain() {
     if (process.env.ENV == 'production') {
         return 'api.carswaddle.com';
     } else if (process.env.ENV == 'staging') {
-        return 'www.safe-ridge-47447.herokuapp.com';
+        return 'api.staging.carswaddle.com';
     } else if (process.env.ENV == 'dev') {
         return 'localhost';
         // http://[::1]:3000
