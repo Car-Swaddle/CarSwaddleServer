@@ -21,7 +21,6 @@ var transporter = nodemailer.createTransport({
 
 const kyleEmailAddress = 'kyle@carswaddle.com';
 const fromEmailAddress = 'Kyle <' + kyleEmailAddress + '>';
-const host = 'car-swaddle.herokuapp.com';
 
 const domain = 'https://' + constants.CURRENT_DOMAIN;
 
@@ -92,7 +91,7 @@ class Emailer {
             resourceType: 'user',
             creationDate: date,
         }).then(verification => {
-            const link = "https://" + host + "/email/verify?id=" + verification.id;
+            const link = domain + "/email/verify?id=" + verification.id;
             const mailOptions = self.verificationEmailOptions(user, link);
             return self.sendMail(mailOptions).then(info => {
                 console.log(info);
