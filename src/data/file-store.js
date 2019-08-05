@@ -12,7 +12,7 @@ const keyDirectory = "profile";
 
 module.exports = {
     uploadImage: function (image, previousFileName) {
-        const name = previousFileName || uuidV1();
+        const name = uuidV1();
         const params = {
             Bucket: bucketName,
             Key: keyDirectory + '/' + name,
