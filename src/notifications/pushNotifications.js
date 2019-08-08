@@ -36,7 +36,13 @@ class PushService {
         const subject = "Upcoming Oil Change";
         const dateString = dateFormat(autoService.scheduledDate, "dddd, mmmm dS, h:MM TT Z");
         const text = autoService.user.firstName + ', you have an oil change coming up: ' + dateString;
-        this.sendUserNotification(autoService.user, text, null, null, subject);
+        const payload = {
+            'type': 'reminder',
+            'date': autoService.scheduledDate,
+            'name': name,
+            'autoServiceID': autoService.id
+        };
+        this.sendUserNotification(autoService.user, text, payload, null, subject);
     }
 
     sendMechanicReminderNotification(autoService) {
@@ -45,11 +51,75 @@ class PushService {
         const name = autoService.mechanic.user.firstName
         const text = name + ', you have an oil change coming up: ' + dateString;
         const payload = {
-            'type': 'reminder', 
+            'type': 'reminder',
             'date': autoService.scheduledDate,
             'name': name,
+            'autoServiceID': autoService.id
         };
         this.sendMechanicNotification(autoService.mechanic, text, payload, null, subject);
+    }
+
+    sendRateMechanicNotificationToUserOf(autoService) {
+        const subject = "How would you rate your oil change?";
+        const mechanicFirstName = autoService.mechanic.user.firstName;
+        const userFirstName = autoService.user.firstName;
+        const text = userFirstName + ', give your feedback on your auto service from ' + mechanicFirstName;
+        const payload = {
+            'type': 'mechanicRating',
+            'mechanicID': autoService.mechanic.id,
+            'autoServiceID': autoService.id,
+            'mechanicFirstName': mechanicFirstName
+        };
+        this.sendUserNotification(autoService.user, text, payload, null, subject);
+    }
+
+    sendUserReviewNotification(user, mechanic, reviewRating) {
+        const name = user.displayName();
+        var alert = '';
+        if (reviewRating > 3) {
+            alert = name + ' gave you a ' + reviewRating + '️️⭐ review! Congratulations!';
+        } else {
+            alert = name + ' gave you a review!';
+        }
+        const title = 'New review from ' + name;
+        const payload = {
+            'type': 'userDidRate',
+            'userID': user.id,
+            'mechanicID': mechanic.id,
+            'reviewRating': reviewRating,
+            'autoServiceID': autoService.id,
+        };
+        this.sendMechanicNotification(mechanic, alert, payload, null, title);
+    }
+
+    sendMechanicUserChangedAutoServiceNotification(user, mechanic, autoService) {
+        const alert = user.displayName() + ' changed one of your scheduled auto services.';
+        const payload = {
+            'type': 'autoServiceUpdated',
+            'autoServiceID': autoService.id
+        };
+        this.sendMechanicNotification(mechanic, alert, payload, null, null);
+    }
+
+    sendUserMechanicChangedAutoServiceStatusNotification(user, autoService, status) {
+        const mechanicFirstName = autoService.mechanic.user.firstName;
+        const alert = user.firstName + ' your mechanic, ' + mechanicFirstName + ', changed the status of your oil change to ' + status + '.';
+        const payload = {
+            'type': 'autoServiceUpdated',
+            'autoServiceID': autoService.id
+        };
+        this.sendUserNotification(user, alert, payload, null, null);
+    }
+
+    sendUserMechanicChangedAutoServiceNotification(user, autoService) {
+        // const alert = user.displayName() + ' changed one of your scheduled auto services.';
+        const mechanicFirstName = autoService.mechanic.user.firstName;
+        const alert = user.firstName + ' your mechanic, ' + mechanicFirstName + ', made a change to your oil change.';
+        const payload = {
+            'type': 'autoServiceUpdated',
+            'autoServiceID': autoService.id
+        };
+        this.sendUserNotification(user, alert, payload, null, null);
     }
 
     sendUserNotification(user, body, payload, badge, title) {
@@ -59,13 +129,16 @@ class PushService {
                 notification.topic = carSwaddleBundleID;
                 this.carSwaddleProviderProduction.send(notification, token.token).then(result => {
                     console.log(result);
+                    console.log("production");
                 });
                 this.carSwaddleProviderDebug.send(notification, token.token).then(result => {
                     console.log(result);
+                    console.log("debug");
                 });
             });
         });
     }
+
 
     sendMechanicNotification(mechanic, body, payload, badge, title) {
         return mechanic.getDeviceTokens().then(tokens => {

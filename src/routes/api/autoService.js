@@ -208,13 +208,16 @@ module.exports = function (router, models) {
 
                 if (changedByMechanic == true) {
                     // (user, alert, payload, badge)
-                    newAutoService.getUser().then(user => {
+                    newAutoService.getUser().then(async user => {
+                        // const mechanic = await newAutoService.getMechanic();
                         if (didChangeStatus) {
-                            const alert = 'Your mechanic changed the status of your oil change to ' + body.status + '.';
                             pushService.sendUserNotification(user, alert, null, null, null);
+                            sendUserMechanicChangedAutoServiceStatusNotification(user, newAutoService, body.status);
+                            if (body.status == models.AutoService.STATUS.completed) {
+                                pushService.sendRateMechanicNotificationToUserOf(newAutoService);
+                            }
                         } else {
-                            const alert = 'Your mechanic made a change to your oil change.';
-                            pushService.sendUserNotification(user, alert, null, null, null);
+                            pushService.sendUserMechanicChangedAutoServiceNotification(user, newAutoService);
                         }
                     });
                 }
@@ -222,19 +225,9 @@ module.exports = function (router, models) {
                 if (changedByUser == true) {
                     newAutoService.getMechanic().then(mechanic => {
                         if (userDidReviewMechanic == true) {
-                            const name = req.user.displayName();
-                            var alert = '';
-                            if (reviewRating > 3) {
-                                alert = name + ' gave you a ' + reviewRating + '️️⭐ review! Congratulations!';
-                            } else {
-                                alert = name + ' gave you a review!';
-                            }
-                            const title = 'New review from ' + name;
-
-                            pushService.sendMechanicNotification(mechanic, alert, null, null, title);
+                            pushService.sendUserReviewNotification(req.user, mechanic, reviewRating);
                         } else {
-                            const alert = req.user.displayName() + ' changed one of your scheduled auto services.';
-                            pushService.sendMechanicNotification(mechanic, alert, null, null, null);
+                            pushService.sendMechanicUserChangedAutoServiceNotification(req.user, mechanic, newAutoService);
                         }
                     });
                 }

@@ -85,9 +85,11 @@ StripeCharges.prototype.payInvoices = async function(invoiceID, sourceID, mechan
 
     try {
         invoice = await stripe.invoices.pay(invoiceID, {
-            source: sourceID,
+            payment_method: sourceID,
         });
-    } catch(e) { }
+    } catch(e) {
+        console.log(e);
+     }
 
     try {
         if(invoice && transferAmount > 0) {
