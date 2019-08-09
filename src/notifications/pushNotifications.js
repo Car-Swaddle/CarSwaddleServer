@@ -32,6 +32,17 @@ class PushService {
         this.carSwaddleMechanicProviderDebug = new apnFramework.Provider(carSwaddleDebugOptions);
     }
 
+    sendMechanicUserScheduledAppointment(user, mechanic, autoService) {
+        const displayName = user.displayName();
+        const alert = displayName + ' scheduled an appointment';
+        const payload = {
+            'type': 'userScheduledAutoService',
+            'autoServiceID': autoService.id,
+            'userID': user.id
+        };
+        this.sendMechanicNotification(mechanic, alert, payload, null, null);
+    }
+
     sendUserReminderNotification(autoService) {
         const subject = "Upcoming Oil Change";
         const dateString = dateFormat(autoService.scheduledDate, "dddd, mmmm dS, h:MM TT Z");

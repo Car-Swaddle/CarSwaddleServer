@@ -77,7 +77,7 @@ AutoServiceScheduler.prototype.scheduleAutoService = async function (user, statu
             });
 
             const mechanic = await this.models.Mechanic.findById(mechanicID);
-            this.sendNotification(user, mechanic);
+            this.sendNotification(user, mechanic, fetchedAutoService);
             this.reminder.scheduleRemindersForAutoService(fetchedAutoService);
 
             const mechanicCost = parseInt(invoice.metadata.mechanicCost, 10);
@@ -94,10 +94,8 @@ AutoServiceScheduler.prototype.scheduleAutoService = async function (user, statu
     });
 }
 
-AutoServiceScheduler.prototype.sendNotification = function (user, mechanic) {
-    const displayName = user.displayName();
-    const alert = displayName + ' scheduled an appointment';
-    pushService.sendMechanicNotification(mechanic, alert, null, null, null);
+AutoServiceScheduler.prototype.sendNotification = function (user, mechanic, autoService) {
+    pushService.sendMechanicUserScheduledAppointment(user, mechanic, autoService);
 }
 
 AutoServiceScheduler.prototype.setupServiceEntities = async function (serviceEntities, autoService, callback) {
