@@ -211,8 +211,8 @@ module.exports = function (router, models) {
                     newAutoService.getUser().then(async user => {
                         // const mechanic = await newAutoService.getMechanic();
                         if (didChangeStatus) {
-                            pushService.sendUserNotification(user, alert, null, null, null);
-                            sendUserMechanicChangedAutoServiceStatusNotification(user, newAutoService, body.status);
+                            // pushService.sendUserNotification(user, alert, null, null, null);
+                            pushService.sendUserMechanicChangedAutoServiceStatusNotification(user, newAutoService, body.status);
                             if (body.status == models.AutoService.STATUS.completed) {
                                 pushService.sendRateMechanicNotificationToUserOf(newAutoService);
                             }
