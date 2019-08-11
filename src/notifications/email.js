@@ -26,14 +26,18 @@ class Emailer {
         if (!allowEmail) {
             return;
         }
-        
-        return client.sendEmail(mailOptions);
+
+        if(mailOptions.TemplateId) {
+            return client.sendEmailWithTemplate(mailOptions);
+        } else {
+            return client.sendEmail(mailOptions);
+        }
     }
 
     sendAdminEmail(subject, contents) {
         const options = this.emailOptions(fromEmailAddress, subject, contents);
 
-        this.sendMail(options);
+        return this.sendMail(options);
     }
 
     sendUserOilChangeReminderMail(autoService, callback) {
@@ -71,12 +75,12 @@ class Emailer {
 
     sendNPSSurvey(userFirstName, userEmail) {
         return client.sendEmailWithTemplate({
-            TemplateId: 1234567,
             From: fromEmailAddress,
             To: userEmail,
+            TemplateId: 13011158,
             TemplateModel: {
                 first_name: userFirstName,
-            }
+            },
         });
     }
 
@@ -200,9 +204,12 @@ class Emailer {
         return {
             From: fromEmailAddress, // sender address (who sends the email)
             To: email, // list of receivers (who gets the email)
-            Subject: subject,
-            TextBidy: text,
-            HtmlBody: html
+            TemplateId: 13034656,
+            TemplateModel: {
+                subject,
+                text: text || html,
+                html: html || text,
+            },
         };
     }
 
