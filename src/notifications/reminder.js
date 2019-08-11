@@ -19,6 +19,15 @@ class Reminder {
         });
     }
 
+    scheduleNPSSurvey(userFirstName, userEmail) {
+        const oneHourFromNow = new Date();
+        oneHourFromNow.setHours(oneHourFromNow.getHours() + 1);
+
+        schedule.scheduleJob(oneHourFromNow, () => {
+            this.mailer.sendNPSSurvey(userFirstName, userEmail);
+        });
+    }
+
     scheduleRemindersForAutoService(autoService) {
         var scheduledDate = autoService.scheduledDate;
         const autoServiceID = autoService.id;
