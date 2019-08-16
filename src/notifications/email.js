@@ -1,26 +1,12 @@
-const nodemailer = require('nodemailer');
+const postmark = require("postmark");
 const uuidV1 = require('uuid/v1');
-var dateFormat = require('dateformat');
+const dateFormat = require('dateformat');
 const { DateTime } = require('luxon');
 const constants = require('../controllers/constants.js');
 
-// Create the transporter with the required configuration for Outlook
-// change the user and pass !
-var transporter = nodemailer.createTransport({
-    host: "smtp-mail.outlook.com", // hostname
-    secureConnection: false, // TLS requires secureConnection to be false
-    port: 587, // port for secure SMTP
-    tls: {
-        ciphers: 'SSLv3'
-    },
-    auth: {
-        user: 'kyle@carswaddle.com',
-        pass: 'carswaddleftw1"'
-    }
-});
+const client = new postmark.ServerClient("c6de928c-7a71-4ba7-a950-19acaad60c46");
 
-const kyleEmailAddress = 'kyle@carswaddle.com';
-const fromEmailAddress = 'Kyle <' + kyleEmailAddress + '>';
+const fromEmailAddress = 'Kyle <kyle@carswaddle.com>';
 
 const domain = 'https://' + constants.CURRENT_DOMAIN;
 
@@ -40,13 +26,18 @@ class Emailer {
         if (!allowEmail) {
             return;
         }
-        return transporter.sendMail(mailOptions);
+
+        if(mailOptions.TemplateId) {
+            return client.sendEmailWithTemplate(mailOptions);
+        } else {
+            return client.sendEmail(mailOptions);
+        }
     }
 
     sendAdminEmail(subject, contents) {
         const options = this.emailOptions(fromEmailAddress, subject, contents);
 
-        this.sendMail(options);
+        return this.sendMail(options);
     }
 
     sendUserOilChangeReminderMail(autoService, callback) {
@@ -79,6 +70,17 @@ class Emailer {
                     callback(err);
                 });
             });
+        });
+    }
+
+    sendNPSSurvey(userFirstName, userEmail) {
+        return client.sendEmailWithTemplate({
+            From: fromEmailAddress,
+            To: userEmail,
+            TemplateId: 13011158,
+            TemplateModel: {
+                first_name: userFirstName,
+            },
         });
     }
 
@@ -200,11 +202,14 @@ class Emailer {
 
     emailOptions(email, subject, text, html) {
         return {
-            from: fromEmailAddress, // sender address (who sends the email)
-            to: email, // list of receivers (who gets the email)
-            subject: subject,
-            text: text,
-            html: html
+            From: fromEmailAddress, // sender address (who sends the email)
+            To: email, // list of receivers (who gets the email)
+            TemplateId: 13034656,
+            TemplateModel: {
+                subject,
+                text: text || html,
+                html: html || text,
+            },
         };
     }
 

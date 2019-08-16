@@ -215,6 +215,8 @@ module.exports = function (router, models) {
                             pushService.sendUserMechanicChangedAutoServiceStatusNotification(user, newAutoService, body.status);
                             if (body.status == models.AutoService.STATUS.completed) {
                                 pushService.sendRateMechanicNotificationToUserOf(newAutoService);
+
+                                reminder.scheduleNPSSurvey(user.firstName, user.email);
                             }
                         } else {
                             pushService.sendUserMechanicChangedAutoServiceNotification(user, newAutoService);
