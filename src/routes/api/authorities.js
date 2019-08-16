@@ -87,7 +87,7 @@ module.exports = function (router, models) {
                 return res.status(400).send('unable to accept');
             } else {
                 models.Authority.findOrCreate({
-                    where: { authorityName: authorityRequest.authorityName },
+                    where: { authorityName: authorityRequest.authorityName, requesterID: authorityRequester.id },
                     defaults: {
                         id: uuidV1(),
                         authorityName: authorityRequest.authorityName
@@ -199,7 +199,7 @@ module.exports = function (router, models) {
             res.status(400).send('unable to determine access');
         }
     }));
-``
+
     router.get('/authorityRequests', bodyParser.json(), asyncMiddleware(async function (req, res) {
         // gets all authority requests sorted by creationDate
         // paged
