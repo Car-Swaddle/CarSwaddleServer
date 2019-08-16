@@ -42,6 +42,7 @@ module.exports = function (router, models) {
         if (!authorityRequest) {
             return res.status(404).send('invalid parameters');
         }
+        const authorityRequester = await models.User.findById(authorityRequest.requesterID);
         const authorityConfirmation = await models.AuthorityConfirmation.findOne({ where: { authorityRequestID: authorityRequest.id } });
 
         if (authorityRequest.expirationDate < new Date()) {
@@ -65,7 +66,7 @@ module.exports = function (router, models) {
         }
 
         const existingAuthority = await models.Authority.findOne({
-            where: { userID: authorityRequest.requesterID, authorityName: authorityRequest.authorityName }
+            where: { userID: authorityRequester.id, authorityName: authorityRequest.authorityName }
         });
 
         if (existingAuthority) {
@@ -92,7 +93,7 @@ module.exports = function (router, models) {
                         authorityName: authorityRequest.authorityName
                     }
                 }).then(async ([authority, created]) => {
-                    authority.setUser(currentUser, { save: false });
+                    authority.setUser(authorityRequester, { save: false });
                     authority.setAuthorityConfirmation(authorityConfirmation, { save: false });
                     authority.setAuthorityRequest(authorityRequest, { save: false });
                     await authority.save();
