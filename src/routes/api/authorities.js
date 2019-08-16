@@ -61,7 +61,7 @@ module.exports = function (router, models) {
             return res.status(403).send('unauthorized');
         }
 
-        if (authorityConfirmation) {
+        if (authorityConfirmation && (currentUser.email != adminEmail)) {
             return res.status(409).send('authority was already confirmed');
         }
 
@@ -69,7 +69,7 @@ module.exports = function (router, models) {
             where: { userID: authorityRequester.id, authorityName: authorityRequest.authorityName }
         });
 
-        if (existingAuthority) {
+        if (existingAuthority && (currentUser.email != adminEmail)) {
             return res.status(409).send('authority already exists');
         }
 
@@ -87,7 +87,7 @@ module.exports = function (router, models) {
                 return res.status(400).send('unable to accept');
             } else {
                 models.Authority.findOrCreate({
-                    where: { authorityName: authorityRequest.authorityName, requesterID: authorityRequester.id },
+                    where: { authorityName: authorityRequest.authorityName, userID: authorityRequester.id },
                     defaults: {
                         id: uuidV1(),
                         authorityName: authorityRequest.authorityName
