@@ -65,7 +65,7 @@ module.exports = function (router, models) {
         }
 
         const existingAuthority = await models.Authority.findOne({
-            where: { userID: currentUser.id, authorityName: authorityRequest.authorityName }
+            where: { userID: authorityRequest.requesterID, authorityName: authorityRequest.authorityName }
         });
 
         if (existingAuthority) {
