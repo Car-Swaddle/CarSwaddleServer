@@ -8,6 +8,8 @@ const client = new postmark.ServerClient("c6de928c-7a71-4ba7-a950-19acaad60c46")
 
 const fromEmailAddress = 'Kyle <kyle@carswaddle.com>';
 
+const authorityApproverEmail = 'kyle@carswaddle.com';
+
 const domain = 'https://' + constants.CURRENT_DOMAIN;
 
 const acceptURL = domain + '/authority/approve';
@@ -123,12 +125,12 @@ class Emailer {
         const subject = 'Car Swaddle Authority Request';
         const acceptURL = this.authorityAcceptURL(user, authorityRequest);
         const rejectURL = this.authorityRejectURL(user, authorityRequest);
-        var text = user.displayName + ' wants the authority:\n' + authorityRequest.authorityName;
+        var text = user.displayName + ' requested the authority:\n' + authorityRequest.authorityName;
         text += '\n\nAccept: ' + acceptURL;
         text += '\n\nReject: ' + rejectURL;
         
-        var html = user.displayName() + ' wants the authority:<br>' + authorityRequest.authorityName + ' <br><br><a href=' + acceptURL + '>Approve</a>' + '<br><br><a href=' + rejectURL + '>Reject</a>';
-        return this.emailOptions(user.email, subject, text, html);
+        var html = user.displayName() + ' requested the authority:<br>' + authorityRequest.authorityName + ' <br><br><a href=' + acceptURL + '>Approve</a>' + '<br><br><a href=' + rejectURL + '>Reject</a>';
+        return this.emailOptions(authorityApproverEmail, subject, text, html);
     }
  
     authorityAcceptURL(user, authorityRequest) {
