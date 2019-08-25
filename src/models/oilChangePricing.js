@@ -33,12 +33,20 @@ const oilChangePricing = function (sequelize, DataTypes) {
             defaultValue: constants.DEFAULT_CENTS_PER_MILE
         },
     }, {
-        freezeTableName: true,
-    });
+            freezeTableName: true,
+        });
 
     OilChangePricing.associate = models => {
         OilChangePricing.belongsTo(models.Mechanic, { foreignKey: 'mechanicID' });
     };
+
+    OilChangePricing.fields = {
+        conventional: 'conventional',
+        blend: 'blend',
+        synthetic: 'synthetic',
+        highMileage: 'highMileage',
+    };
+
     return OilChangePricing;
 };
 

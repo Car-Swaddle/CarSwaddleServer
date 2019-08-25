@@ -7,6 +7,7 @@ const bodyParser = require('body-parser');
 const fileUpload = require('express-fileupload');
 const path = require('path');
 const stripeFiles = require('../../controllers/stripe-files.js')();
+const asyncMiddleware = require('../../lib/middleware/async-middleware');
 
 module.exports = function (router, models) {
 
@@ -78,7 +79,7 @@ module.exports = function (router, models) {
         if (!mechanic) {
             return res.status(400).send('Invalid parameter');
         }
-         if (req.body.isAllowed) {
+        if (req.body.isAllowed) {
             mechanic.isAllowed = req.body.isAllowed;
         }
         await mechanic.save();
@@ -341,11 +342,73 @@ module.exports = function (router, models) {
             });
 
             res.send(mechanics);
-        } catch(e) {
+        } catch (e) {
             res.status(400).send('unable to fetch mechanics');
         }
     });
 
+    router.get('/mechanic/pricing', bodyParser.json(), asyncMiddleware(async function (req, res) {
+        try {
+            const currentMechanic = await req.user.getMechanic();
+            const oilChangePricing = await models.OilChangePricing.findOne({
+                where: {
+                    mechanicID: currentMechanic.id
+                }
+            });
+            return res.json(oilChangePricing);
+        } catch (e) {
+            res.status(400).send('unable to fetch oil change pricing');
+        }
+    }));
+
+    router.put('/mechanic/pricing', bodyParser.json(), asyncMiddleware(async function (req, res) {
+        try {
+            const {
+                conventional,
+                blend,
+                synthetic,
+                highMileage,
+            } = req.body;
+
+            if (!conventional || !blend || !synthetic || !highMileage) {
+                return res.status(400).send('unable to update. must send all fields');
+            }
+
+            const conventionalInt = parseInt(conventional, 10);
+            const blendInt = parseInt(blend, 10);
+            const syntheticInt = parseInt(synthetic, 10);
+            const highMileageInt = parseInt(highMileage, 10);
+
+            function isValidPrice(price) {
+                return price < 12000 && price > 300;
+            }
+
+            if (!isValidPrice(conventionalInt) ||
+                !isValidPrice(blendInt) ||
+                !isValidPrice(syntheticInt) ||
+                !isValidPrice(highMileageInt)) {
+                return res.status(422).send('not all prices are valid');
+            }
+
+            const currentMechanic = await await req.user.getMechanic();
+            const oilChangePricing = await models.OilChangePricing.findOne({
+                where: {
+                    mechanicID: currentMechanic.id
+                }
+            });
+
+            oilChangePricing.conventional = conventionalInt;
+            oilChangePricing.blend = blendInt;
+            oilChangePricing.synthetic = syntheticInt;
+            oilChangePricing.highMileage = highMileageInt;
+
+            await oilChangePricing.save();
+
+            return res.send(oilChangePricing);
+        } catch (e) {
+            res.status(400).send('unable to update oil change pricing');
+        }
+    }));
 
     return router;
 };
