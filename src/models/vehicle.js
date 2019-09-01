@@ -9,6 +9,10 @@ const vehicle = function (sequelize, DataTypes) {
             type: DataTypes.STRING,
             allowNull: true
         },
+        state: {
+            type: DataTypes.STRING,
+            allowNull: true
+        },
         name: {
             type: DataTypes.STRING,
             allowNull: true

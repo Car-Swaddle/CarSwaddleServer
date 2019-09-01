@@ -230,7 +230,16 @@ AutoServiceScheduler.prototype.isDatePreviouslyScheduled = async function (sched
     const autoService = await this.models.AutoService.findOne({
         where: {
             scheduledDate: scheduledDate,
-            mechanicID: mechanicID
+            mechanicID: mechanicID,
+            [Op.and]: [{
+                [Op.or]: [{
+                    status: 'scheduled'
+                }, {
+                    status: 'inProgress'
+                }, {
+                    status: 'completed'
+                }]
+            }]
         }
     });
     return autoService != null

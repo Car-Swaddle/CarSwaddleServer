@@ -10,7 +10,6 @@ module.exports = function (router, models) {
             where: {
               userID: req.user.id
             },
-            include: [{ model: models.AutoService, as: 'autoServices' }],
             offset: req.query.offset || 0,
             limit: Math.min(req.query.limit || 100, 100),
         }).then( vehicles => {
