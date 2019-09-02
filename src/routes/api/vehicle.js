@@ -35,6 +35,7 @@ module.exports = function (router, models) {
         const licensePlate = body.licensePlate;
         const vin = body.vin;
         const vehicleDescription = body.vehicleDescription;
+        const state = body.state;
 
         if (vin == null && licensePlate == null) {
             return res.status(422).send({
@@ -51,6 +52,7 @@ module.exports = function (router, models) {
             vehicle.licensePlate = licensePlate;
             vehicle.vin = vin;
             vehicle.name = req.body.name;
+            vehicle.state = state
             vehicle.save().then( savedVehicle => {
                 return res.json(savedVehicle);
             });
@@ -62,6 +64,7 @@ module.exports = function (router, models) {
         const licensePlate = body.licensePlate;
         const vin = body.vin;
         const vehicleDescription = body.vehicleDescription;
+        const state = body.state;
 
         if (vin == null && licensePlate == null) {
             return res.status(422).send({
@@ -76,6 +79,7 @@ module.exports = function (router, models) {
             name: name,
             vin: vin,
             licensePlate: licensePlate,
+            state: state
         });
 
         vehicle.setUser(req.user, { save: false });
