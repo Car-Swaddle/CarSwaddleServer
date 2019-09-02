@@ -31,7 +31,7 @@ module.exports = function (router, models) {
         });
     });
 
-    router.get('/auto-service', bodyParser.json(), function (req, res) {
+    router.get('/auto-service', bodyParser.json(), asyncMiddleware(async function (req, res) {
         const offset = req.query.offset || 0;
         const limit = req.query.limit || 50;
         const sortStatus = req.query.sortStatus;
@@ -40,15 +40,21 @@ module.exports = function (router, models) {
         const endDate = req.query.endDate;
 
         var mechanicID = req.query.mechanicID;
+        var userID;
+        if (!mechanicID) {
+            userID = req.user.id
+        } else {
+            userID = null;
+        }
         const filter = req.query.filterStatus;
-        autoServiceScheduler.findAutoServices(mechanicID, req.query.userID, limit, offset, filter, sortStatus, startDate, endDate, req.query.autoServiceID, function (err, autoServices) {
+        autoServiceScheduler.findAutoServices(mechanicID, userID, limit, offset, filter, sortStatus, startDate, endDate, req.query.autoServiceID, function (err, autoServices) {
             if (!err) {
                 return res.json(autoServices);
             } else {
                 return res.send(err);
             }
         });
-    });
+    }));
 
     router.patch('/auto-service', bodyParser.json(), asyncMiddleware(async function (req, res) {
 
