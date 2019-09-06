@@ -23,6 +23,7 @@ var carSwaddleDebugOptions = {
 const carSwaddleBundleID = "com.carswaddle.carswaddle";
 const carSwaddleMechanicBundleID = "com.carswaddle.carswaddlemechanic";
 
+
 class PushService {
 
     constructor() {
@@ -114,12 +115,13 @@ class PushService {
 
     sendUserMechanicChangedAutoServiceStatusNotification(user, autoService, status) {
         const mechanicFirstName = autoService.mechanic.user.firstName;
-        const alert = user.firstName + ' your mechanic, ' + mechanicFirstName + ', changed the status of your oil change to ' + status + '.';
+        const title = this.statusNotificationTitle(status, mechanicFirstName);
+        const body = this.statusNotificationBody(status, mechanicFirstName);
         const payload = {
             'type': 'autoServiceUpdated',
             'autoServiceID': autoService.id
         };
-        this.sendUserNotification(user, alert, payload, null, null);
+        this.sendUserNotification(user, body, payload, null, title);
     }
 
     sendUserMechanicChangedAutoServiceNotification(user, autoService) {
@@ -182,6 +184,31 @@ class PushService {
         return notification
     }
 
+    statusNotificationTitle(status, mechanicFirstName) {
+        switch (status) {
+            case 'scheduled':
+                return '';
+            case 'inProgress':
+                return mechanicFirstName + ' started working on your oil change';
+            case 'completed':
+                return mechanicFirstName + ' has finished your oil change';
+            case 'canceled':
+                return mechanicFirstName + ' has canceled your oil change';
+        }
+    }
+
+    statusNotificationBody(status, mechanicFirstName) {
+        switch (status) {
+            case 'scheduled':
+                return '';
+            case 'inProgress':
+                return mechanicFirstName + ' is ready for you to bring your keys to your vehicle';
+            case 'completed':
+                return 'Thank you for using Car Swaddle!'; 
+            case 'canceled':
+                return 'You\'ll receive a refund of your payment within 2 business days';
+        }
+    }
 }
 
 const apn = new PushService();
