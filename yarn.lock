@@ -1062,6 +1062,11 @@ has-flag@^3.0.0:
   resolved "https://registry.yarnpkg.com/has-flag/-/has-flag-3.0.0.tgz#b5d454dc2199ae225699f3467e5a07f3b955bafd"
   integrity sha1-tdRU3CGZriJWmfNGfloH87lVuv0=
 
+hashids@^2.0.1:
+  version "2.0.1"
+  resolved "https://registry.yarnpkg.com/hashids/-/hashids-2.0.1.tgz#cdee93b6de1a6f941c955084fe82658c4fba28da"
+  integrity sha512-Hr1lPEGhCkZSniYj9jAj8gQtcTBKNhf/tF14R1tu3zvIcwCT89/ucHEyObSIUZ42Y30SlIfOt7Sq0Uw+rhs6iQ==
+
 http-errors@1.7.2:
   version "1.7.2"
   resolved "https://registry.yarnpkg.com/http-errors/-/http-errors-1.7.2.tgz#4f5029cf13239f31036e5b2e55292bcfbcc85c8f"

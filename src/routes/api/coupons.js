@@ -76,4 +76,11 @@ module.exports = function (router, models) {
 
         return res.send({ coupons });
     }));
+
+
+    router.get('/coupons/shareable/', asyncMiddleware(async function (req, res) {
+        const coupons = await models.Coupon.fetchOrCreateShareableCoupons(req.user.id, 3);
+        return res.send({ coupons });
+    }));
+
 };
