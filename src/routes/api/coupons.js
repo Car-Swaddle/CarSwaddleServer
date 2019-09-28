@@ -79,7 +79,7 @@ module.exports = function (router, models) {
 
 
     router.get('/coupons/shareable/', asyncMiddleware(async function (req, res) {
-        const coupons = await models.Coupon.fetchOrCreateShareableCoupons(req.user.id, 3);
+        const coupons = await models.Coupon.fetchOrCreateShareableCoupons(req.user.id, req.query.limit || 3);
         return res.send({ coupons });
     }));
 

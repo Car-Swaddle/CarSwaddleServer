@@ -11,7 +11,7 @@
         "details": [
             {
                 "appID": "977533WLK8.com.carswaddle.carswaddle",
-                "paths": ["/car-swaddle/reset-password"]
+                "paths": ["/car-swaddle/reset-password", "/appstore"]
             },
             {
                 "appID": "977533WLK8.com.carswaddle.carswaddlemechanic",

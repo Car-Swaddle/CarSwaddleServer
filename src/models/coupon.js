@@ -148,10 +148,9 @@ const coupon = function (sequelize, DataTypes) {
         const limit = count || 3;
 
         const coupons = await Coupon.findAll({
-            where: {
-                createdByUserID: userId
-            },
+            where: { createdByUserID: userId },
             limit: limit,
+            order: [['createdAt', 'ASC']],
         });
 
         const leftToCreateCount = limit - (coupons.length || 0);
@@ -160,11 +159,10 @@ const coupon = function (sequelize, DataTypes) {
         }
 
         var formattedUserIds = [];
-        for (var i = 0; i < 30; i++) {
+        for (var i = 0; i < max(leftToCreateCount * 2, 30); i++) {
             const randomNumber = Math.round(Math.random() * (9999999999999 - 0) + 0);
             const hashId = hashids.encode(randomNumber);
             formattedUserIds.push(hashId);
-            console.log(hashId);
         }
 
         var formattedUserIdsDict = {};
@@ -179,16 +177,20 @@ const coupon = function (sequelize, DataTypes) {
             delete formattedUserIdsDict[matchingCoupon.id];
         }
 
-        var newCouponCount = 0;
-        var newCoupons = [];
+        var newCouponPromises = [];
         for (var key in formattedUserIdsDict) {
-            console.log(key);
-            if (newCoupons.length > limit) {
-                return  newCoupons;
+            if (newCouponPromises.length >= leftToCreateCount) {
+                break;
             }
 
-            // newCouponCount++;
+            const couponId = (key || '').replace(/\W/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '').toLowerCase();
+            const newCouponPromise = await Coupon.create(shareableCouponBody(couponId, userId));
+            newCouponPromises.push(newCouponPromise);
         }
+
+        const newCoupons = await Promise.all(newCouponPromises);
+
+        return newCoupons.concat(coupons);
     };
 
     Coupon.fetchAllWithIds = (couponIds) => {
@@ -203,7 +205,7 @@ const coupon = function (sequelize, DataTypes) {
         });
     };
 
-    function shareableCouponBody(id) {
+    function shareableCouponBody(id, creatorId) {
         return {
             id: id,
             discountBookingFee: true,
@@ -211,7 +213,8 @@ const coupon = function (sequelize, DataTypes) {
             name: 'Shared coupon',
             maxRedemptions: 1,
             isCorporate: false,
-            redeemBy: new Date(new Date().setFullYear(new Date().getFullYear() + 1)),
+            redeemBy: new Date(new Date().setFullYear(new Date().getFullYear() + 100)),
+            createdByUserID: creatorId
         }
     }
 
