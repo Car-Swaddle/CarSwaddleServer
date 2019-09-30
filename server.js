@@ -15,7 +15,8 @@ bodyParser.limit = '500mb';
 const app = express();
 app.use(express.static(__dirname + '/www'));
 
-express.static.mime.define({'application/json': ['apple-app-site-association']});
+express.static.mime.define({'application/pkcs7-mime': ['apple-app-site-association']});
+express.static.mime.define({'application/pkcs7-mime': ['.well-known/apple-app-site-association']});
 
 var port = process.env.PORT;
 if (port == null || port == "") {
