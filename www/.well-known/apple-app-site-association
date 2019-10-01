@@ -11,15 +11,33 @@
         "details": [
             {
                 "appID": "977533WLK8.com.carswaddle.carswaddle",
-                "paths": ["/car-swaddle/reset-password", "/appstore"]
+                "paths": ["/car-swaddle/reset-password", "/appstore"],
+                "components": [
+                    {
+                        "/": ["/car-swaddle/reset-password"],
+                    },
+                    {
+                        "/": ["/appstore"],
+                    }
+                ]
             },
             {
                 "appID": "977533WLK8.com.carswaddle.carswaddlemechanic",
-                "paths": ["/car-swaddle-mechanic/reset-password"]
+                "paths": ["/car-swaddle-mechanic/reset-password"],
+                "components": [
+                    {
+                        "/": ["/car-swaddle-mechanic/reset-password"],
+                    }
+                ]
             },
             {
                 "appID": "977533WLK8.com.carswaddle.carswaddleadmin",
-                "paths": ["/car-swaddle-admin/reset-password"]
+                "paths": ["/car-swaddle-admin/reset-password"],
+                "components": [
+                    {
+                        "/": ["/car-swaddle-admin/reset-password"],
+                    }
+                ]
             }
         ]
     }
