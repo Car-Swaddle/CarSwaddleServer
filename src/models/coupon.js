@@ -159,7 +159,7 @@ const coupon = function (sequelize, DataTypes) {
         }
 
         var formattedUserIds = [];
-        for (var i = 0; i < max(leftToCreateCount * 2, 30); i++) {
+        for (var i = 0; i < Math.max(leftToCreateCount * 2, 30); i++) {
             const randomNumber = Math.round(Math.random() * (9999999999999 - 0) + 0);
             const hashId = hashids.encode(randomNumber);
             formattedUserIds.push(hashId);
