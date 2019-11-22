@@ -143,9 +143,9 @@ class Emailer {
 
     verificationEmailOptions(user, link) {
         const subject = 'Car Swaddle Email Verification';
-        const text = 'Hello from Car Swaddle! Please click on this link to verify your email. ' + link + '\n\n';
-        const html = 'Hello from Car Swaddle!<br>Please Click on this link to verify your email.<br><a href=' + link + '>' + link + '</a>';
-        return this.emailOptions(user.email, subject, text, html);
+        // const text = 'Hello from Car Swaddle! Please click on this link to verify your email. ' + link + '\n\n';
+        const html = 'Hello and welcome from Car Swaddle!<br><br>Car Swaddle brings the mechanic to you. We allow you to order an oil change from our app and the mechanic will come to your house or work to perform the oil change!<br><br>Please Click on this link to verify your email.<br><a href=' + link + '>' + link + '</a>';
+        return this.emailOptions(user.email, subject, null, html);
     }
 
     reminderUserEmailOptions(autoService, callback) {
