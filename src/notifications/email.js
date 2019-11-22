@@ -29,7 +29,7 @@ class Emailer {
             return;
         }
 
-        if(mailOptions.TemplateId) {
+        if (mailOptions.TemplateId) {
             return client.sendEmailWithTemplate(mailOptions);
         } else {
             return client.sendEmail(mailOptions);
@@ -86,6 +86,19 @@ class Emailer {
         });
     }
 
+    sendWelcomeAndVerify(userFirstName, userEmail, url, vanityUrl) {
+        return client.sendEmailWithTemplate({
+            From: fromEmailAddress,
+            To: userEmail,
+            TemplateId: 15014588,
+            TemplateModel: {
+                name: userFirstName,
+                verification_url: url,
+                vanity_url: vanityUrl
+            },
+        });
+    }
+
     sendEmailVerificationEmail(user, callback) {
         var date = new Date();
         var self = this;
@@ -96,8 +109,7 @@ class Emailer {
             creationDate: date,
         }).then(verification => {
             const link = domain + "/email/verify?id=" + verification.id;
-            const mailOptions = self.verificationEmailOptions(user, link);
-            return self.sendMail(mailOptions).then(info => {
+            return self.sendWelcomeAndVerify(user.firstName, user.email, link, link).then( info => {
                 console.log(info);
                 callback(null);
             }).catch(err => {
@@ -128,11 +140,11 @@ class Emailer {
         var text = user.displayName + ' requested the authority:\n' + authorityRequest.authorityName;
         text += '\n\nAccept: ' + acceptURL;
         text += '\n\nReject: ' + rejectURL;
-        
+
         var html = user.displayName() + ' requested the authority:<br>' + authorityRequest.authorityName + ' <br><br><a href=' + acceptURL + '>Approve</a>' + '<br><br><a href=' + rejectURL + '>Reject</a>';
         return this.emailOptions(authorityApproverEmail, subject, text, html);
     }
- 
+
     authorityAcceptURL(user, authorityRequest) {
         return acceptURL + '?email=' + encodeURIComponent(user.email) + '&secretID=' + authorityRequest.secretID;
     }
@@ -144,7 +156,7 @@ class Emailer {
     verificationEmailOptions(user, link) {
         const subject = 'Car Swaddle Email Verification';
         // const text = 'Hello from Car Swaddle! Please click on this link to verify your email. ' + link + '\n\n';
-        const html = 'Hello and welcome from Car Swaddle!<br><br>Car Swaddle brings the mechanic to you. We allow you to order an oil change from our app and the mechanic will come to your house or work to perform the oil change!<br><br>Please Click on this link to verify your email.<br><a href=' + link + '>' + link + '</a>';
+        const html = 'Hello and welcome to Car Swaddle!<br><br>Car Swaddle brings the mechanic to you. We allow you to order an oil change from our app and the mechanic will come to your house or work to perform the oil change!<br><br>Please Click on this link to verify your email.<br><a href=' + link + '>' + link + '</a>';
         return this.emailOptions(user.email, subject, null, html);
     }
 
