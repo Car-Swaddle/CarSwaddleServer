@@ -7,6 +7,7 @@ const distance = require('../routes/distance.js');
 const { DateTime } = require('luxon');
 const reminderFile = require('../notifications/reminder.js');
 const stripeChargesFile = require('../controllers/stripe-charges.js');
+const emailFile = require('../notifications/email.js');
 
 module.exports = function (models) {
     return new AutoServiceScheduler(models);
@@ -16,6 +17,7 @@ function AutoServiceScheduler(models) {
     this.models = models;
     this.reminder = new reminderFile(models);
     this.stripeCharges = stripeChargesFile(models);
+    this.emailer = new emailFile(models);
     this.init();
 }
 
@@ -96,6 +98,7 @@ AutoServiceScheduler.prototype.scheduleAutoService = async function (user, statu
 
 AutoServiceScheduler.prototype.sendNotification = function (user, mechanic, autoService) {
     pushService.sendMechanicUserScheduledAppointment(user, mechanic, autoService);
+    this.emailer.sendMechanicNewServiceEmail(user, mechanic, autoService);
 }
 
 AutoServiceScheduler.prototype.setupServiceEntities = async function (serviceEntities, autoService, callback) {

@@ -42,6 +42,11 @@ class Emailer {
         return this.sendMail(options);
     }
 
+    async sendMechanicNewServiceEmail(user, mechanic, autoService) {
+        const mechanicUser = await mechanic.getUser();
+        this.sendNewServiceEmail(user, mechanicUser, 'oil change', autoService.scheduledDate, autoService.location.streetAddress);
+    }
+
     sendUserOilChangeReminderMail(autoService, callback) {
         if (!allowEmail) {
             if (callback) {
@@ -72,6 +77,23 @@ class Emailer {
                     callback(err);
                 });
             });
+        });
+    }
+
+    sendNewServiceEmail(user, mechanicUser, autoServiceType, date, location) {
+        const dateTime = DateTime.fromJSDate(date, { setZone: true, zone: user.timeZone || 'America/Denver' });
+        const dateString = dateTime.toFormat("cccc LLLL d, h:mm ZZZZ");
+        return client.sendEmailWithTemplate({
+            From: fromEmailAddress,
+            To: mechanicUser.email,
+            TemplateId: 15747646,
+            TemplateModel: {
+                "mechanic_name": mechanicUser.firstName,
+                "user_name": user.firstName,
+                "auto_service_type": autoServiceType,
+                "date": dateString, // "Fri, Jan 10th 2020 12:00 pm"
+                "location": location,
+            },
         });
     }
 
@@ -109,7 +131,7 @@ class Emailer {
             creationDate: date,
         }).then(verification => {
             const link = domain + "/email/verify?id=" + verification.id;
-            return self.sendWelcomeAndVerify(user.firstName, user.email, link, link).then( info => {
+            return self.sendWelcomeAndVerify(user.firstName, user.email, link, link).then(info => {
                 console.log(info);
                 callback(null);
             }).catch(err => {
