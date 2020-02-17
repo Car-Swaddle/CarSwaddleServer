@@ -28,9 +28,29 @@ services:
             - postgres-data:/var/lib/postgresql
         networks:
             - carswaddle-net
+    
+    s3:
+        image: minio/minio:latest
+        restart: always
+        ports:
+            - '9000:9000'
+        volumes:
+            - s3:/data
+        environment:
+            MINIO_ACCESS_KEY: minio
+            MINIO_SECRET_KEY: minio123
+        command: server /data
+        networks:
+            - carswaddle-net
+        healthcheck:
+            test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+            interval: 30s
+            timeout: 20s
+            retries: 3
 
 volumes:
     postgres-data:
+    s3:
 
 networks:
     carswaddle-net:
