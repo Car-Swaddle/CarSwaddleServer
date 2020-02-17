@@ -3,7 +3,7 @@ const Reminder = require('../notifications/reminder.js');
 
 var sequelize = null;
 console.log('process.env.DATABASE: ' + process.env.DATABASE_URL);
-console.log('process.env: ' + process.env);
+console.log('process.env: ' + JSON.stringify(process.env));
 
 if (process.env.DATABASE_URL) {
   // the application is executed on Heroku
@@ -11,6 +11,15 @@ if (process.env.DATABASE_URL) {
     dialect:  'postgres',
     protocol: 'postgres',
     logging:  true // false
+  });
+} else if (process.env.DOCKER) {
+  sequelize = new Sequelize({
+    dialect: 'postgres',
+    host: 'db',
+    port: '5432',
+    username: 'kylekendall',
+    password: 'password',
+    database: 'carswaddle'
   });
 } else {
   // the application is executed on the local machine

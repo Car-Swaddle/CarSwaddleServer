@@ -1,0 +1,37 @@
+version: '3.7'
+
+services:
+    carswaddle:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        restart: unless-stopped
+        ports:
+            - '3000:3000'
+        depends_on:
+            - db
+        networks:
+            - carswaddle-net
+
+    db:
+        image: kartoza/postgis:12.0
+        restart: always
+        ports:
+            - "5432:5432"
+        environment:
+            - POSTGRES_USER=kylekendall
+            - POSTGRES_PASS=password
+            - POSTGRES_DBNAME=carswaddle
+            - POSTGRES_MULTIPLE_EXTENSIONS=postgis,hstore,postgis_topology
+            - ALLOW_IP_RANGE=0.0.0.0/0
+        volumes:
+            - postgres-data:/var/lib/postgresql
+        networks:
+            - carswaddle-net
+
+volumes:
+    postgres-data:
+
+networks:
+    carswaddle-net:
+        driver: bridge
