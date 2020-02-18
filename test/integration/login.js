@@ -26,4 +26,10 @@ describe('Account management', function() {
         + "&password=asdfasdf)")
         .expect(400, done);
     });
+
+    it('Should return current user', function(done) {
+        host_request.get('/api/current-user')
+        .set("Authorization", "bearer " + jwt)
+        .expect(200, done);
+    });
 });
