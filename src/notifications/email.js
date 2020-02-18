@@ -16,7 +16,7 @@ const acceptURL = domain + '/authority/approve';
 const rejectURL = domain + '/authority/reject';
 const unsubscribeURL = domain + '/email-unsubscribe';
 
-const allowEmail = true;
+const allowEmail = !process.env.NO_EMAIL || process.env.NO_EMAIL === 'false';
 
 class Emailer {
 

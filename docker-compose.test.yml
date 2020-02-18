@@ -1,15 +1,26 @@
 version: '3.7'
 
 services:
+    test:
+        build:
+            context: .
+            dockerfile: ./docker/test/Dockerfile
+        depends_on:
+            - carswaddle
+        networks:
+            - carswaddle-net
+
     carswaddle:
         build:
             context: .
-            dockerfile: Dockerfile
+            dockerfile: ./docker/app/Dockerfile
         restart: unless-stopped
         ports:
             - '3000:3000'
+            - '9229:9229'
         depends_on:
             - db
+            - s3
         networks:
             - carswaddle-net
 
