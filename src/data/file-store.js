@@ -7,7 +7,16 @@ const accessKeyID = 'AKIAJE4T6M2KIBNLNKRA'
 const secretAccessKey = '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';
 const bucketName = 'car-swaddle';
 
-const s3 = new aws.S3({ accessKeyId: accessKeyID, secretAccessKey: secretAccessKey });
+var s3 = null;
+if (process.env.DOCKER) {
+    s3 = new aws.S3({
+        endpoint: "s3:9000",
+        accessKeyId: "minio",
+        secretAccessKey: "minio123"
+    });
+} else {
+    s3 = new aws.S3({ accessKeyId: "minio", secretAccessKey: "minio123" });
+}
 const keyDirectory = "profile";
 
 module.exports = {

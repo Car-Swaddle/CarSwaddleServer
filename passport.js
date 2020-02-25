@@ -15,10 +15,15 @@ module.exports = function (models) {
         usernameField: 'email',
         passwordField: 'password'
     }, function (email, password, cb) {
+        if (!email || !password) {
+            // TODO - validate email + password are good
+            return cb(null, false, {message: "Missing email or password"})
+        }
         console.log('local login email: ' + email);
         return models.User.findOne({ where: { email: email } }).then(user => {
-            console.log('got users: ' + user);
+            console.log('got users: ' + JSON.stringify(user));
             if (!user || user.validPassword(password) == false) {
+                console.log("Here");
                 return cb(null, false, { message: 'Incorrect email or password.' });
             }
             return cb(null, user, { message: 'Logged In Successfully' });
@@ -56,7 +61,7 @@ module.exports = function (models) {
                 // we are checking to see if the user trying to login already exists
                 models.User.findOne({ where: { email: email } })
                     .then(user => {
-                        console.log('user: ' + user);
+                        console.log('user: ' + JSON.stringify(user));
 
                         // check to see if theres already a user with that email
 

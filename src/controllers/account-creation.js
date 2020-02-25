@@ -22,10 +22,12 @@ AccountCreation.prototype.createStripeCustomerAccount = function (user, callback
     }, function (err, customer) {
         if (customer == null || err != null) {
             callback(err, null, null);
+            return;
         }
         user.stripeCustomerID = customer.id;
         user.save().then(user => {
             callback(err, customer, user);
+            return;
         });
     });
 }
