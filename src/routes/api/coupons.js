@@ -13,7 +13,7 @@ module.exports = function (router, models) {
             editCarSwaddleCouponAuthory,
         ] = await Promise.all([
             models.Coupon.findById(id),
-            authoritiesController.fetchAuthorityForUser(req.user.id, models.Authority.NAME.editCarSwaddleCoupon, false),
+            authoritiesController.fetchAuthorityForUser(req.user.id, models.Authority.NAME.editCarSwaddleCoupon),
         ]);
 
         const canDelete = coupon && (coupon.createdByUserID === req.user.id || editCarSwaddleCouponAuthory);
@@ -32,7 +32,7 @@ module.exports = function (router, models) {
             authority,
             mechanic,
         ] = await Promise.all([
-            authoritiesController.fetchAuthorityForUser(req.user.id, models.Authority.NAME.editCarSwaddleCoupon, false),
+            authoritiesController.fetchAuthorityForUser(req.user.id, models.Authority.NAME.editCarSwaddleCoupon),
             req.user.getMechanic(),
         ]);
 
@@ -61,7 +61,7 @@ module.exports = function (router, models) {
         const [
             authority,
         ] = await Promise.all([
-            authoritiesController.fetchAuthorityForUser(req.user.id, models.Authority.NAME.readCarSwaddleCoupon, false),
+            authoritiesController.fetchAuthorityForUser(req.user.id, models.Authority.NAME.readCarSwaddleCoupon),
         ]);
 
         if(!authority) {

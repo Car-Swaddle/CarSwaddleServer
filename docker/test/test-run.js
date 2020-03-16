@@ -20,7 +20,7 @@ console.log(body);
 function runTests(token) {
     process.env.TEST_JWT = token;
     execSync(
-        'mocha ./test/**/*.*s',
+        'mocha ./src/test/**/*.*s',
         {stdio: 'inherit'}
     );
 }

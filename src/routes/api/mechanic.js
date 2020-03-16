@@ -11,10 +11,10 @@ const asyncMiddleware = require('../../lib/middleware/async-middleware');
 
 module.exports = function (router, models) {
 
-    require('../stats.js')(models);
+    const stats = require('../stats.js')(models);
 
     const authoritiesControllerFile = require('../../controllers/authorities.js');
-    const authoritiesController = new authoritiesControllerFile(models);
+    const authoritiesController = authoritiesControllerFile(models);
 
     router.get('/current-mechanic', bodyParser.json(), async function (req, res) {
         const mechanic = await req.user.getMechanic();
@@ -26,9 +26,9 @@ module.exports = function (router, models) {
             return res.status(422).send('invalid parameters');
         }
         const mechanicID = req.query.mechanic;
-        const averageRating = await averageReceivedRating(mechanicID);
-        const numberOfRatings = await numberOfRatingsReceived(mechanicID);
-        const autoServicesProvided = await numberOfAutoServicesProvided(mechanicID);
+        const averageRating = await stats.averageReceivedRating(mechanicID);
+        const numberOfRatings = await stats.numberOfRatingsReceived(mechanicID);
+        const autoServicesProvided = await stats.numberOfAutoServicesProvided(mechanicID);
 
         const avg = averageRating[0].rating;
         const count = parseInt(numberOfRatings[0].count);
@@ -270,7 +270,6 @@ module.exports = function (router, models) {
         models.Mechanic.findById(mechanicID).then(mechanic => {
             fileStore.getImage(mechanic.profileImageID).then(data => {
                 if (data == null) {
-                    console.log(err);
                     res.status(404).send();
                 }
                 res.writeHead(200, { 'Content-Type': 'image/*' });

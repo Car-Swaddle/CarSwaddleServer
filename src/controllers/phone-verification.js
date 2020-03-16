@@ -55,7 +55,7 @@ PhoneVerification.prototype.requestPhoneVerification = function (phone_number, c
             "api_key": this.apiKey,
             "phone_number": phone_number,
             "via": via || 'sms',
-            "country_code": country_code || 1,
+            "country_code": country_code || '1',
             "code_length": 5
         },
         callback
@@ -68,7 +68,7 @@ PhoneVerification.prototype._request = function (type, path, params, callback, q
     qs = qs || {};
     qs['api_key'] = this.apiKey;
 
-    options = {
+    const options = {
         url: this.apiURL + path,
         form: params,
         headers: this.headers,

@@ -36,14 +36,14 @@ module.exports = function (router, models) {
                 return
             }
             models.TemplateTimeSpan.destroy({where: { mechanicID: mechanic.id }}).then(function () {
-                for (i = 0; i < spans.length; i++) { 
+                for (var i = 0; i < spans.length; i++) { 
                     var val = spans[i];
                     val.id = uuidV1();
                     val.startTime = models.TemplateTimeSpan.getStartTimeDate(val.startTime);
                 }
                 models.TemplateTimeSpan.bulkCreate(spans).then( newSpans => {
                     var promises = []
-                    for (i = 0; i < newSpans.length; i++) { 
+                    for (var i = 0; i < newSpans.length; i++) { 
                         var newSpan = newSpans[i];
                         newSpan.mechanicID = mechanic.id;
                         newSpan.setMechanic(mechanic, { save: false });

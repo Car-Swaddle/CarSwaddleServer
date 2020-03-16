@@ -9,7 +9,7 @@ module.exports = function (router, models) {
     const emailFile = require('../../notifications/email.js');
     const emailer = new emailFile(models);
     const authoritiesControllerFile = require('../../controllers/authorities.js');
-    const authoritiesController = new authoritiesControllerFile(models);
+    const authoritiesController = authoritiesControllerFile(models);
 
     router.post('/authorities/request', bodyParser.json(), function (req, res) {
         const authority = req.body.authority;

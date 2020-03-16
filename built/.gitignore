@@ -1,0 +1,4 @@
+# Ignoring everything in this directory because it's compiled
+*
+*/
+!.gitignore

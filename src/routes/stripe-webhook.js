@@ -204,33 +204,8 @@ module.exports = function (app, models) {
     function decriptionForPayoutFailure(failure) {
         if (failure == payoutFailures.ACCOUNT_CLOSED) {
             return '';
-        } else if (failure == payoutFailures.ACCOUNT_CLOSED) {
-
-        } else if (failure == payoutFailures.ACCOUNT_CLOSED) {
-
-        } else if (failure == payoutFailures.ACCOUNT_CLOSED) {
-
-        } else if (failure == payoutFailures.ACCOUNT_CLOSED) {
-
-        } else if (failure == payoutFailures.ACCOUNT_CLOSED) {
-
-        } else if (failure == payoutFailures.ACCOUNT_CLOSED) {
-
-        } else if (failure == payoutFailures.ACCOUNT_CLOSED) {
-
-        } else if (failure == payoutFailures.ACCOUNT_CLOSED) {
-
-        } else if (failure == payoutFailures.ACCOUNT_CLOSED) {
-
-        } else if (failure == payoutFailures.ACCOUNT_CLOSED) {
-
-        } else if (failure == payoutFailures.ACCOUNT_CLOSED) {
-
-        } else if (failure == payoutFailures.ACCOUNT_CLOSED) {
-
-        } else if (failure == payoutFailures.ACCOUNT_CLOSED) {
-
         }
+        return '';
     }
 
 };

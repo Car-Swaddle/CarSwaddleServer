@@ -23,7 +23,7 @@ function currentDomain() {
         return 'api.carswaddle.com';
     } else if (process.env.ENV == 'staging') {
         return 'api.staging.carswaddle.com';
-    } else if (process.env.ENV == 'dev') {
+    } else {
         return 'localhost';
         // http://[::1]:3000
     }
