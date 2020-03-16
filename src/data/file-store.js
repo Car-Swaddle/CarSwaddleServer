@@ -15,7 +15,7 @@ if (process.env.DOCKER) {
         secretAccessKey: "minio123"
     });
 } else {
-    s3 = new aws.S3({ accessKeyId: "minio", secretAccessKey: "minio123" });
+    s3 = new aws.S3({ accessKeyId: accessKeyID, secretAccessKey: secretAccessKey });
 }
 const keyDirectory = "profile";
 
