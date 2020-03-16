@@ -15,7 +15,7 @@ module.exports = function (app, models) {
 
         const verification = await models.Verification.findById(id);
 
-        if (verification == null || verification.resourceType != 'user' || ((new Date) - verification.creationDate) > MAX_TIME) {
+        if (verification == null || verification.resourceType != 'user' || (+(new Date) - verification.creationDate) > MAX_TIME) {
             return res.status(400).send('not verified');
         }
 

@@ -4,7 +4,7 @@ const bodyParser = require('body-parser');
 
 module.exports = function (router, models) {
 
-    require('../stats.js')(models);
+    const stats = require('../stats.js')(models);
 
     router.get('/average-rating-received', bodyParser.json(), function (req, res) {
         var id = null;
@@ -15,7 +15,7 @@ module.exports = function (router, models) {
         } else {
             id = req.user.id;
         }
-        averageReceivedRating(id).then(averageRating => {
+        stats.averageReceivedRating(id).then(averageRating => {
             if (averageRating[0] == null) {
                 return res.status(404).send();
             }
@@ -32,7 +32,7 @@ module.exports = function (router, models) {
         } else {
             id = req.user.id;
         }
-        numberOfRatingsReceived(id).then(count => {
+        stats. numberOfRatingsReceived(id).then(count => {
             if (count[0] == null) {
                 return res.status(404).send();
             }

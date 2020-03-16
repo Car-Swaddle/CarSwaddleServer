@@ -47,7 +47,6 @@ module.exports = function (router, models) {
     }
     fileStore.getImage(fileName).then(data => {
       if (data == null) {
-        console.log(err);
         res.status(404).send();
       }
       res.writeHead(200, { 'Content-Type': 'image/*' });
@@ -70,7 +69,6 @@ module.exports = function (router, models) {
     }
     const data = await fileStore.getImage(user.profileImageID);
     if (data == null) {
-      console.log(err);
       res.status(404).send();
     }
     res.writeHead(200, { 'Content-Type': 'image/*' });
@@ -143,7 +141,7 @@ module.exports = function (router, models) {
           }
           user.phoneNumber = body.phoneNumber;
           return user.save().then(user => {
-            return phone.requestPhoneVerification(body.phoneNumber, 1, null, function (err, response) {
+            return phone.requestPhoneVerification(body.phoneNumber, '1', null, function (err, response) {
               if (!err) {
                 console.log('unable to send sms');
               }

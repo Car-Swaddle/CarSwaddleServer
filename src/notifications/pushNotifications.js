@@ -51,7 +51,6 @@ class PushService {
         const payload = {
             'type': 'reminder',
             'date': autoService.scheduledDate,
-            'name': name,
             'autoServiceID': autoService.id
         };
         this.sendUserNotification(autoService.user, text, payload, null, subject);
@@ -99,7 +98,6 @@ class PushService {
             'userID': user.id,
             'mechanicID': mechanic.id,
             'reviewRating': reviewRating,
-            'autoServiceID': autoService.id,
         };
         this.sendMechanicNotification(mechanic, alert, payload, null, title);
     }
@@ -194,6 +192,8 @@ class PushService {
                 return mechanicFirstName + ' has finished your oil change';
             case 'canceled':
                 return mechanicFirstName + ' has canceled your oil change';
+            default:
+                return '';
         }
     }
 
@@ -207,6 +207,8 @@ class PushService {
                 return 'Thank you for using Car Swaddle!'; 
             case 'canceled':
                 return 'You\'ll receive a refund of your payment within 2 business days';
+            default:
+                return '';
         }
     }
 }

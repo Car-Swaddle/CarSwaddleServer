@@ -13,7 +13,6 @@ COPY ./package*.json ./
 RUN npm install
 
 COPY . .
-RUN chmod +x ./docker/test/test-start.sh
 
 ENV HOST_URL http://carswaddle:3000
 ENV TEST_USER test@carswaddle.com

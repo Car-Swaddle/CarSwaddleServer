@@ -1,6 +1,6 @@
 const constants = require('../../controllers/constants.js');
 var twilioFramework = require('twilio');
-var twilio = new twilioFramework(constants.TWILIO_SID, constants.TWILIO_AUTH_TOKEN);
+var twilio = twilioFramework(constants.TWILIO_SID, constants.TWILIO_AUTH_TOKEN);
 const bodyParser = require('body-parser');
 const phone = require('../../controllers/phone-verification.js')();
 

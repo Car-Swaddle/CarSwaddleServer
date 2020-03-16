@@ -26,7 +26,7 @@ class Emailer {
 
     sendMail(mailOptions) {
         if (!allowEmail) {
-            return;
+            return new Promise(() => {});
         }
 
         if (mailOptions.TemplateId) {
@@ -83,7 +83,7 @@ class Emailer {
     sendNewServiceEmail(user, mechanicUser, autoServiceType, date, location) {
         const dateTime = DateTime.fromJSDate(date, { setZone: true, zone: user.timeZone || 'America/Denver' });
         const dateString = dateTime.toFormat("cccc LLLL d, h:mm ZZZZ");
-        return client.sendEmailWithTemplate({
+        return this.sendMail({
             From: fromEmailAddress,
             To: mechanicUser.email,
             TemplateId: 15747646,
@@ -98,7 +98,7 @@ class Emailer {
     }
 
     sendNPSSurvey(userFirstName, userEmail) {
-        return client.sendEmailWithTemplate({
+        return this.sendMail({
             From: fromEmailAddress,
             To: userEmail,
             TemplateId: 13011158,
@@ -109,7 +109,7 @@ class Emailer {
     }
 
     sendWelcomeAndVerify(userFirstName, userEmail, url, vanityUrl) {
-        return client.sendEmailWithTemplate({
+        return this.sendMail({
             From: fromEmailAddress,
             To: userEmail,
             TemplateId: 15014588,

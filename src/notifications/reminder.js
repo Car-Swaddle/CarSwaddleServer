@@ -32,6 +32,7 @@ class Reminder {
         var scheduledDate = autoService.scheduledDate;
         const autoServiceID = autoService.id;
         const models = this.models;
+        const AutoService = models.AutoService;
 
         var self = this;
 
@@ -74,7 +75,6 @@ class Reminder {
         var thirtyMinutesBefore = this.addMinutes(scheduledDate, -30);
 
         if (thirtyMinutesBefore > new Date()) {
-            const AutoService = this.models.AutoService;
             schedule.scheduleJob(thirtyMinutesBefore, function (time) {
                 AutoService.findOne({
                     where: { id: autoServiceID },

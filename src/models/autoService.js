@@ -96,7 +96,7 @@ const autoService = function (sequelize, DataTypes) {
 
     var statusAreValid = true;
 
-    for (i = 0; i < sortStatus.length; i++) {
+    for (var i = 0; i < sortStatus.length; i++) {
       var currentStatus = sortStatus[i];
       if (AutoService.allStatus.includes(currentStatus) == false) {
         statusAreValid = false;
@@ -114,7 +114,8 @@ const autoService = function (sequelize, DataTypes) {
 
     var queryString = 'case ';
 
-    for (i = 0; i < sortStatus.length; i++) {
+    var lastIndex = -1;
+    for (var i = 0; i < sortStatus.length; i++) {
       queryString += `WHEN status = '` + sortStatus[i] + `' THEN ` + i + ` `;
       lastIndex = i;
     }

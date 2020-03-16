@@ -47,14 +47,15 @@ module.exports = function (router, models) {
     });
 
     function oilChangeKeyForOilType(oilType) {
-        if (oilType == 'CONVENTIONAL') {
-            return 'oilChangeConventional'
-        } else if (oilType == 'BLEND') {
+        if (oilType == 'BLEND') {
             return 'oilChangeBlend'
         } else if (oilType == 'SYNTHETIC') {
             return 'oilChangeSynthetic'
         } else if (oilType == 'HIGH_MILEAGE') {
             return 'oilChangeHighMileage'
+        } else {
+            // Conventional, default
+            return 'oilChangeConventional'
         }
     }
 

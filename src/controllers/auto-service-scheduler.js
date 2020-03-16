@@ -104,7 +104,7 @@ AutoServiceScheduler.prototype.sendNotification = function (user, mechanic, auto
 AutoServiceScheduler.prototype.setupServiceEntities = async function (serviceEntities, autoService, callback) {
     var entityTypeToSpecificEntities = {};
 
-    for (i = 0; i < serviceEntities.length; i++) {
+    for (var i = 0; i < serviceEntities.length; i++) {
         var val = serviceEntities[i];
         const entityType = val.entityType;
         if (entityTypeToSpecificEntities[entityType] == null) {
@@ -115,10 +115,10 @@ AutoServiceScheduler.prototype.setupServiceEntities = async function (serviceEnt
 
     var serviceEntityPromises = [];
     var keys = Object.keys(entityTypeToSpecificEntities)
-    for (i = 0; i < keys.length; i++) {
+    for (var i = 0; i < keys.length; i++) {
         const key = keys[i];
         var specificServices = entityTypeToSpecificEntities[key];
-        for (j = 0; j < specificServices.length; j++) {
+        for (var j = 0; j < specificServices.length; j++) {
             if (key == 'OIL_CHANGE') {
                 const specificService = specificServices[j];
                 const p = this.createOilChange(specificService, key, autoService);

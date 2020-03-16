@@ -112,12 +112,13 @@ Taxes.prototype.taxRateForLocation = async function(location) {
 }
 
 function utahTaxRate() {
-    if (process.env.ENV == 'production') {
-        return 'txr_1F2D92DGwCXJzLur7MiO7w4u';
-    } else if (process.env.ENV == 'staging') {
+    if (process.env.ENV == 'staging') {
         return 'txr_1EsKFiDGwCXJzLurboddwtFb';
     } else if (process.env.ENV == 'dev') {
         return 'txr_1EsKFiDGwCXJzLurboddwtFb';
+    } else {
+        // Prod, default
+        return 'txr_1F2D92DGwCXJzLur7MiO7w4u';
     }
 }
 

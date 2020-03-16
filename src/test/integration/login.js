@@ -8,7 +8,7 @@ let host_request = request(host_url);
 describe('Account management', function() {
     it('Should create account', function(done) {
         host_request.post('/signup')
-        .send("email=" + encodeURIComponent("brad+" + Math.floor(new Date() / 1000) + "@carswaddle.com")
+        .send("email=" + encodeURIComponent("brad+" + Math.floor(+new Date() / 1000) + "@carswaddle.com")
         + "&password=1234")
         .expect(200, done);
     });

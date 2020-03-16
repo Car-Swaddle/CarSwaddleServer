@@ -77,11 +77,11 @@ StripeCharges.prototype.monthlyDebitFee = function (mechanicPayment) {
 StripeCharges.prototype.payInvoices = async function(invoiceID, sourceID, mechanicID, transferAmount) {
     const mechanic = await this.models.Mechanic.findById(mechanicID);
 
-    if (sourceID == null || invoiceID == null || mechanic == null) {
-        return res.status(422).send();
-    }
-
     var invoice = null, transfer = null;
+
+    if (sourceID == null || invoiceID == null || mechanic == null) {
+        return {invoice, transfer}
+    }
 
     try {
         invoice = await stripe.invoices.pay(invoiceID, {
@@ -196,9 +196,8 @@ StripeCharges.prototype.updateDraft = async function(customer, prices, metadata,
 /**
  * Performs a debit on an auto service. If the montly stripe debit is required, this method will perform that debit as well.
  *
- * @param {!Mechanic} mechanic
- * @param {!integer} mechanicPayment
- * @param {!function} callback
+ * @param mechanic Mechanic
+ * @param mechanicPayment integer
  */
 StripeCharges.prototype.performDebit = function (mechanic, mechanicPayment) {
     return this.fetchMonthDebit(mechanic.id).then(mechanicMonthDebit => {
