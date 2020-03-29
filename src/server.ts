@@ -10,10 +10,12 @@ stripe.setAppInfo({
     url: constants.CURRENT_DOMAIN
 });
 
+console.log(__dirname)
+
 bodyParser.limit = '500mb';
 
 const app = express();
-app.use(express.static(__dirname + '../www'));
+app.use(express.static(__dirname + '/../www'));
 
 express.static.mime.define({'application/pkcs7-mime': ['apple-app-site-association']});
 express.static.mime.define({'application/pkcs7-mime': ['.well-known/apple-app-site-association']});

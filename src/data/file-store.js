@@ -8,9 +8,9 @@ const secretAccessKey = 'Ogjtg5qAt1UeneEUwoGp2J1ZekFT0HxB52/BG7V2';
 const bucketName = 'car-swaddle';
 
 var s3 = null;
-if (process.env.DOCKER) {
+if (process.env.LOCAL_S3) {
     s3 = new aws.S3({
-        endpoint: "s3:9000",
+        endpoint: process.env.LOCAL_S3,
         accessKeyId: "minio",
         secretAccessKey: "minio123"
     });
