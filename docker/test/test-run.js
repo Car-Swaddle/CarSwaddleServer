@@ -20,7 +20,7 @@ console.log(body);
 function runTests(token) {
     process.env.TEST_JWT = token;
     execSync(
-        'mocha ./src/test/**/*.*s',
+        'mocha ./built/test/**/*.*s',
         {stdio: 'inherit'}
     );
 }
@@ -37,8 +37,9 @@ function signup() {
     })
 }
 
-// Login, then signup if login failed
-request.post(process.env.HOST_URL + "/login")
+function login() {
+    // Login, then signup if login failed
+    request.post(process.env.HOST_URL + "/login")
     .send(body)
     .then(res => {
         if (res.status != 200) {
@@ -55,5 +56,6 @@ request.post(process.env.HOST_URL + "/login")
             signup();
         }
     })
+}
 
-
+login()

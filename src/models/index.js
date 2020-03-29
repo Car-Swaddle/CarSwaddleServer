@@ -2,8 +2,8 @@ const Sequelize = require('sequelize');
 const Reminder = require('../notifications/reminder.js');
 
 var sequelize = null;
-console.log('process.env.DATABASE: ' + process.env.DATABASE_URL);
-console.log('process.env: ' + JSON.stringify(process.env));
+// console.log('process.env.DATABASE: ' + process.env.DATABASE_URL);
+// console.log('process.env: ' + JSON.stringify(process.env));
 
 if (process.env.DATABASE_URL) {
   // the application is executed on Heroku
@@ -12,19 +12,15 @@ if (process.env.DATABASE_URL) {
     protocol: 'postgres',
     logging:  true // false
   });
-} else if (process.env.DOCKER) {
+} else {
+  // Local machine natively or docker
   sequelize = new Sequelize({
     dialect: 'postgres',
-    host: 'db',
+    host: process.env.LOCAL_DATABASE_URL || 'localhost',
     port: '5432',
     username: 'kylekendall',
     password: 'password',
     database: 'carswaddle'
-  });
-} else {
-  // the application is executed on the local machine
-  sequelize = new Sequelize('carswaddle', 'kylekendall', 'password', {
-    dialect: 'postgres'
   });
 }
 

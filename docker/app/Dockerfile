@@ -12,12 +12,13 @@ COPY ./package*.json ./
 RUN npm install
 
 COPY . .
-RUN npm build
+RUN npm run build
 
 ENV PORT 3000
 ENV DOCKER true
 ENV STRIPE_LIVE NO
 ENV NO_EMAIL true
+ENV LOCAL_DATABASE_URL db
 
 EXPOSE 9229/tcp
 EXPOSE 3000/tcp

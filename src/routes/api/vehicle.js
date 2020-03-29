@@ -1,8 +1,47 @@
 const uuidV1 = require('uuid/v1');
 const pushService = require('../../notifications/pushNotifications.js');
 const bodyParser = require('body-parser');
+const vehicleLookup = require('../../data/vehicle-lookup').VehicleLookup
+const util = require('../../util/util').Util
 
 module.exports = function (router, models) {
+
+    router.get('/vehicle/lookup/:field', bodyParser.json(), (req, res, next) => {
+        const field = req.params.field;
+        if (!field) {
+            return res.status(400).send({message: "Missing field"});
+        }
+        const year = req.query.year;
+        const make = req.query.make;
+        const model = req.query.model;
+        const engine = req.query.engine;
+        if (!util.isNullOrNumber(year) || !util.areNullOrString([make, model, engine])) {
+            return res.status(400).send({message: "Invalid query params"});
+        }
+        switch (field) {
+            case "YEAR":
+                return res.status(200).send(vehicleLookup.listYears(make, model));
+            case "MAKE":
+                return res.status(200).send(vehicleLookup.listMakes(make, year));
+            case "MODEL":
+                return res.status(200).send(vehicleLookup.listModels(make, model, year));
+            case "ENGINE":
+                return res.status(200).send(vehicleLookup.listEngines(make, model, year, engine));
+            default:
+                return res.status(400).send({message: "Unknown field type: " + field});
+        }
+    })
+
+    router.get('/vehicle/lookup', bodyParser.json(), (req, res, next) => {
+        const year = req.query.year;
+        const make = req.query.make;
+        const model = req.query.model;
+        const engine = req.query.engine;
+        if (!util.isNullOrNumber(year) || !util.areNullOrString([make, model, engine])) {
+            return res.status(400).send({message: "Invalid query params"});
+        }
+        return res.status(200).send(vehicleLookup.getVehicleInfo(make, model, year, engine));
+    })
 
     /// Should only get vehicles for current user
     router.get('/vehicles', bodyParser.json(), function (req, res, next) {
