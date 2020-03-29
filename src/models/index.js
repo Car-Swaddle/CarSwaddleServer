@@ -64,10 +64,13 @@ Object.keys(models).forEach(key => {
 
 // {force: true}
 sequelize.sync().then( function() {
-  console.log("synced")
+  console.log("synced");
   const reminder = new Reminder(models);
   reminder.rescheduleRemindersForAllAutoServices();
 });
+// .catch((err) => {
+//   console.log("error: " + err);
+// });
 
 models.sequelize = sequelize;
 models.Sequelize = Sequelize;
