@@ -50,7 +50,13 @@ BillingCalculations.prototype.calculatePrices = async function(mechanic, locatio
 
     const centsPerMile = (oilChangePricing && oilChangePricing.centsPerMile) || constants.DEFAULT_CENTS_PER_MILE;
     const oilChangePrice = centsForOilType(oilType, oilChangePricing) || constants.DEFAULT_CONVENTIONAL_PRICE;
-    const distancePrice =  Math.round((centsPerMile * miles) * 2);
+    var distancePrice =  Math.round((centsPerMile * miles) * 2);
+
+    // If the mechanic doesn't charge for travel, set to 0
+    if (!mechanic.chargeForTravel) {
+        distancePrice = 0.0;
+    }
+
     const subtotalPrice = oilChangePrice + distancePrice;
     const discountPrice = coupon ? this.calculateCouponDiscount(coupon, subtotalPrice) : null;
     const bookingFeePrice = Math.round(constants.BOOKING_FEE_PERCENTAGE * subtotalPrice);

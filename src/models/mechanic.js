@@ -43,6 +43,12 @@ const mechanic = function (sequelize, DataTypes) {
             type: DataTypes.BOOLEAN,
             allowNull: false,
             defaultValue: false
+        },
+        /// If `true`, the mechanic charges for travel. If false, the mechanic will not charge for travel.
+        chargeForTravel: {
+            type: DataTypes.BOOLEAN,
+            allowNull: false,
+            defaultValue: true
         }
     },
         {

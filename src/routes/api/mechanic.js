@@ -215,12 +215,17 @@ module.exports = function (router, models) {
                 promises.push(promise);
             }
 
+            if (body.chargeForTravel != null) {
+                mechanic.chargeForTravel = body.chargeForTravel
+                didChangeMechanic = true
+            }
+
             if (didChangeMechanic == true) {
                 Promise.all(promises).then(values => {
                     mechanic.save().then(savedMechanic => {
                         models.Mechanic.findOne({
                             where: { id: savedMechanic.id },
-                            attributes: ['id', 'isActive', 'dateOfBirth', 'userID'],
+                            attributes: ['id', 'isActive', 'dateOfBirth', 'userID', 'chargeForTravel'],
                             include: ['address'],
                         }).then(updatedMechanic => {
                             return res.send(updatedMechanic);

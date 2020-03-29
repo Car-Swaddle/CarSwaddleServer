@@ -20,8 +20,8 @@
         {
             "type": "node",
             "request": "launch",
-            "name": "Launch Program",
-            "program": "${workspaceFolder}/server.js",
+            "name": "Debug",
+            "program": "${workspaceFolder}/src/server.js",
             "env": {"ENV":"dev"}
         }
     ]

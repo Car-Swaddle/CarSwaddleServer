@@ -10,9 +10,10 @@ stripe.setAppInfo({
     url: constants.CURRENT_DOMAIN
 });
 
+
 console.log(__dirname)
 
-bodyParser.limit = '500mb';
+// bodyParser.limit = '500mb';
 
 const app = express();
 app.use(express.static(__dirname + '/../www'));
