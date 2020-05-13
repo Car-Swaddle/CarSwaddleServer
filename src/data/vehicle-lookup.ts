@@ -1,7 +1,7 @@
 const Database = require("better-sqlite3");
 const db = new Database(__dirname + "/../../resources/vehicle-lookup.db", {readonly: true, fileMustExist: true, verbose: console.log});
 
-class VehicleInfo {
+class VehicleSpecs {
     id: number
     year: number
     make: string
@@ -43,7 +43,7 @@ export class VehicleLookup {
         return stmt.all(prep.params).map(x => x.engine);
     }
 
-    static getVehicleInfo(make: string, model: string, year?: number, engine?: string): VehicleInfo {
+    static getVehicleSpecs(make: string, model: string, year?: number, engine?: string): VehicleSpecs {
         const prep = this.queryPrep(make, model, year, engine);
         const stmt = db.prepare("SELECT v.* FROM vehicle v WHERE v.id IN (SELECT docid FROM vehicle_fts " + prep.whereClause + ")");
 

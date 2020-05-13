@@ -1,3 +1,5 @@
+import { VehicleLookup } from "../data/vehicle-lookup";
+
 const vehicle = function (sequelize, DataTypes) {
     const Vehicle = sequelize.define('vehicle', {
         id: {
@@ -24,6 +26,17 @@ const vehicle = function (sequelize, DataTypes) {
     }, {
         freezeTableName: true,
     });
+
+    Vehicle.prototype.toJSON = function () {
+        var values = Object.assign({}, this.get());
+
+        if (values.vehicleDescription && !values.specs) {
+            const d = values.vehicleDescription;
+            values.specs = VehicleLookup.getVehicleSpecs(d.make, d.model, d.year)
+        }
+
+        return values;
+    };
 
     Vehicle.associate = models => {
         Vehicle.belongsTo(models.User, { foreignKey: 'userID', allowNull: false });

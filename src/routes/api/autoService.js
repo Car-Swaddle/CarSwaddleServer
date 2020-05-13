@@ -6,6 +6,7 @@ const bodyParser = require('body-parser');
 const constants = require('../../controllers/constants');
 const stripe = require('stripe')(constants.STRIPE_SECRET_KEY);
 const distance = require('../distance.js');
+const VehicleService = require('../../controllers/vehicle').VehicleService
 
 module.exports = function (router, models) {
 
@@ -16,6 +17,7 @@ module.exports = function (router, models) {
     const stripeChargesFile = require('../../controllers/stripe-charges.js')(models);
     const billingCalculations = require('../../controllers/billing-calculations')(models);
     const taxes = require('../../controllers/taxes')(models);
+    const vehicleService = new VehicleService(models);
 
     const reminderFile = require('../../notifications/reminder.js');
     const reminder = new reminderFile(models);
@@ -70,8 +72,8 @@ module.exports = function (router, models) {
             return res.status(404).send('invalid parameters');
         }
 
-        const autoServiceUser = await models.User.findById(autoService.userID);
-        const autoServiceMechanic = await models.Mechanic.findById(autoService.mechanicID);
+        const autoServiceUser = await models.User.findByPk(autoService.userID);
+        const autoServiceMechanic = await models.Mechanic.findByPk(autoService.mechanicID);
         const currentMechanic = await req.user.getMechanic();
 
         if (autoServiceUser == null || autoServiceMechanic == null) {
@@ -111,26 +113,21 @@ module.exports = function (router, models) {
         }
 
         if (body.vehicleID != null && body.vehicleID != autoService.vehicleID && autoServiceUser.id == req.user.id) {
-            const p = models.Vehicle.findOne({
-                where: {
-                    userID: req.user.id,
-                    id: body.vehicleID,
-                }
-            }).then(newVehicle => {
+            const p = vehicleService.getVehicle(body.vehicleId).then(newVehicle => {
                 return autoService.setVehicle(newVehicle);
             });
             promises.push(p);
         }
 
         if (body.mechanicID != null && body.mechanicID != autoService.mechanicID) {
-            const p = models.Mechanic.findById(body.mechanicID).then(queriedMechanic => {
+            const p = models.Mechanic.findByPk(body.mechanicID).then(queriedMechanic => {
                 return autoService.setMechanic(queriedMechanic);
             });
             promises.push(p);
         }
 
         if (body.locationID != null && body.locationID != autoService.locationID) {
-            const p = models.Location.findById(body.locationID).then(location => {
+            const p = models.Location.findByPk(body.locationID).then(location => {
                 return autoService.setLocation(location);
             });
             promises.push(p);
@@ -207,7 +204,7 @@ module.exports = function (router, models) {
         }
 
         Promise.all(promises).then(values => {
-            models.AutoService.find({
+            models.AutoService.findOne({
                 where: { id: autoService.id },
                 include: autoServiceScheduler.includeDict(),
             }).then(newAutoService => {
@@ -287,7 +284,7 @@ module.exports = function (router, models) {
             couponID,
         } = req.body;
 
-        const oilChangeService = serviceEntities.find(x => x.entityType === 'OIL_CHANGE');
+        const oilChangeService = serviceEntities.findOne(x => x.entityType === 'OIL_CHANGE');
         const oilType = oilChangeService && oilChangeService.specificService.oilType;
 
         const [
@@ -298,7 +295,7 @@ module.exports = function (router, models) {
             isAlreadyScheduled,
         ] = await Promise.all([
             models.Location.findBySearch(locationID, address),
-            models.Mechanic.findById(mechanicID),
+            models.Mechanic.findByPk(mechanicID),
             models.Coupon.redeem(couponID, mechanicID),
             autoServiceScheduler.isDateInMechanicSlot(scheduledDate, req.user, mechanicID),
             autoServiceScheduler.isDatePreviouslyScheduled(scheduledDate, req.user, mechanicID)
@@ -321,7 +318,7 @@ module.exports = function (router, models) {
         }
 
         const taxRate = await taxes.taxRateForLocation(location);
-        const prices = await billingCalculations.calculatePrices(mechanic, location, oilType, coupon, taxRate);
+        const prices = await billingCalculations.calculatePrices(mechanic, location, oilType, vehicleID, coupon, taxRate);
 
         const invoice = await stripeChargesFile.updateDraft(req.user.stripeCustomerID, prices, {
             transferAmount: prices.transferAmount,

@@ -18,7 +18,7 @@ const vehicleDescription = function (sequelize, DataTypes) {
             type: DataTypes.STRING
         },
         year: {
-            type: DataTypes.STRING,
+            type: DataTypes.INTEGER,
             allowNull: true
         }
     }, {

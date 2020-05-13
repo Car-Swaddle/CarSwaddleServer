@@ -1,11 +1,11 @@
 
 export class Util {
     static isString (obj: any | null): boolean {
-        return Object.prototype.toString.call(obj) === '[object String]';
+        return obj && Object.prototype.toString.call(obj) === '[object String]';
     }
 
     static isNumber (obj: any | null): boolean {
-        return !isNaN(obj);
+        return obj && !isNaN(obj);
     }
 
     static isNullOrString(obj: any | null): boolean {
@@ -16,11 +16,19 @@ export class Util {
         return !obj || this.isNumber(obj);
     }
 
-    static areNullOrString(arr: any[]): boolean {
+    static areStrings(...arr: any[]): boolean {
+        return arr.every(x => this.isString(x));
+    }
+
+    static areNumbers(...arr: any[]): boolean {
+        return arr.every(x => this.isNumber(x));
+    }
+
+    static areNullOrStrings(...arr: any[]): boolean {
         return arr.every(x => this.isNullOrString(x));
     }
 
-    static areNullOrNumber(arr: any[]): boolean {
+    static areNullOrNumbers(...arr: any[]): boolean {
         return arr.every(x => this.isNullOrNumber(x));
     }
 }

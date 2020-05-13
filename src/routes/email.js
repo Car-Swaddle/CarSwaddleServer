@@ -13,13 +13,13 @@ module.exports = function (app, models) {
             return res.status(400).send('not verified');
         }
 
-        const verification = await models.Verification.findById(id);
+        const verification = await models.Verification.findByPk(id);
 
         if (verification == null || verification.resourceType != 'user' || (+(new Date) - verification.creationDate) > MAX_TIME) {
             return res.status(400).send('not verified');
         }
 
-        const user = await models.User.findById(verification.resourceID);
+        const user = await models.User.findByPk(verification.resourceID);
 
         if (user == null) {
             return res.status(400).send('not verified');

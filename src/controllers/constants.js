@@ -3,10 +3,15 @@ const useStripeLive = process.env.STRIPE_LIVE === 'YES';
 module.exports = Object.freeze({
     BOOKING_FEE_PERCENTAGE: 0.10,
     DEFAULT_CONVENTIONAL_PRICE: 4500, // in cents
+    DEFAULT_CONVENTIONAL_PRICE_PER_QUART: 900, // in cents
     DEFAULT_BLEND_PRICE: 5000, // in cents
+    DEFAULT_BLEND_PRICE_PER_QUART: 1000, // in cents
     DEFAULT_SYNTHETIC_PRICE: 5600, // in cents
+    DEFAULT_SYNTHETIC_PRICE_PER_QUART: 1120, // in cents
     DEFAULT_HIGH_MILEAGE_PRICE: 5850, // in cents
+    DEFAULT_HIGH_MILEAGE_PRICE_PER_QUART: 1170, // in cents
     DEFAULT_CENTS_PER_MILE: 50, // in cents
+    DEFAULT_QUARTS_COUNT: 5.0,
     STRIPE_WEBHOOK_KEY: useStripeLive ? process.env.STRIPE_WEBHOOK_KEY : 'whsec_6Ow0KxEn4hqBvi77tAAdets83KNAZRO5',
     STRIPE_WEBHOOK_KEY_CONNECT: useStripeLive ? process.env.STRIPE_WEBHOOK_KEY_CONNECT : 'whsec_NZ2S54mDSbeRpWB5NDVXOGrVxJpOyEY0',    
     STRIPE_SECRET_KEY: useStripeLive ? process.env.STRIPE_SECRET_KEY : 'sk_test_FIXQgdKIimfTs9h2Rk88BFJ200B0WF7pE7',

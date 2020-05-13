@@ -1,5 +1,6 @@
 const distance = require('../routes/distance');
 const constants = require('./constants');
+const { VehicleService } = require('./vehicle')
 
 // All in cents
 // const centsPerMile = 78;
@@ -18,6 +19,7 @@ const METERS_TO_MILES = 1609.344;
 
 function BillingCalculations(models) {
     this.models = models;
+    this.vehicleService = new VehicleService(models);
 }
 
 BillingCalculations.prototype.calculateCouponDiscount = function(coupon, subTotal) {
@@ -34,7 +36,7 @@ BillingCalculations.prototype.calculateCouponDiscount = function(coupon, subTota
     return Math.max(Math.round(discount), -subTotal);
 }
 
-BillingCalculations.prototype.calculatePrices = async function(mechanic, location, oilType, coupon, taxRate) {
+BillingCalculations.prototype.calculatePrices = async function(mechanic, location, oilType, vehicleID, coupon, taxRate) {
     const [
         region,
         oilChangePricing,
@@ -48,8 +50,9 @@ BillingCalculations.prototype.calculatePrices = async function(mechanic, locatio
     const meters = distance.metersBetween(locationPoint, regionPoint);
     const miles = meters / METERS_TO_MILES;
 
+    const vehicle = vehicleID ? this.vehicleService.getVehicle(vehicleID) : null;
     const centsPerMile = (oilChangePricing && oilChangePricing.centsPerMile) || constants.DEFAULT_CENTS_PER_MILE;
-    const oilChangePrice = centsForOilType(oilType, oilChangePricing) || constants.DEFAULT_CONVENTIONAL_PRICE;
+    const oilChangePrice = centsForOilType(oilType, oilChangePricing, vehicle) || constants.DEFAULT_CONVENTIONAL_PRICE;
     var distancePrice =  Math.round((centsPerMile * miles) * 2);
 
     // If the mechanic doesn't charge for travel, set to 0
@@ -107,16 +110,31 @@ function calculateProcessingFee(oilChange, distance, discountPrice, bookingFee, 
     return Math.round(total - basePrice);
 }
 
-function centsForOilType(oilType, oilChangePricing) {
+function centsForOilType(oilType, oilChangePricing, vehicle) {
+    var base;
+    var costPerQuart;
     if (oilType == 'CONVENTIONAL') {
-        return oilChangePricing.conventional || constants.DEFAULT_CONVENTIONAL_PRICE;
+        base = oilChangePricing.conventional || constants.DEFAULT_CONVENTIONAL_PRICE;
+        costPerQuart = oilChangePricing.conventionalPerQuart || constants.DEFAULT_CONVENTIONAL_PRICE_PER_QUART;
     } else if (oilType == 'BLEND') {
-        return oilChangePricing.blend || constants.DEFAULT_BLEND_PRICE;
+        base = oilChangePricing.blend || constants.DEFAULT_BLEND_PRICE;
+        costPerQuart = oilChangePricing.blendPerQuart || constants.DEFAULT_BLEND_PRICE_PER_QUART;
     } else if (oilType == 'SYNTHETIC') {
-        return oilChangePricing.synthetic || constants.DEFAULT_SYNTHETIC_PRICE;
+        base = oilChangePricing.synthetic || constants.DEFAULT_SYNTHETIC_PRICE;
+        costPerQuart = oilChangePricing.syntheticPerQuart || constants.DEFAULT_SYNTHETIC_PRICE_PER_QUART;
     } else if (oilType == 'HIGH_MILEAGE') {
-        return oilChangePricing.highMileage || constants.DEFAULT_HIGH_MILEAGE_PRICE;
+        base = oilChangePricing.highMileage || constants.DEFAULT_HIGH_MILEAGE_PRICE;
+        costPerQuart = oilChangePricing.highMileagePerQuart || constants.DEFAULT_HIGH_MILEAGE_PRICE_PER_QUART;
     }
+    var totalCost = base;
+    const quarts = vehicle && vehicle.vehicleDescription && vehicle.vehicleDescription.specs && vehicle.vehicleDescription.specs.quarts ?
+        vehicle.vehicleDescription.specs.quarts : constants.DEFAULT_QUARTS_COUNT;
+    if (quarts > constants.DEFAULT_QUARTS_COUNT) {
+        // Shouldn't be possible, but just in case never allow negative quarts over
+        const quartsOver = Math.max(0, quarts - constants.DEFAULT_QUARTS_COUNT);
+        totalCost = totalCost + Math.ceil(quartsOver) * costPerQuart;
+    }
+    return totalCost;
 }
 
 module.exports = function (models) {

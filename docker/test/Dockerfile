@@ -9,17 +9,17 @@ RUN wget https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSI
 
 WORKDIR /server/app
 COPY ./package*.json ./
-RUN npm install
+RUN yarn install
 
 COPY . .
-RUN npm run build
+RUN yarn run build
 
 ENV HOST_URL http://carswaddle:3000
 ENV TEST_USER test@carswaddle.com
 ENV TEST_PASS Test123!
 
 EXPOSE 9228/tcp
-RUN npm install -g mocha
+RUN yarn global add mocha
 
 # wait for db to come up before running
-CMD ["dockerize", "-wait", "tcp://db:5432", "-wait", "tcp://s3:9000", "-wait", "tcp://carswaddle:3000", "-timeout", "30s", "node", "--inspect=0.0.0.0:9228", "./docker/test/test-run.js"]
+CMD ["dockerize", "-wait", "tcp://db:5432", "-wait", "tcp://s3:9000", "-wait", "tcp://carswaddle:3000", "-timeout", "30s", "node", "--inspect=0.0.0.0:9228", "./built/test-run.js"]

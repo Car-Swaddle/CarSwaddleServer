@@ -78,7 +78,7 @@ AutoServiceScheduler.prototype.scheduleAutoService = async function (user, statu
                 include: this.includeDict(),
             });
 
-            const mechanic = await this.models.Mechanic.findById(mechanicID);
+            const mechanic = await this.models.Mechanic.findByPk(mechanicID);
             this.sendNotification(user, mechanic, fetchedAutoService);
             this.reminder.scheduleRemindersForAutoService(fetchedAutoService);
 
@@ -170,7 +170,7 @@ AutoServiceScheduler.prototype.createAutoService = async function (user, mechani
 
     var locationPromise = null;
     if (locationID != null) {
-        locationPromise = this.models.Location.findById(locationID);
+        locationPromise = this.models.Location.findByPk(locationID);
     } else if (location != null && location.latitude != null && location.longitude != null) {
         var point = { type: 'Point', coordinates: [location.longitude, location.latitude] };
         locationPromise = this.models.Location.create({
@@ -187,9 +187,9 @@ AutoServiceScheduler.prototype.createAutoService = async function (user, mechani
 
     const fetchedLocation = await locationPromise;
     if (!fetchedLocation) { callback('invalid parameters, no location', null); return; }
-    const mechanic = await this.models.Mechanic.findById(mechanicID);
+    const mechanic = await this.models.Mechanic.findByPk(mechanicID);
     if (!mechanic) { callback('invalid parameters, no location', null); return; }
-    const vehicle = await this.models.Vehicle.findById(vehicleID);
+    const vehicle = await this.models.Vehicle.findByPk(vehicleID);
     if (!vehicle) { callback('invalid parameters, no location', null); return; }
 
     const autoService = await this.models.AutoService.create({
@@ -320,7 +320,7 @@ AutoServiceScheduler.prototype.includeDict = function () {
         { model: this.models.User, attributes: this.models.User.defaultAttributes, },
         this.models.Location,
         { model: this.models.ServiceEntity, include: [this.models.OilChange] },
-        this.models.Vehicle,
+        { model: this.models.Vehicle, include: [this.models.VehicleDescription] },
         {
             model: this.models.Mechanic,
             include: [

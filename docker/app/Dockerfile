@@ -9,10 +9,10 @@ RUN wget https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSI
 
 WORKDIR /server/app
 COPY ./package*.json ./
-RUN npm install
+RUN yarn install
 
 COPY . .
-RUN npm run build
+RUN yarn run build
 
 ENV PORT 3000
 ENV DOCKER true
@@ -24,4 +24,4 @@ EXPOSE 9229/tcp
 EXPOSE 3000/tcp
 
 # wait for db to come up before running
-CMD ["dockerize", "-wait", "tcp://db:5432", "-wait", "tcp://s3:9000", "-timeout", "10s", "npm", "--inspect=0.0.0.0:9229", "start"]
+CMD ["dockerize", "-wait", "tcp://db:5432", "-wait", "tcp://s3:9000", "-timeout", "10s", "node", "--inspect=0.0.0.0:9229", "built/server.js"]

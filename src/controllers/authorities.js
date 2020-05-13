@@ -27,9 +27,9 @@ AuthoritiesController.prototype.createAuthorityRequest = async function (userID,
         authorityName: authority,
         expirationDate: oneWeekFromNow
     }).then(async authorityRequest => {
-        const user = await self.models.User.findById(userID);
+        const user = await self.models.User.findByPk(userID);
         await authorityRequest.setUser(user, { save: true })
-        self.models.AuthorityRequest.findById(authorityRequest.id, {
+        self.models.AuthorityRequest.findByPk(authorityRequest.id, {
             include: [{
                 model: self.models.User, attributes: self.models.User.defaultAttributes
             }, {

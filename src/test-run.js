@@ -12,15 +12,17 @@ console.log("Host url: " + process.env.HOST_URL)
 console.log("Test user: " + process.env.TEST_USER)
 console.log("Test pass: " + process.env.TEST_PASS)
 
-encodedUser = encodeURIComponent(process.env.TEST_USER)
-encodedPass = encodeURIComponent(process.env.TEST_PASS)
-body = "email=" + encodedUser + "&password=" + encodedPass;
+var encodedUser = encodeURIComponent(process.env.TEST_USER)
+var encodedPass = encodeURIComponent(process.env.TEST_PASS)
+var body = "email=" + encodedUser + "&password=" + encodedPass;
 console.log(body);
 
 function runTests(token) {
     process.env.TEST_JWT = token;
+    var args = process.argv.slice(2);
+    var testsToRun = args[0] || './built/test/**/*.*s'
     execSync(
-        'mocha ./built/test/**/*.*s',
+        'mocha ' + testsToRun,
         {stdio: 'inherit'}
     );
 }

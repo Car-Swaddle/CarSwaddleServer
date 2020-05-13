@@ -21,7 +21,7 @@ module.exports = function (router, models) {
             mechanic.setRegion(region).then(region => {
                 mechanic.hasSetServiceRegion = true;
                 mechanic.save().then(mechanic => {
-                    models.Mechanic.find({
+                    models.Mechanic.findOne({
                         where: {
                             id: mechanic.id
                         },

@@ -8,6 +8,7 @@ const fileUpload = require('express-fileupload');
 const path = require('path');
 const stripeFiles = require('../../controllers/stripe-files.js')();
 const asyncMiddleware = require('../../lib/middleware/async-middleware');
+const Util = require("../../util/util").Util;
 
 module.exports = function (router, models) {
 
@@ -57,7 +58,17 @@ module.exports = function (router, models) {
         limit = limit > 25 ? 25 : limit;
         const maxDistance = parseFloat(query.maxDistance) || 100000;
 
-        models.sequelize.query('SELECT *, u.id as "userID", m.id as "id", r.id as "regionID", ST_Distance(r.origin, ST_MakePoint(?, ?), false) AS "distance" FROM "user" AS u INNER JOIN mechanic as m ON m."userID" = u.id INNER JOIN region AS r ON m.id = r."mechanicID" AND ST_Distance(r.origin, ST_MakePoint(?, ?), false) < r.radius AND m."isActive" = true AND m."isAllowed" = true AND ST_Distance(r.origin, ST_MakePoint(?, ?), false) <= ? ORDER BY ST_MakePoint(?,?) <-> r.origin FETCH FIRST ? ROWS ONLY', {
+        models.sequelize.query(`
+            SELECT *, u.id as "userID", m.id as "id", r.id as "regionID", ST_Distance(r.origin, ST_SetSRID(ST_MakePoint(?, ?), 4326), false) AS "distance"
+            FROM "user" AS u
+            INNER JOIN mechanic as m ON m."userID" = u.id
+            INNER JOIN region AS r ON m.id = r."mechanicID"
+            AND ST_Distance(r.origin, ST_SetSRID(ST_MakePoint(?, ?), 4326), false) < r.radius
+            AND m."isActive" = true AND m."isAllowed" = true
+            AND ST_Distance(r.origin, ST_SetSRID(ST_MakePoint(?, ?), 4326), false) <= ?
+            ORDER BY ST_SetSRID(ST_MakePoint(?, ?), 4326) <-> r.origin
+            FETCH FIRST ? ROWS ONLY
+            `, {
             replacements: [longitude, latitude, longitude, latitude, longitude, latitude, maxDistance, longitude, latitude, limit],
             type: models.sequelize.QueryTypes.SELECT,
             model: models.User
@@ -75,7 +86,7 @@ module.exports = function (router, models) {
         if (!authority) {
             return res.status(401).send('You need the required authority');
         }
-        const mechanic = await models.Mechanic.findById(mechanicID);
+        const mechanic = await models.Mechanic.findByPk(mechanicID);
         if (!mechanic) {
             return res.status(400).send('Invalid parameter');
         }
@@ -272,7 +283,7 @@ module.exports = function (router, models) {
         if (mechanicID == null) {
             return res.status(422).send('invalid parameters');
         }
-        models.Mechanic.findById(mechanicID).then(mechanic => {
+        models.Mechanic.findByPk(mechanicID).then(mechanic => {
             fileStore.getImage(mechanic.profileImageID).then(data => {
                 if (data == null) {
                     res.status(404).send();
@@ -367,30 +378,43 @@ module.exports = function (router, models) {
 
     router.put('/mechanic/pricing', bodyParser.json(), asyncMiddleware(async function (req, res) {
         try {
-            const {
+            var {
                 conventional,
+                conventionalPerQuart,
                 blend,
+                blendPerQuart,
                 synthetic,
+                syntheticPerQuart,
                 highMileage,
+                highMileagePerQuart
             } = req.body;
 
-            if (!conventional || !blend || !synthetic || !highMileage) {
-                return res.status(400).send('unable to update. must send all fields');
+            if (!Util.areNumbers(conventional, blend, synthetic, highMileage)) {
+                return res.status(400).send('unable to update, missing or invalid values');
             }
 
-            const conventionalInt = parseInt(conventional, 10);
-            const blendInt = parseInt(blend, 10);
-            const syntheticInt = parseInt(synthetic, 10);
-            const highMileageInt = parseInt(highMileage, 10);
-
-            function isValidPrice(price) {
-                return price < 12000 && price > 300;
+            if (!Util.areNullOrNumbers(conventionalPerQuart, blendPerQuart, syntheticPerQuart, highMileagePerQuart)) {
+                return res.status(400).send('unable to update, invalid values for per quart');
             }
 
-            if (!isValidPrice(conventionalInt) ||
-                !isValidPrice(blendInt) ||
-                !isValidPrice(syntheticInt) ||
-                !isValidPrice(highMileageInt)) {
+            if (!conventionalPerQuart) {
+                conventionalPerQuart = conventional / 5;
+            }
+            if (!blendPerQuart) {
+                blendPerQuart = blend / 5;
+            }
+            if (!syntheticPerQuart) {
+                syntheticPerQuart = synthetic / 5;
+            }
+            if (!highMileagePerQuart) {
+                highMileagePerQuart = highMileage / 5;
+            }
+
+            const isValidPrice = (price) => price < 12000 && price > 300;
+            const isValidPerQuartPrice = (price) => isValidPrice(price * 5);
+
+            if ([conventional, blend, synthetic, highMileage].every(isValidPrice) &&
+                    [conventionalPerQuart, blendPerQuart, syntheticPerQuart, highMileagePerQuart].every(isValidPerQuartPrice)) {
                 return res.status(422).send('not all prices are valid');
             }
 
@@ -401,10 +425,14 @@ module.exports = function (router, models) {
                 }
             });
 
-            oilChangePricing.conventional = conventionalInt;
-            oilChangePricing.blend = blendInt;
-            oilChangePricing.synthetic = syntheticInt;
-            oilChangePricing.highMileage = highMileageInt;
+            oilChangePricing.conventional = conventional;
+            oilChangePricing.conventionalPerQuart = conventionalPerQuart;
+            oilChangePricing.blend = blend;
+            oilChangePricing.blendPerQuart = blendPerQuart;
+            oilChangePricing.synthetic = synthetic;
+            oilChangePricing.syntheticPerQuart = syntheticPerQuart;
+            oilChangePricing.highMileage = highMileage;
+            oilChangePricing.highMileagePerQuart = highMileagePerQuart;
 
             await oilChangePricing.save();
 

@@ -24,7 +24,7 @@ const location = function (sequelize, DataTypes) {
 
     Location.findBySearch = function(locationID, address) {
         if (locationID) {
-            return Location.findById(locationID);
+            return Location.findByPk(locationID);
         } else if (address != null && address.latitude != null && address.longitude != null) {
             return Location.create({
                 point: {

@@ -75,7 +75,7 @@ StripeCharges.prototype.monthlyDebitFee = function (mechanicPayment) {
 }
 
 StripeCharges.prototype.payInvoices = async function(invoiceID, sourceID, mechanicID, transferAmount) {
-    const mechanic = await this.models.Mechanic.findById(mechanicID);
+    const mechanic = await this.models.Mechanic.findByPk(mechanicID);
 
     var invoice = null, transfer = null;
 

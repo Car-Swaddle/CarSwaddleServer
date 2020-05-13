@@ -36,7 +36,7 @@ module.exports = function (models) {
     },
         function (jwtPayload, cb) {
             //find the user in db if needed. This functionality may be omitted if you store everything you'll need in JWT payload.
-            return models.User.findById(jwtPayload.id)
+            return models.User.findByPk(jwtPayload.id)
                 .then(user => {
                     return cb(null, user);
                 })

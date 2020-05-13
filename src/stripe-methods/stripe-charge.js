@@ -20,7 +20,7 @@
 //         return res.status(422).send();
 //     }
 
-//     var autoService = await models.AutoService.findById(autoServiceID);
+//     var autoService = await models.AutoService.findByPk(autoServiceID);
 //     var mechanic = await autoService.getMechanic();
 //     var price = await autoService.getPrice();
 //     var priceParts = await price.getPriceParts();
@@ -72,7 +72,7 @@
 // //             return res.status(422).send();
 // //         }
 
-// //         var autoService = await models.AutoService.findById(autoServiceID);
+// //         var autoService = await models.AutoService.findByPk(autoServiceID);
 // //         var mechanic = await autoService.getMechanic();
 // //         var price = await autoService.getPrice();
 // //         var priceParts = await price.getPriceParts();

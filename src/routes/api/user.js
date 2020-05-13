@@ -63,7 +63,7 @@ module.exports = function (router, models) {
       return res.status(422).send('invalid parameters');
     }
 
-    const user = await models.User.findById(userID);
+    const user = await models.User.findByPk(userID);
     if (!user || !user.profileImageID) {
       return res.status(400).send('unable to fetch profile image');
     }
@@ -215,7 +215,7 @@ module.exports = function (router, models) {
       res.status(422).send('Invalid parameter(s)');
     }
 
-    models.User.findById(req.query.id).then(user => {
+    models.User.findByPk(req.query.id).then(user => {
       res.json(user);
     }).catch(error => {
       res.status(403).send('resource not found');

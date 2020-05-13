@@ -12,7 +12,7 @@ module.exports = function (router, models) {
             coupon,
             editCarSwaddleCouponAuthory,
         ] = await Promise.all([
-            models.Coupon.findById(id),
+            models.Coupon.findByPk(id),
             authoritiesController.fetchAuthorityForUser(req.user.id, models.Authority.NAME.editCarSwaddleCoupon),
         ]);
 

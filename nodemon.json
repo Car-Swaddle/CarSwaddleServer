@@ -2,10 +2,12 @@
     "watch": ["src"],
     "ext": ".ts,.js",
     "ignore": [],
-    "exec": "ts-node ./src/server.ts",
+    "exec": "node --inspect -r ts-node/register ./src/server.js",
     "env": {
       "LOCAL_S3": "true",
       "STRIPE_LIVE": "NO",
-      "NO_EMAIL": "true"
-    }
+      "NO_EMAIL": "true",
+      "ENV": "dev"
+    },
+    "inspect": "true"
   }

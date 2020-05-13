@@ -42,7 +42,7 @@ module.exports = function (router, models) {
         if (!authorityRequest) {
             return res.status(404).send('invalid parameters');
         }
-        const authorityRequester = await models.User.findById(authorityRequest.requesterID);
+        const authorityRequester = await models.User.findByPk(authorityRequest.requesterID);
         const authorityConfirmation = await models.AuthorityConfirmation.findOne({ where: { authorityRequestID: authorityRequest.id } });
 
         if (authorityRequest.expirationDate < new Date()) {
@@ -97,7 +97,7 @@ module.exports = function (router, models) {
                     authority.setAuthorityConfirmation(authorityConfirmation, { save: false });
                     authority.setAuthorityRequest(authorityRequest, { save: false });
                     await authority.save();
-                    models.AuthorityConfirmation.findById(authorityConfirmation.id, {
+                    models.AuthorityConfirmation.findByPk(authorityConfirmation.id, {
                         include: [{
                             model: models.User, attributes: models.User.defaultAttributes
                         }, {
@@ -159,7 +159,7 @@ module.exports = function (router, models) {
                 return res.status(400).send('unable to reject');
             } else {
                 await authorityRequest.setAuthorityConfirmation(authorityConfirmation, { save: true });
-                models.AuthorityConfirmation.findById(authorityConfirmation.id, {
+                models.AuthorityConfirmation.findByPk(authorityConfirmation.id, {
                     include: [{
                         model: models.User, attributes: models.User.defaultAttributes
                     }, {

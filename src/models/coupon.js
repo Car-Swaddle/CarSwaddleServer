@@ -92,7 +92,7 @@ const coupon = function (sequelize, DataTypes) {
         var error = null;
 
         if (!redeemableCoupon) {
-            const coupon = await Coupon.findById(couponId);
+            const coupon = await Coupon.findByPk(couponId);
 
             if (!coupon) {
                 error = 'INCORRECT_CODE';
@@ -135,7 +135,7 @@ const coupon = function (sequelize, DataTypes) {
 
         return update.then(res => {
             return res[0] === 1
-                ? Coupon.findById(couponId)
+                ? Coupon.findByPk(couponId)
                 : null;
         });
     };

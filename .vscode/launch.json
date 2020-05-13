@@ -19,6 +19,28 @@
         },
         {
             "type": "node",
+            "request": "attach",
+            "name": "Attach to local",
+            "protocol": "auto",
+            "port": 9229,
+            "restart": true,
+            "skipFiles": [
+              "<node_internals>/**/*.js",
+            ]
+        },
+        {
+            "type": "node",
+            "request": "attach",
+            "name": "Attach to tests",
+            "protocol": "auto",
+            "port": 9228,
+            "restart": true,
+            "skipFiles": [
+              "<node_internals>/**/*.js",
+            ]
+        },
+        {
+            "type": "node",
             "request": "launch",
             "name": "Debug",
             "program": "${workspaceFolder}/src/server.js",

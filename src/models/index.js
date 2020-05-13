@@ -1,5 +1,6 @@
-const Sequelize = require('sequelize');
+const { Sequelize } = require('sequelize');
 const Reminder = require('../notifications/reminder.js');
+const Umzug = require('umzug');
 
 var sequelize = null;
 // console.log('process.env.DATABASE: ' + process.env.DATABASE_URL);
@@ -14,14 +15,15 @@ if (process.env.DATABASE_URL) {
   });
 } else {
   // Local machine natively or docker
-  sequelize = new Sequelize({
-    dialect: 'postgres',
-    host: process.env.LOCAL_DATABASE_URL || 'localhost',
-    port: '5432',
-    username: 'kylekendall',
-    password: 'password',
-    database: 'carswaddle'
-  });
+  sequelize = new Sequelize(
+    'carswaddle',
+    'kylekendall',
+    'password', {
+      dialect: 'postgres',
+      host: process.env.LOCAL_DATABASE_URL || 'localhost',
+      port: 5432
+    }
+  );
 }
 
 const models = {
@@ -62,9 +64,23 @@ Object.keys(models).forEach(key => {
   }
 });
 
+const umzug = new Umzug({
+  migrations: {
+    path: __dirname + '/../migrations', // Path from src/models
+    params: [
+      sequelize.getQueryInterface()
+    ]
+  },
+  storage: 'sequelize',
+  storageOptions: { sequelize }
+});
+
 // {force: true}
-sequelize.sync().then( function() {
+sequelize.sync().then(async function() {
   console.log("synced");
+  // Run all migrations
+  await umzug.up();
+  console.log("Migrated");
   const reminder = new Reminder(models);
   reminder.rescheduleRemindersForAllAutoServices();
 });

@@ -9,7 +9,7 @@ module.exports = function (router, models) {
     const taxes = require('../../controllers/taxes')(models);
 
     router.post('/price', bodyParser.json(), async function (req, res) {
-        const { oilType, mechanicID, coupon, locationID, location: address } = req.body;
+        const { oilType, mechanicID, coupon, locationID, vehicleID, location: address } = req.body;
         const { stripeCustomerID } = req.user;
 
         if (!oilType || !mechanicID) {
@@ -22,7 +22,7 @@ module.exports = function (router, models) {
             { coupon: couponEntity, error: couponError },
         ] = await Promise.all([
             models.Location.findBySearch(locationID, address),
-            models.Mechanic.findById(mechanicID),
+            models.Mechanic.findByPk(mechanicID),
             models.Coupon.findRedeemable(coupon, mechanicID),
         ]);
 
@@ -35,7 +35,7 @@ module.exports = function (router, models) {
         }
 
         const taxRate = await taxes.taxRateForLocation(location);
-        const prices = await billingCalculations.calculatePrices(mechanic, location, oilType, couponEntity, taxRate);
+        const prices = await billingCalculations.calculatePrices(mechanic, location, oilType, vehicleID, couponEntity, taxRate);
         const meta = { oilType, mechanicID, locationID: location.id };
 
         await stripeChargesFile.updateDraft(stripeCustomerID, prices, meta, taxRate);

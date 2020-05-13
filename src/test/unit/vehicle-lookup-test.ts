@@ -29,7 +29,7 @@ describe('Vehicle lookup', function() {
     });
 
     it('Should have vehicle info', function() {
-        const vehicle = lookup.getVehicleInfo('toyota', 'sienna', 2018, 'LE 6-Cyl');
+        const vehicle = lookup.getVehicleSpecs('toyota', 'sienna', 2018, 'LE 6-Cyl');
         assert.equal(vehicle.year, 2018);
         assert.equal(vehicle.make, 'Toyota');
         assert.equal(vehicle.model, 'Sienna');
