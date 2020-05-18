@@ -1,29 +1,20 @@
-# Foobar
+# Setup Postgres locally
 
-Foobar is a Python library for dealing with word pluralization.
+Install postgresql
 
-## Installation
+`brew install postgresql`
 
-Use the package manager [pip](https://pip.pypa.io/en/stable/) to install foobar.
+Create `carswaddle` database
 
-```bash
-pip install foobar
-```
+`psql`
+`create database carswaddle;`
+`CREATE EXTENSION carswaddle postgis;`
 
-## Usage
+# Run locally
 
-```python
-import foobar
+`yarn start`
 
-foobar.pluralize('word') # returns 'words'
-foobar.pluralize('goose') # returns 'geese'
-foobar.singularize('phenomena') # returns 'phenomenon'
-```
 
-## Contributing
-Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
-
-Please make sure to update tests as appropriate.
 
 ## License
 [MIT](https://choosealicense.com/licenses/mit/)
