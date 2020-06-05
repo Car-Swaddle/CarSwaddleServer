@@ -157,10 +157,10 @@ class PushService {
                 var notification = this.createNotification(body, payload, badge, title);
                 notification.topic = carSwaddleMechanicBundleID;
                 this.carSwaddleMechanicProviderProduction.send(notification, token.token).then(result => {
-                    console.log(result);
+                    console.log(JSON.stringify(result, null, 4));
                 });
                 this.carSwaddleMechanicProviderDebug.send(notification, token.token).then(result => {
-                    console.log(result);
+                    console.log(JSON.stringify(result, null, 4));
                 });
             });
         });
