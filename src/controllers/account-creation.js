@@ -52,8 +52,8 @@ AccountCreation.prototype.findOrCreateOilChangePricing = function (mechanic, cal
     });
 }
 
-AccountCreation.prototype.createStripeMechanicAccount = function (mechanic, remoteAddress, email, callback) {
-    stripe.accounts.create(stripeCreateDict(remoteAddress, email)).then(stripeAccount => {
+AccountCreation.prototype.createStripeMechanicAccount = function (mechanic, remoteAddress, email, firstName, lastName, callback) {
+    stripe.accounts.create(stripeCreateDict(remoteAddress, email, firstName, lastName)).then(stripeAccount => {
         mechanic.stripeAccountID = stripeAccount.id;
         mechanic.save().then(mechanic => {
             callback(null, mechanic);
@@ -98,7 +98,7 @@ AccountCreation.prototype.completeMechanicCreationOrUpdate = function (user, rem
     var self = this;
     this.findOrCreateMechanic(user, function (user, mechanic, created) {
         if (created == true) {
-            self.createStripeMechanicAccount(mechanic, remoteAddress, user.email, function (err, stripeAccount) {
+            self.createStripeMechanicAccount(mechanic, remoteAddress, user.email, user.firstName, user.lastName, function (err, stripeAccount) {
                 if (err) {
                     self.deleteMechanicAccount(mechanic, function (deleteError) {
                         callback(err);
@@ -123,7 +123,7 @@ AccountCreation.prototype.completeMechanicCreationOrUpdate = function (user, rem
     });
 }
 
-function stripeCreateDict(ip, email) {
+function stripeCreateDict(ip, email, firstName, lastName) {
     return {
         country: 'US',
         type: 'custom',
@@ -134,7 +134,9 @@ function stripeCreateDict(ip, email) {
         business_type: 'individual',
         requested_capabilities: ['platform_payments'],
         individual: {
-            email: email
+            email: email,
+            first_name: firstName,
+            last_name: lastName
         },
         business_profile: {
             product_description: 'This connect user is a mechanic who sells Oil changes through Car Swaddle'

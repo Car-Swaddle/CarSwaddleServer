@@ -45,6 +45,17 @@
             "name": "Debug",
             "program": "${workspaceFolder}/src/server.js",
             "env": {"ENV":"dev"}
+        },
+        {
+            "type": "node",
+            "request": "attach",
+            "name": "Attach to local",
+            "protocol": "auto",
+            "port": 9229,
+            "restart": true,
+            "skipFiles": [
+              "<node_internals>/**/*.js",
+            ]
         }
     ]
 }
