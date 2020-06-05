@@ -59,14 +59,14 @@ module.exports = function (router, models) {
         const maxDistance = parseFloat(query.maxDistance) || 100000;
 
         models.sequelize.query(`
-            SELECT *, u.id as "userID", m.id as "id", r.id as "regionID", ST_Distance(r.origin, ST_SetSRID(ST_MakePoint(?, ?), 4326), false) AS "distance"
+            SELECT *, u.id as "userID", m.id as "id", r.id as "regionID", ST_Distance(ST_SetSRID(r.origin, 4326), ST_SetSRID(ST_MakePoint(?, ?), 4326)) AS "distance"
             FROM "user" AS u
             INNER JOIN mechanic as m ON m."userID" = u.id
             INNER JOIN region AS r ON m.id = r."mechanicID"
-            AND ST_Distance(r.origin, ST_SetSRID(ST_MakePoint(?, ?), 4326), false) < r.radius
+            AND ST_Distance(ST_SetSRID(r.origin, 4326), ST_SetSRID(ST_MakePoint(?, ?), 4326)) < r.radius
             AND m."isActive" = true AND m."isAllowed" = true
-            AND ST_Distance(r.origin, ST_SetSRID(ST_MakePoint(?, ?), 4326), false) <= ?
-            ORDER BY ST_SetSRID(ST_MakePoint(?, ?), 4326) <-> r.origin
+            AND ST_Distance(ST_SetSRID(r.origin, 4326), ST_SetSRID(ST_MakePoint(?, ?), 4326)) <= ?
+            ORDER BY ST_Distance(ST_SetSRID(r.origin, 4326), ST_SetSRID(ST_MakePoint(?, ?), 4326))
             FETCH FIRST ? ROWS ONLY
             `, {
             replacements: [longitude, latitude, longitude, latitude, longitude, latitude, maxDistance, longitude, latitude, limit],
