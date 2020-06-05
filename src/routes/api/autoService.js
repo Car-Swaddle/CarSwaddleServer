@@ -284,7 +284,7 @@ module.exports = function (router, models) {
             couponID,
         } = req.body;
 
-        const oilChangeService = serviceEntities.findOne(x => x.entityType === 'OIL_CHANGE');
+        const oilChangeService = serviceEntities.find(x => x.entityType === 'OIL_CHANGE');
         const oilType = oilChangeService && oilChangeService.specificService.oilType;
 
         const [
