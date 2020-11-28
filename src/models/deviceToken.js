@@ -7,6 +7,11 @@ const deviceToken = function (sequelize, DataTypes) {
         },
         token: {
             type: DataTypes.STRING
+        },
+        pushType: {
+            type: DataTypes.STRING,
+            allowNull: false,
+            defaultValue: "APNS"
         }
     }, {
         freezeTableName: true,

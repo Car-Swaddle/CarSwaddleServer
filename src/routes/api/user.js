@@ -4,6 +4,7 @@ const stripe = require('stripe')(constants.STRIPE_SECRET_KEY);
 const fileStore = require('../../data/file-store.js');
 const bodyParser = require('body-parser');
 const fileUpload = require('express-fileupload');
+const { Util } = require('../../util/util');
 const phone = require('../../controllers/phone-verification.js')();
 
 module.exports = function (router, models) {
@@ -153,16 +154,22 @@ module.exports = function (router, models) {
       didChangeUser = true;
     }
     if (body.token != null) {
+      var pushType = body.tokenType ? body.tokenType : "APNS";
       var promise = models.DeviceToken.findOne({
         where: {
           token: body.token,
           userID: user.id
         }
       }).then(deviceToken => {
-        if (deviceToken == null) {
+        if (deviceToken == null) { 
+          if (!Util.isNullOrString(pushType) || pushType != "APNS" || pushType != "FCM") {
+            console.log(`Invalid push type: ${pushType}`)
+            return;
+          }
           return models.DeviceToken.create({
             id: uuidV1(),
-            token: body.token
+            token: body.token,
+            pushType: pushType
           }).then(deviceToken => {
             user.addDeviceToken(deviceToken);
             return user.save();
