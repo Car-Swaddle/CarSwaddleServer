@@ -154,7 +154,7 @@ module.exports = function (router, models) {
       didChangeUser = true;
     }
     if (body.token != null) {
-      var pushType = body.tokenType ? body.tokenType : "APNS";
+      var pushType = body.pushTokenType ? body.pushTokenType : "APNS";
       var promise = models.DeviceToken.findOne({
         where: {
           token: body.token,
