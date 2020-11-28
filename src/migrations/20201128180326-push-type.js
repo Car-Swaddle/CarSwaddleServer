@@ -1,7 +1,8 @@
 'use strict';
+var Sequelize = require('sequelize');
 
 module.exports = {
-  up: (queryInterface, Sequelize) => {
+  up: (queryInterface) => {
     
     return new Promise((resolve, reject) => {
       queryInterface.describeTable('deviceToken').then(async definition => {
@@ -20,7 +21,7 @@ module.exports = {
     });
   },
 
-  down: (queryInterface, Sequelize) => {
+  down: (queryInterface) => {
     return new Promise(async (resolve, reject) => {
       await queryInterface.removeColumn('deviceToken', 'pushType');
       resolve();
