@@ -162,7 +162,7 @@ module.exports = function (router, models) {
         }
       }).then(deviceToken => {
         if (deviceToken == null) { 
-          if (!Util.isNullOrString(pushType) || pushType != "APNS" || pushType != "FCM") {
+          if (pushType && (pushType != "APNS" || pushType != "FCM")) {
             console.log(`Invalid push type: ${pushType}`)
             return;
           }
