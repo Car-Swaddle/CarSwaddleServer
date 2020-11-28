@@ -1,4 +1,5 @@
 var apnFramework = require('apn');
+var firebaseAdmin = require('firebase-admin');
 var dateFormat = require('dateformat');
 
 var carSwaddleProductionOptions = {
@@ -20,9 +21,11 @@ var carSwaddleDebugOptions = {
 };
 
 
+
 const carSwaddleBundleID = "com.carswaddle.carswaddle";
 const carSwaddleMechanicBundleID = "com.carswaddle.carswaddlemechanic";
-
+const APNS_PUSH_TYPE = "APNS";
+const FCM_PUSH_TYPE = "FCM";
 
 class PushService {
 
@@ -31,6 +34,10 @@ class PushService {
         this.carSwaddleMechanicProviderProduction = new apnFramework.Provider(carSwaddleProductionOptions);
         this.carSwaddleProviderDebug = new apnFramework.Provider(carSwaddleDebugOptions);
         this.carSwaddleMechanicProviderDebug = new apnFramework.Provider(carSwaddleDebugOptions);
+        this.carSwaddleFirebaseAdmin = firebaseAdmin.initializeApp({
+            credential: firebaseAdmin.credential.cert("src/resources/CarSwaddleFirebaseKey.json"),
+            databaseURL: "https://car-swaddle-56a01.firebaseio.com"
+        })
     }
 
     sendMechanicUserScheduledAppointment(user, mechanic, autoService) {
@@ -136,16 +143,26 @@ class PushService {
     sendUserNotification(user, body, payload, badge, title) {
         return user.getDeviceTokens().then(tokens => {
             tokens.forEach(token => {
-                let notification = this.createNotification(body, payload, badge, title);
-                notification.topic = carSwaddleBundleID;
-                this.carSwaddleProviderProduction.send(notification, token.token).then(result => {
-                    console.log(result);
-                    console.log("production");
-                });
-                this.carSwaddleProviderDebug.send(notification, token.token).then(result => {
-                    console.log(result);
-                    console.log("debug");
-                });
+                if (token.pushType == APNS_PUSH_TYPE) {
+                    let notification = this.createAPNSNotification(body, payload, badge, title);
+                    notification.topic = carSwaddleBundleID;
+                    this.carSwaddleProviderProduction.send(notification, token.token).then(result => {
+                        console.log(result);
+                        console.log("production");
+                    });
+                    this.carSwaddleProviderDebug.send(notification, token.token).then(result => {
+                        console.log(result);
+                        console.log("debug");
+                    });
+                } else if (token.pushType == FCM_PUSH_TYPE) {
+                    this.carSwaddleFirebaseAdmin.messaging().send(this.createFCMNotification(body, payload, title, token.token))
+                        .then((response) => {
+                            console.info(`Send FCM with response: ${response}`);
+                        })
+                        .catch((error) => {
+                            console.error(`Error sending message for user ${user.id} device token ${token.token} error ${error}`);
+                        })
+                }
             });
         });
     }
@@ -154,19 +171,23 @@ class PushService {
     sendMechanicNotification(mechanic, body, payload, badge, title) {
         return mechanic.getDeviceTokens().then(tokens => {
             tokens.forEach(token => {
-                var notification = this.createNotification(body, payload, badge, title);
-                notification.topic = carSwaddleMechanicBundleID;
-                this.carSwaddleMechanicProviderProduction.send(notification, token.token).then(result => {
-                    console.log(result);
-                });
-                this.carSwaddleMechanicProviderDebug.send(notification, token.token).then(result => {
-                    console.log(result);
-                });
+                if (token.pushType == APNS_PUSH_TYPE) {
+                    var notification = this.createAPNSNotification(body, payload, badge, title);
+                    notification.topic = carSwaddleMechanicBundleID;
+                    this.carSwaddleMechanicProviderProduction.send(notification, token.token).then(result => {
+                        console.log(result);
+                    });
+                    this.carSwaddleMechanicProviderDebug.send(notification, token.token).then(result => {
+                        console.log(result);
+                    });
+                } else if (token.pushType == FCM_PUSH_TYPE) {
+                    console.error("FCM pushes for mechanic not setup");
+                }
             });
         });
     }
 
-    createNotification(body, payload, badge, title) {
+    createAPNSNotification(body, payload, badge, title) {
         var notification = new apnFramework.Notification();
         notification.expiry = Math.floor(Date.now() / 1000) + 24 * 3600; // will expire in 24 hours from now
         notification.badge = badge;
@@ -180,6 +201,18 @@ class PushService {
         // notification.payload = payload;
         notification.payload = payload;
         return notification
+    }
+
+    createFCMNotification(body, payload, title, token) {
+        // https://firebase.google.com/docs/cloud-messaging/concept-options#notifications_and_data_messages
+        return {
+            token: token,
+            notification: {
+                title: title,
+                body: body
+            },
+            data: payload
+        }
     }
 
     statusNotificationTitle(status, mechanicFirstName) {
