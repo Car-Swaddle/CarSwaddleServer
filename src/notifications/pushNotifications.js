@@ -21,7 +21,6 @@ var carSwaddleDebugOptions = {
 };
 
 
-
 const carSwaddleBundleID = "com.carswaddle.carswaddle";
 const carSwaddleMechanicBundleID = "com.carswaddle.carswaddlemechanic";
 const APNS_PUSH_TYPE = "APNS";
@@ -36,7 +35,7 @@ class PushService {
         this.carSwaddleMechanicProviderDebug = new apnFramework.Provider(carSwaddleDebugOptions);
         this.carSwaddleFirebaseAdmin = firebaseAdmin.initializeApp({
             credential: firebaseAdmin.credential.cert("src/resources/CarSwaddleFirebaseKey.json"),
-            databaseURL: "https://car-swaddle-56a01.firebaseio.com"
+            databaseURL: "https://car-swaddle-android.firebaseio.com"
         })
     }
 
