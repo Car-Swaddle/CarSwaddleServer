@@ -21,6 +21,7 @@ module.exports = Object.freeze({
     TWILIO_PHONE: '+17727636586',
     ADMIN_SECRET: '169ed15a-e030-4f59-86c7-8684bf6ef628',
     CURRENT_DOMAIN: currentDomain(),
+    
 });
 
 function currentDomain() {
