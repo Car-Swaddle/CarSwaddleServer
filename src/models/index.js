@@ -54,6 +54,8 @@ const models = {
   AuthorityConfirmation: sequelize.import('./authorityConfirmation'),
   AuthorityRequest: sequelize.import('./authorityRequest'),
   Coupon: sequelize.import('./coupon'),
+  Referrer: sequelize.import('./referrer'),
+  PayStructure: sequelize.import('./payStructure')
 };
 
 Object.keys(models).forEach(key => {

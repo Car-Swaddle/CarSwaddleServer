@@ -25,6 +25,11 @@ const coupon = function (sequelize, DataTypes) {
             type: DataTypes.INTEGER,
             allowNull: true,
         },
+        maxRedemptionsPerUser: {
+            type: DataTypes.INTEGER,
+            allowNull: true,
+            default: '1'
+        },
         name: {
             type: DataTypes.STRING,
             allowNull: false,
@@ -48,6 +53,7 @@ const coupon = function (sequelize, DataTypes) {
     Coupon.associate = models => {
         Coupon.belongsTo(models.User, { foreignKey: 'createdByUserID' });
         Coupon.belongsTo(models.Mechanic, { foreignKey: 'createdByMechanicID' });
+        Coupon.belongsTo(models.Referrer, { foreignKey: 'referrerID', allowNull: true })
     };
 
     const { Op } = sequelize;
