@@ -45,7 +45,7 @@ PasswordResetController.prototype.requestResetPassword = async function (email, 
             id: uuidV1(), email: email, token: newToken, expirationDate: tomorrow
         }).then(passwordReset => {
             console.log('created new password reset');
-            self.sendForgotPasswordEmail(email, appName, newToken);
+            self.sendForgotPasswordEmail(email, appName, user.firstName, newToken);
             callback(null, passwordReset);
         }).catch(err => {
             callback(err, null);
@@ -112,9 +112,8 @@ PasswordResetController.prototype.tokenIsValid = function (token, callback) {
     });
 }
 
-PasswordResetController.prototype.sendForgotPasswordEmail = function (email, appName, token) {
-    const text = "Hello from Car Swaddle,\n\nWe've received a request to reset your password. Please click this link to reset your password:\n" + this.resetPasswordDomain(appName, token) + "\n\nIf you didn't request this, you can ignore this.\n\nThanks!";
-    const options = this.emailer.emailOptions(email, 'Car Swaddle password reset', text, null);
+PasswordResetController.prototype.sendForgotPasswordEmail = function (email, appName, userFirstName, token) {
+    const options = this.emailer.sendResetPasswordEmail(userFirstName, email, this.resetPasswordDomain(appName, token))
     this.emailer.sendMail(options);
 }
 
