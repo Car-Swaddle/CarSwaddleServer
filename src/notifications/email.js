@@ -121,6 +121,18 @@ class Emailer {
         });
     }
 
+    sendResetPasswordEmail(userFirstName, userEmail, reset_password_url) {
+        return this.sendMail({
+            From: fromEmailAddress,
+            To: userEmail,
+            TemplateId: 21555007,
+            TemplateModel: {
+                name: userFirstName,
+                reset_password_url: reset_password_url
+            },
+        });
+    }
+
     sendEmailVerificationEmail(user, callback) {
         var date = new Date();
         var self = this;
