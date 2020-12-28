@@ -29,7 +29,7 @@ const referrer = function (sequelize, DataTypes) {
     Referrer.associate = models => {
         Referrer.belongsTo(models.User, { foreignKey: "userID", allowNull: true });
         Referrer.belongsTo(models.Coupon, { foreignKey: "couponID", allowNull: true, constraints: false });
-        Referrer.hasOne(models.PayStructure, { foreignKey: "payStructureID", allowNull: true, constraints: false });
+        Referrer.hasOne(models.PayStructure, { foreignKey: "payStructureID", allowNull: true });
     };
 
     return Referrer;

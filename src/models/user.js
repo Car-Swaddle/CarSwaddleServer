@@ -57,8 +57,6 @@ const user = function (sequelize, DataTypes) {
         User.hasMany(models.DeviceToken, { foreignKey: 'userID' });
         User.hasMany(models.Review, { foreignKey: 'userID' });
         User.hasOne(models.Referrer, { foreignKey: 'userID', constraints: false });
-        User.belongsTo(models.Referrer, { as: 'signUpReferrer', foreignKey: 'signUpReferrerID', allowNull: true })
-        User.belongsTo(models.Referrer, { as: 'activeReferrer', foreignKey: 'activeReferrerID', allowNull: true })
     };
 
     User.generateHash = function (password) {
@@ -76,6 +74,7 @@ const user = function (sequelize, DataTypes) {
     User.prototype.toJSON = function () {
         var values = Object.assign({}, this.get());
 
+        // TODO - we should just always exclude fetching this field unless explicitly requested or move to a different table
         delete values.password;
 
         if (values.origin != null) {

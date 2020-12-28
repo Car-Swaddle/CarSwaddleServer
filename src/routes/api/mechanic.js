@@ -59,17 +59,17 @@ module.exports = function (router, models) {
         const maxDistance = parseFloat(query.maxDistance) || 100000;
 
         models.sequelize.query(`
-            SELECT *, u.id as "userID", m.id as "id", r.id as "regionID", ST_Distance(ST_SetSRID(r.origin, 4326), ST_SetSRID(ST_MakePoint(?, ?), 4326), false) AS "distance"
+            SELECT *, u.id as "userID", m.id as "id", r.id as "regionID", ST_Distance(ST_SetSRID(r.origin, 4326), ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326), false) AS "distance"
             FROM "user" AS u
             INNER JOIN mechanic as m ON m."userID" = u.id
             INNER JOIN region AS r ON m.id = r."mechanicID"
-            AND ST_Distance(ST_SetSRID(r.origin, 4326), ST_SetSRID(ST_MakePoint(?, ?), 4326), false) < r.radius
+            AND ST_Distance(ST_SetSRID(r.origin, 4326), ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326), false) < r.radius
             AND m."isActive" = true AND m."isAllowed" = true
-            AND ST_Distance(ST_SetSRID(r.origin, 4326), ST_SetSRID(ST_MakePoint(?, ?), 4326), false) <= ?
-            ORDER BY ST_Distance(ST_SetSRID(r.origin, 4326), ST_SetSRID(ST_MakePoint(?, ?), 4326), false)
-            FETCH FIRST ? ROWS ONLY
+            AND ST_Distance(ST_SetSRID(r.origin, 4326), ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326), false) <= :maxDistance
+            ORDER BY ST_Distance(ST_SetSRID(r.origin, 4326), ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326), false)
+            FETCH FIRST :limit ROWS ONLY
             `, {
-            replacements: [longitude, latitude, longitude, latitude, longitude, latitude, maxDistance, longitude, latitude, limit],
+            replacements: {longitude: longitude, latitude: latitude, maxDistance: maxDistance, limit: limit},
             type: models.sequelize.QueryTypes.SELECT,
             model: models.User
         }).then(users => {
