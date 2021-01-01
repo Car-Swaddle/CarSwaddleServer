@@ -46,7 +46,7 @@ class Reminder {
                     include: AutoService.includeValues(models),
                 }).then(fetchedAutoService => {
                     if (fetchedAutoService.status != 'canceled') {
-                        self.mailer.sendUserOilChangeReminderMail(fetchedAutoService);
+                        self.mailer.sendUserOilChangeReminderMail(fetchedAutoService, null);
                         pushNotification.sendUserReminderNotification(fetchedAutoService);
                         pushNotification.sendMechanicReminderNotification(fetchedAutoService);
                     }
@@ -64,7 +64,7 @@ class Reminder {
                     include: AutoService.includeValues(models),
                 }).then(fetchedAutoService => {
                     if (fetchedAutoService.status != 'canceled') {
-                        self.mailer.sendUserOilChangeReminderMail(fetchedAutoService);
+                        self.mailer.sendUserOilChangeReminderMail(fetchedAutoService, null);
                         pushNotification.sendUserReminderNotification(fetchedAutoService);
                         pushNotification.sendMechanicReminderNotification(fetchedAutoService);
                     }
@@ -81,7 +81,7 @@ class Reminder {
                     include: AutoService.includeValues(models),
                 }).then(fetchedAutoService => {
                     if (fetchedAutoService.status != AutoService.STATUS.canceled) {
-                        self.mailer.sendUserOilChangeReminderMail(fetchedAutoService);
+                        self.mailer.sendUserOilChangeReminderMail(fetchedAutoService, null);
                         pushNotification.sendUserReminderNotification(fetchedAutoService);
                         pushNotification.sendMechanicReminderNotification(fetchedAutoService);
                     }

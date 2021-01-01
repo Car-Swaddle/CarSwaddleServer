@@ -12,6 +12,7 @@ if (process.env.DATABASE_URL) {
     dialect:  'postgres',
     protocol: 'postgres',
     logging:  true // false
+    // TODO - pool and add timeouts for prod
   });
 } else {
   // Local machine natively or docker
@@ -20,8 +21,20 @@ if (process.env.DATABASE_URL) {
     'kylekendall',
     'password', {
       dialect: 'postgres',
+      dialectOptions: {
+        statement_timeout: 30000,
+        query_timeout: 30000,
+        connnectionTimeoutMillis: 30000,
+        idle_in_transaction_session_timeout: 60000
+      },
       host: process.env.LOCAL_DATABASE_URL || 'localhost',
-      port: 5432
+      port: 5432,
+      pool: {
+        max: 5,
+        min: 0,
+        acquire: 30000,
+        idle: 10000
+      }
     }
   );
 }
@@ -59,10 +72,10 @@ const models = {
 };
 
 Object.keys(models).forEach(key => {
-  console.log(key);
+  // console.debug(key);
   if ('associate' in models[key]) {
     models[key].associate(models);
-    console.log('associated ' + key);
+    // console.debug('associated ' + key);
   }
 });
 
@@ -77,18 +90,14 @@ const umzug = new Umzug({
   storageOptions: { sequelize }
 });
 
-// {force: true}
-sequelize.sync().then(async function() {
-  console.log("synced");
-  // Run all migrations
-  await umzug.up();
-  console.log("Migrated");
+umzug.up().then(() => {
+  console.log("Finished migrations")
   const reminder = new Reminder(models);
   reminder.rescheduleRemindersForAllAutoServices();
+})
+.catch((err) => {
+  console.error("Error during migrations: " + err);
 });
-// .catch((err) => {
-//   console.log("error: " + err);
-// });
 
 models.sequelize = sequelize;
 models.Sequelize = Sequelize;
