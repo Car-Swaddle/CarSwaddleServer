@@ -413,8 +413,8 @@ module.exports = function (router, models) {
             const isValidPrice = (price) => price < 12000 && price > 300;
             const isValidPerQuartPrice = (price) => isValidPrice(price * 5);
 
-            if ([conventional, blend, synthetic, highMileage].every(isValidPrice) &&
-                    [conventionalPerQuart, blendPerQuart, syntheticPerQuart, highMileagePerQuart].every(isValidPerQuartPrice)) {
+            if (![conventional, blend, synthetic, highMileage].every(isValidPrice) ||
+                    ![conventionalPerQuart, blendPerQuart, syntheticPerQuart, highMileagePerQuart].every(isValidPerQuartPrice)) {
                 return res.status(422).send('not all prices are valid');
             }
 
