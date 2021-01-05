@@ -46,6 +46,14 @@ const user = function (sequelize, DataTypes) {
             allowNull: false,
             defaultValue: 'America/Denver'
         },
+        signUpReferrerID: {
+            type: DataTypes.STRING,
+            allowNull: false
+        },
+        activeReferrerID: {
+            type: DataTypes.STRING,
+            allowNull: false
+        }
     }, {
             freezeTableName: true,
         });

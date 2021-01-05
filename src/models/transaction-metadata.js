@@ -18,7 +18,19 @@ const transactionMetadata = function (sequelize, DataTypes) {
         drivingDistance: {
             type: DataTypes.INTEGER,
             allowNull: true
-        }
+        },
+        referrerID: {
+            type: DataTypes.STRING,
+            allowNull: true
+        },
+        couponID: {
+            type: DataTypes.STRING,
+            allowNull: true
+        },
+        payStructureID: {
+            type: DataTypes.STRING,
+            allowNull: true
+        },
     }, {
         freezeTableName: true,
     });
