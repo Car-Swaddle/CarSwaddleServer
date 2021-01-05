@@ -28,7 +28,7 @@ const coupon = function (sequelize, DataTypes) {
         maxRedemptionsPerUser: {
             type: DataTypes.INTEGER,
             allowNull: true,
-            default: '1'
+            default: 1
         },
         name: {
             type: DataTypes.STRING,

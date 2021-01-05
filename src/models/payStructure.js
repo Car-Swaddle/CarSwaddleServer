@@ -1,5 +1,10 @@
 const payStructure = function (sequelize, DataTypes) {
     const PayStructure = sequelize.define('payStructure', {
+        id: {
+            type: DataTypes.STRING,
+            primaryKey: true,
+            unique: true
+        },
         percentageOfPurchase: {
             type: DataTypes.DECIMAL(5,4), // 0.0000
             allowNull: false
@@ -11,12 +16,12 @@ const payStructure = function (sequelize, DataTypes) {
         maxNumberOfPurchasesPerUser: {
             type: DataTypes.INTEGER,
             allowNull: false,
-            defaultValue: '1'
+            defaultValue: 1
         },
         getPaidEvenIfCouponIsApplied: {
             type: DataTypes.BOOLEAN,
             allowNull: false,
-            defaultValue: '1'
+            defaultValue: true
         },
     }, {
             freezeTableName: true,

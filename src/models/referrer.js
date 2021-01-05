@@ -10,7 +10,8 @@ const referrer = function (sequelize, DataTypes) {
             type: DataTypes.STRING,
             allowNull: false
         },
-        externalId: {
+        // Internal metadata - id for ad campaign, email template
+        externalID: {
             type: DataTypes.STRING,
             allowNull: true
         },
@@ -32,7 +33,7 @@ const referrer = function (sequelize, DataTypes) {
         },
         activePayStructureID: {
             type: DataTypes.STRING,
-            allowNull:
+            allowNull: false
         },
     }, {
         freezeTableName: true,
