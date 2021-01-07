@@ -33,7 +33,13 @@ CREATE TABLE IF NOT EXISTS "payStructure" ("id" VARCHAR(255) UNIQUE , "percentag
 
 module.exports = {
     up: (queryInterface) => {
-        return queryInterface.sequelize.query(baselineSql);
+        return new Promise(async (resolve, reject) => {
+            let tableCreateQueries = baselineSql.trim().split("\n");
+            for (let tableQuery of tableCreateQueries) {
+                await queryInterface.sequelize.query(tableQuery);
+            }
+            resolve();
+        });
     },
 
     down: (queryInterface) => {

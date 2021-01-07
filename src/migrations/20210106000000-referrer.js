@@ -15,11 +15,11 @@ module.exports = {
     try {
         await queryInterface.addColumn('user', 'signUpReferrerID', {
             type: Sequelize.STRING,
-            allowNull: true
+            allowNull: true,
         }, { transaction });
         await queryInterface.addColumn('user', 'activeReferrerID', {
             type: Sequelize.STRING,
-            allowNull: true
+            allowNull: true,
         }, { transaction });
 
         await queryInterface.addColumn('coupon', 'referrerID', {
@@ -35,20 +35,20 @@ module.exports = {
         await queryInterface.addColumn('coupon', 'maxRedemptionsPerUser', {
             type: Sequelize.INTEGER,
             allowNull: true,
-            default: 1
+            default: 1,
         }, { transaction });
 
         await queryInterface.addColumn('transactionMetadata', 'referrerID', {
             type: Sequelize.STRING,
-            allowNull: true
+            allowNull: true,
         }, { transaction });
         await queryInterface.addColumn('transactionMetadata', 'couponID', {
             type: Sequelize.STRING,
-            allowNull: true
+            allowNull: true,
         }, { transaction });
         await queryInterface.addColumn('transactionMetadata', 'payStructureID', {
             type: Sequelize.STRING,
-            allowNull: true
+            allowNull: true,
         }, { transaction });
 
         await transaction.commit();
