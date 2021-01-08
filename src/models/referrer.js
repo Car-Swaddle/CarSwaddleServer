@@ -33,7 +33,7 @@ const referrer = function (sequelize, DataTypes) {
         },
         activePayStructureID: {
             type: DataTypes.STRING,
-            allowNull: false
+            allowNull: true
         },
     }, {
         freezeTableName: true,

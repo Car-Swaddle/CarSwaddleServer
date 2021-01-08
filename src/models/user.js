@@ -48,11 +48,11 @@ const user = function (sequelize, DataTypes) {
         },
         signUpReferrerID: {
             type: DataTypes.STRING,
-            allowNull: false
+            allowNull: true
         },
         activeReferrerID: {
             type: DataTypes.STRING,
-            allowNull: false
+            allowNull: true
         }
     }, {
             freezeTableName: true,
