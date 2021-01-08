@@ -46,6 +46,14 @@ const user = function (sequelize, DataTypes) {
             allowNull: false,
             defaultValue: 'America/Denver'
         },
+        signUpReferrerID: {
+            type: DataTypes.STRING,
+            allowNull: true
+        },
+        activeReferrerID: {
+            type: DataTypes.STRING,
+            allowNull: true
+        }
     }, {
             freezeTableName: true,
         });
@@ -56,6 +64,7 @@ const user = function (sequelize, DataTypes) {
         User.hasMany(models.Vehicle, { foreignKey: 'userID' });
         User.hasMany(models.DeviceToken, { foreignKey: 'userID' });
         User.hasMany(models.Review, { foreignKey: 'userID' });
+        User.hasOne(models.Referrer, { foreignKey: 'userID', constraints: false });
     };
 
     User.generateHash = function (password) {
@@ -73,6 +82,7 @@ const user = function (sequelize, DataTypes) {
     User.prototype.toJSON = function () {
         var values = Object.assign({}, this.get());
 
+        // TODO - we should just always exclude fetching this field unless explicitly requested or move to a different table
         delete values.password;
 
         if (values.origin != null) {
