@@ -284,6 +284,9 @@ module.exports = function (router, models) {
             couponID,
         } = req.body;
 
+        // TODO - check for 1. usePaymentIntents flag  2. request has referrerID 3. see if user has an activeReferrerID
+        // Maybe we don't need 2) because it will have been updated on the user before now, @kyle?
+
         const oilChangeService = serviceEntities.find(x => x.entityType === 'OIL_CHANGE');
         const oilType = oilChangeService && oilChangeService.specificService.oilType;
 
@@ -320,6 +323,7 @@ module.exports = function (router, models) {
         const taxRate = await taxes.taxRateForLocation(location);
         const prices = await billingCalculations.calculatePrices(mechanic, location, oilType, vehicleID, coupon, taxRate);
 
+        // If using payment intents - switch on that here, validate the referrer is still a valid target referrer (remove as active if not? throw?)
         const invoice = await stripeChargesFile.updateDraft(req.user.stripeCustomerID, prices, {
             transferAmount: prices.transferAmount,
             mechanicCost: prices.mechanicCost,
@@ -327,6 +331,7 @@ module.exports = function (router, models) {
             oilType,
         }, taxRate);
 
+        // Pass payment intent id if applicable
         autoServiceScheduler.scheduleAutoService(req.user, status, scheduledDate, vehicleID, mechanicID, invoice.id, sourceID, prices.transferAmount, serviceEntities, address, locationID, couponID, notes, function (err, autoService) {
             if (!err) {
                 return res.json(autoService);

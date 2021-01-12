@@ -59,6 +59,7 @@ AutoServiceScheduler.prototype.findAutoServices = function (mechanicID, userID, 
 };
 
 AutoServiceScheduler.prototype.scheduleAutoService = async function (user, status, scheduledDate, vehicleID, mechanicID, invoiceID, sourceID, transferAmount, serviceEntities, location, locationID, couponID, notes, callback) {
+    // Confirm payment intent
     const { invoice, transfer } = await this.stripeCharges.payInvoices(invoiceID, sourceID, mechanicID, transferAmount);
 
     if (!invoice) {
@@ -66,6 +67,7 @@ AutoServiceScheduler.prototype.scheduleAutoService = async function (user, statu
         return
     }
 
+    // Allow a payment intent storage here
     this.createAutoService(user, mechanicID, status, scheduledDate, vehicleID, invoice, transfer, transferAmount, sourceID, serviceEntities, locationID, location, couponID, notes, async (err, autoService) => {
         if (err) {
             callback(err, null);

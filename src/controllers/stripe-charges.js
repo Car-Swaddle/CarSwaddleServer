@@ -74,6 +74,12 @@ StripeCharges.prototype.monthlyDebitFee = function (mechanicPayment) {
     return stripeConnectMonthlyDebit;
 }
 
+// TODO - function to confirm payment intent and set up mechanic + referrer payouts
+
+// Separate function fired off the `charge.succeeded` event before transferring any funds (https://stripe.com/docs/api/events/types#event_types-charge.succeeded)
+// Use source_transaction to tie to payment intent (https://stripe.com/docs/connect/charges-transfers#transfer-availability)
+// Maybe we don't need this if we only accept credit cards/apple pay? Does apply pay allow ACH transactions?
+
 StripeCharges.prototype.payInvoices = async function(invoiceID, sourceID, mechanicID, transferAmount) {
     const mechanic = await this.models.Mechanic.findByPk(mechanicID);
 
