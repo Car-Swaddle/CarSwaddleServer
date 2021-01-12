@@ -284,6 +284,10 @@ module.exports = function (router, models) {
             couponID,
         } = req.body;
 
+        const {
+            usePaymentIntent
+        } = req.query;
+
         // TODO - check for 1. usePaymentIntents flag  2. request has referrerID 3. see if user has an activeReferrerID
         // Maybe we don't need 2) because it will have been updated on the user before now, @kyle?
 
@@ -323,7 +327,19 @@ module.exports = function (router, models) {
         const taxRate = await taxes.taxRateForLocation(location);
         const prices = await billingCalculations.calculatePrices(mechanic, location, oilType, vehicleID, coupon, taxRate);
 
-        // If using payment intents - switch on that here, validate the referrer is still a valid target referrer (remove as active if not? throw?)
+        // TODO - push this and invoice logic and anything else possible down into the controller
+        if (req.user.activeReferrerID) {
+            const referrer = await models.Referrer.findByPk(req.user.activeReferrerID);
+            // TODO - check that current user != referrer
+            // TODO - check we haven't hit max # of purchases per user or total for referrer
+            // If either of above disqualify, remove as active referrer
+
+            // TODO - check for "get paid even if coupon applied" flag if coupon is on this service
+
+            // Send email if this is a new completed referral
+        }
+
+        // If NOT using payment intent, do this, otherwise use to be written code
         const invoice = await stripeChargesFile.updateDraft(req.user.stripeCustomerID, prices, {
             transferAmount: prices.transferAmount,
             mechanicCost: prices.mechanicCost,

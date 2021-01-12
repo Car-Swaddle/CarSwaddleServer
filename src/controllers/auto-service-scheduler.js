@@ -59,7 +59,8 @@ AutoServiceScheduler.prototype.findAutoServices = function (mechanicID, userID, 
 };
 
 AutoServiceScheduler.prototype.scheduleAutoService = async function (user, status, scheduledDate, vehicleID, mechanicID, invoiceID, sourceID, transferAmount, serviceEntities, location, locationID, couponID, notes, callback) {
-    // Confirm payment intent
+    // Create/confirm payment intent here else do invoice
+
     const { invoice, transfer } = await this.stripeCharges.payInvoices(invoiceID, sourceID, mechanicID, transferAmount);
 
     if (!invoice) {
@@ -74,6 +75,7 @@ AutoServiceScheduler.prototype.scheduleAutoService = async function (user, statu
             return;
         }
 
+        // TODO - transaction around these steps, hopefully create than all at the same time and do notifications after all succeed
         this.setupServiceEntities(serviceEntities, autoService, async (err, serviceEntities) => {
             const fetchedAutoService = await this.models.AutoService.findOne({
                 where: { id: autoService.id },
