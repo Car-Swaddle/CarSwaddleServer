@@ -139,6 +139,8 @@ StripeCharges.prototype.listUpcomingLineItems = function(customer) {
     });
 }
 
+// @kyle how much do we expose this invoice? I wonder if the reason for it is for customer purposes so they can see line items
+// Maybe we need to keep it? It looks like you can still use payment intents with invoices
 StripeCharges.prototype.updateDraft = async function(customer, prices, metadata, taxRate) {
     const draftInvoice = await this.retrieveDraftInvoice(customer);
     const existingLines = draftInvoice

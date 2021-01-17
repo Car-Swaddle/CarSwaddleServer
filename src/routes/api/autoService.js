@@ -329,12 +329,42 @@ module.exports = function (router, models) {
 
         // TODO - push this and invoice logic and anything else possible down into the controller
         if (req.user.activeReferrerID) {
-            const referrer = await models.Referrer.findByPk(req.user.activeReferrerID);
-            // TODO - check that current user != referrer
-            // TODO - check we haven't hit max # of purchases per user or total for referrer
-            // If either of above disqualify, remove as active referrer
+            const referrer = await models.Referrer.findByPk(req.user.activeReferrerID, {
+                include: [
+                    {model: models.Coupon},
+                    {model: models.PayStructure}
+                ] 
+            });
 
-            // TODO - check for "get paid even if coupon applied" flag if coupon is on this service
+            var isValidReferrer = true;
+            if (referrer.userID && req.user.id == referrer.userID) {
+                isValidReferrer = false;
+            }
+            const referrerCoupon = referrer.getActiveCoupon();
+            const referrerPayStructure = referrer.getActivePayStructure();
+            if (referrerCoupon && !coupon) {
+                // TODO - apply referrer's coupon
+                // TODO - refactor to distinguish between requested coupon and referrer's coupon id, only apply when we decide which to use
+            }
+            if (referrerPayStructure) {
+                // TODO - check for "get paid even if coupon applied" flag if coupon is on this service
+            }
+
+            // TODO - check we haven't hit max # of purchases per user or total for referrer
+            // something like
+
+            // Current user uses
+            // select count(1) from transaction-metadata t
+            // left outer join auto-services as on t.autoServiceID = as.id
+            // left outer join user u on u.id = as.userID where t.payStructureID = #{payStructureID} and t.referrerID = #{referrerID} and u.id = #{req.user.id}
+
+            // All uses
+            // select count(1) from transaction-metadata t
+            // left outer join auto-services as on t.autoServiceID = as.id
+            // left outer join user u on u.id = as.userID where t.payStructureID = #{payStructureID} and t.referrerID = #{referrerID}
+            // @kyle should we be specific about the pay structure or just the referrer id here?
+
+            // If either of above disqualify, remove as active referrer
 
             // Send email if this is a new completed referral
         }
