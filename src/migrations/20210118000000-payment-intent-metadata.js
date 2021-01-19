@@ -16,19 +16,23 @@ module.exports = {
     const transaction = await queryInterface.sequelize.transaction();
 
     try {
-        await queryInterface.addColumn(transactionMetadataTableName, 'paymentIntentID', {
+        await queryInterface.addColumn(transactionMetadataTableName, 'stripePaymentIntentID', {
             type: Sequelize.STRING,
             allowNull: true,
         }, { transaction });
-        await queryInterface.addColumn(transactionMetadataTableName, 'referrerCost', {
+        await queryInterface.addColumn(transactionMetadataTableName, 'mechanicTransferAmount', {
             type: Sequelize.INTEGER,
             allowNull: true,
         }, { transaction });
-        await queryInterface.addColumn(transactionMetadataTableName, 'mechanicTransferID', {
+        await queryInterface.addColumn(transactionMetadataTableName, 'referrerTransferAmount', {
+            type: Sequelize.INTEGER,
+            allowNull: true,
+        }, { transaction });
+        await queryInterface.addColumn(transactionMetadataTableName, 'stripeMechanicTransferID', {
             type: Sequelize.STRING,
             allowNull: true,
         }, { transaction });
-        await queryInterface.addColumn(transactionMetadataTableName, 'referrerTransferID', {
+        await queryInterface.addColumn(transactionMetadataTableName, 'stripeReferrerTransferID', {
             type: Sequelize.STRING,
             allowNull: true,
         }, { transaction });
@@ -46,10 +50,11 @@ module.exports = {
 
   down: (queryInterface) => {
     return new Promise(async (resolve, reject) => {
-      await queryInterface.removeColumn(transactionMetadataTableName, 'paymentIntentID');
-      await queryInterface.removeColumn(transactionMetadataTableName, 'referrerCost');
-      await queryInterface.removeColumn(transactionMetadataTableName, 'mechanicTransferID');
-      await queryInterface.removeColumn(transactionMetadataTableName, 'referrerTransferID');
+      await queryInterface.removeColumn(transactionMetadataTableName, 'stripePaymentIntentID');
+      await queryInterface.removeColumn(transactionMetadataTableName, 'mechanicTransferAmount');
+      await queryInterface.removeColumn(transactionMetadataTableName, 'referrerTransferAmount');
+      await queryInterface.removeColumn(transactionMetadataTableName, 'stripeMechanicTransferID');
+      await queryInterface.removeColumn(transactionMetadataTableName, 'stripeReferrerTransferID');
       await queryInterface.removeColumn(transactionMetadataTableName, 'audit');
       resolve();
     });
