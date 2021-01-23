@@ -323,9 +323,9 @@ module.exports = function (router, models) {
                 ] 
             });
 
-            var removeActiveReferrer = true;
+            var removeActiveReferrer = false;
             if (referrer.userID && req.user.id == referrer.userID) {
-                removeActiveReferrer = false;
+                removeActiveReferrer = true;
             }
             const referrerCoupon = referrer.getActiveCoupon();
             const referrerPayStructure = referrer.getActivePayStructure();
