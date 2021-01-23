@@ -5,12 +5,28 @@ const transactionMetadata = function (sequelize, DataTypes) {
             primaryKey: true,
             unique: true
         },
+        // Stripe payment intent
+        stripePaymentIntentID: {
+            type: DataTypes.STRING,
+            allowNull: true
+        },
+        // Legacy stripe balance transaction id
         stripeTransactionID: {
             type: DataTypes.STRING,
             allowNull: true
         },
-        // Cost in cents 
+        // Cost in cents (estimated mechanic cost, not transfer amounts)
         mechanicCost: {
+            type: DataTypes.INTEGER,
+            allowNull: true
+        },
+        // Amount transferred (or to be transferred) to mechanic
+        mechanicTransferAmount: {
+            type: DataTypes.INTEGER,
+            allowNull: true
+        },
+        // Amount transferred (or to be transferred) to referrer
+        referrerTransferAmount: {
             type: DataTypes.INTEGER,
             allowNull: true
         },
@@ -31,6 +47,19 @@ const transactionMetadata = function (sequelize, DataTypes) {
             type: DataTypes.STRING,
             allowNull: true
         },
+        stripeMechanicTransferID: {
+            type: DataTypes.STRING,
+            allowNull: true
+        },
+        stripeReferrerTransferID: {
+            type: DataTypes.STRING,
+            allowNull: true
+        },
+        // Catch-all to store internal event metadata, incoming webhooks timestamps, etc
+        audit: {
+            type: DataTypes.JSON,
+            allowNull: true
+        }
     }, {
         freezeTableName: true,
     });
