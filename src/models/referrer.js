@@ -53,7 +53,7 @@ const referrer = function (sequelize, DataTypes) {
     }
 
     Referrer.getActivePayStructure = () => {
-        if (!this.getPayStructures()()) {
+        if (!this.getPayStructures()) {
             throw 'Pay structures not fetched'
         }
         return this.getPayStructures().find(ps => ps.getId() == this.getActivePayStructureID());
