@@ -332,47 +332,47 @@ module.exports = function (router, models) {
             if (referrerCoupon && !finalCoupon) {
                 finalCoupon = referrerCoupon;
             }
-            if (referrerPayStructure) {
-                if (finalCoupon && referrerPayStructure.getPaidEvenIfCouponIsApplied === false) {
-                    // Still valid referrer for future purchases but can't use pay structure for this one
+
+            // Still valid referrer for future purchases but can't use pay structure for this one if coupon applied
+            const canUsePayStructure = !finalCoupon || referrerPayStructure.getPaidEvenIfCouponIsApplied === true;
+            if (referrerPayStructure && canUsePayStructure) {
+
+                const currentUserReferralCount = await models.sequelize.query(`
+                    SELECT COUNT(1) from (
+                        SELECT DISTINCT a."id" FROM "transactionMetadata" tm
+                        INNER JOIN "autoService" a ON tm."autoServiceID" = a."id"
+                        INNER JOIN "user" u ON u."id" = a."userID"
+                        WHERE t."referrerID" = :referrerID AND u."id" = :userID
+                    ) tsub;
+                `, {
+                    replacements: {referrerID: referrer.id, userID: req.user.id},
+                    type: models.sequelize.QueryTypes.SELECT,
+                    raw: true, // no model
+                    plain: true // single result
+                });
+
+                const totalReferralCount = await models.sequelize.query(`
+                    SELECT COUNT(1) from (
+                        SELECT DISTINCT a."id" FROM "transactionMetadata" tm
+                        INNER JOIN "autoService" a ON tm."autoServiceID" = a."id"
+                        WHERE tm."referrerID" = :referrerID
+                    ) tsub;
+                `, {
+                    replacements: {referrerID: referrer.id},
+                    type: models.sequelize.QueryTypes.SELECT,
+                    raw: true, // no model
+                    plain: true // single result
+                });
+
+                if (currentUserReferralCount > referrerPayStructure.maxRedemptionsPerUser || totalReferralCount > referrerPayStructure.maxRedemptions) {
+                    removeActiveReferrer = true;
                 } else {
                     payStructure = referrerPayStructure;
                 }
-            }
 
-            const currentUserReferralCount = await models.sequelize.query(`
-                SELECT COUNT(1) from (
-                    SELECT DISTINCT a."id" FROM "transactionMetadata" tm
-                    INNER JOIN "autoService" a ON tm."autoServiceID" = a."id"
-                    INNER JOIN "user" u ON u."id" = a."userID"
-                    WHERE t."referrerID" = :referrerID AND u."id" = :userID
-                ) tsub;
-            `, {
-                replacements: {referrerID: referrer.id, userID: req.user.id},
-                type: models.sequelize.QueryTypes.SELECT,
-                raw: true, // no model
-                plain: true // single result
-            });
-
-            const totalReferralCount = await models.sequelize.query(`
-                SELECT COUNT(1) from (
-                    SELECT DISTINCT a."id" FROM "transactionMetadata" tm
-                    INNER JOIN "autoService" a ON tm."autoServiceID" = a."id"
-                    WHERE tm."referrerID" = :referrerID
-                ) tsub;
-            `, {
-                replacements: {referrerID: referrer.id},
-                type: models.sequelize.QueryTypes.SELECT,
-                raw: true, // no model
-                plain: true // single result
-            });
-
-            if (currentUserReferralCount > referrer.maxRedemptionsPerUser || totalReferralCount > referrer.maxRedemptions) {
-                removeActiveReferrer = true;
-            }
-
-            if (currentUserReferralCount == 0) {
-                // Send email, this is a new completed referral
+                if (currentUserReferralCount == 0) {
+                    // Send email, this is a new completed referral
+                }
             }
 
             if (removeActiveReferrer === true) {
