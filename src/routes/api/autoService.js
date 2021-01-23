@@ -385,7 +385,6 @@ module.exports = function (router, models) {
         const taxRate = await taxes.taxRateForLocation(location);
         const prices = await billingCalculations.calculatePrices(mechanic, location, oilType, vehicleID, finalCoupon ? finalCoupon.id : null, taxRate);
 
-        // Pass payment intent id if applicable
         autoServiceScheduler.scheduleAutoService(req.user, status, scheduledDate, vehicleID, mechanicID, sourceID,
             prices, oilType, serviceEntities, address, locationID, taxRate,
             finalCoupon ? finalCoupon.id : null, payStructure ? payStructure.id : null, notes, function (err, autoService) {
