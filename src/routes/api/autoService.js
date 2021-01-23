@@ -14,7 +14,6 @@ module.exports = function (router, models) {
     const emailer = new emailFile(models);
 
     const autoServiceScheduler = require('../../controllers/auto-service-scheduler.js')(models);
-    const stripeChargesFile = require('../../controllers/stripe-charges.js')(models);
     const billingCalculations = require('../../controllers/billing-calculations')(models);
     const taxes = require('../../controllers/taxes')(models);
     const vehicleService = new VehicleService(models);
@@ -284,50 +283,38 @@ module.exports = function (router, models) {
             couponID,
         } = req.body;
 
-        const {
-            usePaymentIntent
-        } = req.query;
-
-        // TODO - check for 1. usePaymentIntents flag  2. request has referrerID 3. see if user has an activeReferrerID
-        // Maybe we don't need 2) because it will have been updated on the user before now, @kyle?
-
         const oilChangeService = serviceEntities.find(x => x.entityType === 'OIL_CHANGE');
         const oilType = oilChangeService && oilChangeService.specificService.oilType;
 
         const [
             location,
             mechanic,
-            coupon,
+            requestCoupon,
             inTimeSlot,
             isAlreadyScheduled,
         ] = await Promise.all([
             models.Location.findBySearch(locationID, address),
             models.Mechanic.findByPk(mechanicID),
-            models.Coupon.redeem(couponID, mechanicID),
+            models.Coupon.findByPk(couponID),
             autoServiceScheduler.isDateInMechanicSlot(scheduledDate, req.user, mechanicID),
             autoServiceScheduler.isDatePreviouslyScheduled(scheduledDate, req.user, mechanicID)
         ]);
 
         if (autoServiceScheduler.isValidScheduledDate(scheduledDate, req.user) == false || inTimeSlot == false || isAlreadyScheduled == true) {
-            models.Coupon.undoRedeem(coupon);
-
             return res.status(422).send({ code: 'MECHANIC_TIME_ALREADY_RESERVED' });
         }
 
-        if(couponID && !coupon) {
+        if(couponID && !requestCoupon) {
             return res.status(422).send({ code: 'COUPON_NOT_FOUND' });
         }
 
         if (location == null || mechanic == null) {
-            models.Coupon.undoRedeem(coupon);
-
             return res.status(422).send();
         }
 
-        const taxRate = await taxes.taxRateForLocation(location);
-        const prices = await billingCalculations.calculatePrices(mechanic, location, oilType, vehicleID, coupon, taxRate);
+        var finalCoupon = requestCoupon;
+        var payStructure = null;
 
-        // TODO - push this and invoice logic and anything else possible down into the controller
         if (req.user.activeReferrerID) {
             const referrer = await models.Referrer.findByPk(req.user.activeReferrerID, {
                 include: [
@@ -336,54 +323,75 @@ module.exports = function (router, models) {
                 ] 
             });
 
-            var isValidReferrer = true;
+            var removeActiveReferrer = true;
             if (referrer.userID && req.user.id == referrer.userID) {
-                isValidReferrer = false;
+                removeActiveReferrer = false;
             }
             const referrerCoupon = referrer.getActiveCoupon();
             const referrerPayStructure = referrer.getActivePayStructure();
-            if (referrerCoupon && !coupon) {
-                // TODO - apply referrer's coupon
-                // TODO - refactor to distinguish between requested coupon and referrer's coupon id, only apply when we decide which to use
+            if (referrerCoupon && !finalCoupon) {
+                finalCoupon = referrerCoupon;
             }
             if (referrerPayStructure) {
-                // TODO - check for "get paid even if coupon applied" flag if coupon is on this service
+                if (finalCoupon && referrerPayStructure.getPaidEvenIfCouponIsApplied === false) {
+                    // Still valid referrer for future purchases but can't use pay structure for this one
+                } else {
+                    payStructure = referrerPayStructure;
+                }
             }
 
-            // TODO - check we haven't hit max # of purchases per user or total for referrer
-            // something like
+            const currentUserReferralCount = await models.sequelize.query(`
+                SELECT COUNT(1) from (
+                    SELECT DISTINCT a."id" FROM "transactionMetadata" tm
+                    INNER JOIN "autoService" a ON tm."autoServiceID" = a."id"
+                    INNER JOIN "user" u ON u."id" = a."userID"
+                    WHERE t."referrerID" = :referrerID AND u."id" = :userID
+                ) tsub;
+            `, {
+                replacements: {referrerID: referrer.id, userID: req.user.id},
+                type: models.sequelize.QueryTypes.SELECT,
+                raw: true, // no model
+                plain: true // single result
+            });
 
-            // Current user uses
-            // select count(1) from transaction-metadata t
-            // left outer join auto-services as on t.autoServiceID = as.id
-            // left outer join user u on u.id = as.userID where t.payStructureID = #{payStructureID} and t.referrerID = #{referrerID} and u.id = #{req.user.id}
+            const totalReferralCount = await models.sequelize.query(`
+                SELECT COUNT(1) from (
+                    SELECT DISTINCT a."id" FROM "transactionMetadata" tm
+                    INNER JOIN "autoService" a ON tm."autoServiceID" = a."id"
+                    WHERE tm."referrerID" = :referrerID
+                ) tsub;
+            `, {
+                replacements: {referrerID: referrer.id},
+                type: models.sequelize.QueryTypes.SELECT,
+                raw: true, // no model
+                plain: true // single result
+            });
 
-            // All uses
-            // select count(1) from transaction-metadata t
-            // left outer join auto-services as on t.autoServiceID = as.id
-            // left outer join user u on u.id = as.userID where t.payStructureID = #{payStructureID} and t.referrerID = #{referrerID}
-            // @kyle should we be specific about the pay structure or just the referrer id here?
+            if (currentUserReferralCount > referrer.maxRedemptionsPerUser || totalReferralCount > referrer.maxRedemptions) {
+                removeActiveReferrer = true;
+            }
 
-            // If either of above disqualify, remove as active referrer
+            if (currentUserReferralCount == 0) {
+                // Send email, this is a new completed referral
+            }
 
-            // Send email if this is a new completed referral
+            if (removeActiveReferrer === true) {
+                payStructure = null;
+                req.user.activeReferrerID = null;
+                await req.user.save();
+            }
         }
 
-        // If NOT using payment intent, do this, otherwise use to be written code
-        const invoice = await stripeChargesFile.updateDraft(req.user.stripeCustomerID, prices, {
-            transferAmount: prices.transferAmount,
-            mechanicCost: prices.mechanicCost,
-            mechanicID,
-            oilType,
-        }, taxRate);
+        const taxRate = await taxes.taxRateForLocation(location);
+        const prices = await billingCalculations.calculatePrices(mechanic, location, oilType, vehicleID, finalCoupon ? finalCoupon.id : null, taxRate);
 
         // Pass payment intent id if applicable
-        autoServiceScheduler.scheduleAutoService(req.user, status, scheduledDate, vehicleID, mechanicID, invoice.id, sourceID, prices.transferAmount, serviceEntities, address, locationID, couponID, notes, function (err, autoService) {
+        autoServiceScheduler.scheduleAutoService(req.user, status, scheduledDate, vehicleID, mechanicID, sourceID,
+            prices, oilType, serviceEntities, address, locationID, taxRate,
+            finalCoupon ? finalCoupon.id : null, payStructure ? payStructure.id : null, notes, function (err, autoService) {
             if (!err) {
                 return res.json(autoService);
             } else {
-                models.Coupon.undoRedeem(coupon);
-
                 return res.status(400).send(err);
             }
         });

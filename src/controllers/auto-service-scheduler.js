@@ -58,18 +58,29 @@ AutoServiceScheduler.prototype.findAutoServices = function (mechanicID, userID, 
     });
 };
 
-AutoServiceScheduler.prototype.scheduleAutoService = async function (user, status, scheduledDate, vehicleID, mechanicID, invoiceID, sourceID, transferAmount, serviceEntities, location, locationID, couponID, notes, callback) {
-    // Create/confirm payment intent here else do invoice
+AutoServiceScheduler.prototype.scheduleAutoService = async function (user, status, scheduledDate, vehicleID, mechanicID, sourceID,
+    prices, oilType, serviceEntities, location, locationID, taxRate,
+    couponID, payStructureID, notes, callback) {
+    
+    if (payStructureID) {
+        // Create/confirm payment intent here
+    } else {
+        var invoice = await this.stripeCharges.updateDraft(user.stripeCustomerID, prices, {
+            transferAmount: prices.transferAmount,
+            mechanicCost: prices.mechanicCost,
+            mechanicID,
+            oilType,
+        }, taxRate);
+        var { invoice, transfer } = await this.stripeCharges.payInvoices(invoice.id, sourceID, mechanicID, prices.transferAmount);
 
-    const { invoice, transfer } = await this.stripeCharges.payInvoices(invoiceID, sourceID, mechanicID, transferAmount);
-
-    if (!invoice) {
-        callback('unable to create charge', null);
-        return
+        if (!invoice) {
+            callback('unable to create charge', null);
+            return
+        }
     }
 
     // Allow a payment intent storage here
-    this.createAutoService(user, mechanicID, status, scheduledDate, vehicleID, invoice, transfer, transferAmount, sourceID, serviceEntities, locationID, location, couponID, notes, async (err, autoService) => {
+    this.createAutoService(user, mechanicID, status, scheduledDate, vehicleID, invoice, transfer, prices.transferAmount, sourceID, serviceEntities, locationID, location, couponID, notes, async (err, autoService) => {
         if (err) {
             callback(err, null);
             return;
