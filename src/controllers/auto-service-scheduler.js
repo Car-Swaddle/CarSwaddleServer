@@ -67,7 +67,7 @@ AutoServiceScheduler.prototype.scheduleAutoService = async function (user, statu
     var referrerTransferAmount = null;
     if (payStructureID) {
         console.info(`Using payment intents for this user ${user.id} with ties to pay structure ${payStructureID}`)
-        const payStructure = this.models.PayStructure.findByPk(payStructureID);
+        const payStructure = await this.models.PayStructure.findByPk(payStructureID);
         referrerTransferAmount = prices.subtotal * payStructure.percentageOfPurchase;
         if (referrerTransferAmount > (prices.subTotal * 0.5)) {
             // Sanity check, should never be above 50% for a referrer
@@ -76,24 +76,27 @@ AutoServiceScheduler.prototype.scheduleAutoService = async function (user, statu
         }
         referrerTransferAmount = referrerTransferAmount >= 0 ? referrerTransferAmount : 0;
 
-        stripe.paymentIntents.create({
-            amount: prices.total,
-            currency: 'usd',
-            payment_method: sourceID,
-            confirm: true,
-            metadata: {
-                user_id: user.id,
-                mechanic_id: mechanicID,
-                vehicle_id: vehicleID,
-                scheduled_date: scheduledDate
-            }
-        }).then(paymentIntent => {
+        try {
+            const paymentIntent = await stripe.paymentIntents.create({
+                amount: prices.total,
+                currency: 'usd',
+                payment_method: sourceID,
+                customer: user.stripeCustomerID,
+                confirm: true,
+                metadata: {
+                    user_id: user.id,
+                    mechanic_id: mechanicID,
+                    vehicle_id: vehicleID,
+                    scheduled_date: scheduledDate
+                }
+            });
             paymentIntentID = paymentIntent.id;
-        }).catch(error => {
-            callback("Unable to complete payment intent: " + error, null)
-        })
+        } catch (error) {
+            console.error(`Error confirming payment intent: ${error}`);
+        }
 
         if (!paymentIntentID) {
+            callback(`Unable to complete payment intent`, null)
             return;
         }
     } else {
@@ -128,9 +131,7 @@ AutoServiceScheduler.prototype.scheduleAutoService = async function (user, statu
             this.sendNotification(user, mechanic, fetchedAutoService);
             this.reminder.scheduleRemindersForAutoService(fetchedAutoService);
 
-            const mechanicCost = parseInt(invoice.metadata.mechanicCost, 10);
-
-            this.createTransactionMetadata(mechanic, fetchedAutoService.location, mechanicCost, fetchedAutoService,
+            this.createTransactionMetadata(mechanic, fetchedAutoService.location, prices.mechanicCost, fetchedAutoService,
                 paymentIntentID, couponID, referrerID, payStructureID, mechanicTransferAmount, referrerTransferAmount, async (err, transactionMetadata) => {
                 const lastAutoService = await this.models.AutoService.findOne({
                     where: { id: fetchedAutoService.id },
@@ -211,7 +212,7 @@ AutoServiceScheduler.prototype.createAutoService = async function (user, mechani
     }
 
     if (!vehicleID) { callback('invalid parameters, vehicleID', null); return; }
-    if (!invoice) { callback('invalid parameters, invoice'); return; }
+    // if (!invoice) { callback('invalid parameters, invoice'); return; }
     if (!sourceID) { callback('invalid parameters, sourceID'); return; }
     if (serviceEntities.length <= 0) { callback('invalid parameters, at least one serviceEntities', null); return; }
 
@@ -244,8 +245,8 @@ AutoServiceScheduler.prototype.createAutoService = async function (user, mechani
         status: status,
         notes: notes,
         scheduledDate: scheduledDate,
-        invoiceID: invoice.id,
-        chargeID: invoice.charge,
+        invoiceID: invoice ? invoice.id : "none",
+        chargeID: invoice ? invoice.charge : "none",
         transferID: transfer && transfer.id,
         balanceTransactionID: transfer && transfer.destination_payment.balance_transaction,
         transferAmount,

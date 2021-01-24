@@ -329,8 +329,9 @@ module.exports = function (router, models) {
             if (referrer.userID && req.user.id == referrer.userID) {
                 removeActiveReferrer = true;
             }
-            const referrerCoupon = referrer.getActiveCoupon();
-            const referrerPayStructure = referrer.getActivePayStructure();
+
+            const referrerCoupon = (await referrer.getCoupons()).find(c => c.id == referrer.activeCouponID);
+            const referrerPayStructure = (await referrer.getPayStructures()).find(ps => ps.id == referrer.activePayStructureID);
             if (referrerCoupon && !finalCoupon) {
                 finalCoupon = referrerCoupon;
             }
@@ -344,7 +345,7 @@ module.exports = function (router, models) {
                         SELECT DISTINCT a."id" FROM "transactionMetadata" tm
                         INNER JOIN "autoService" a ON tm."autoServiceID" = a."id"
                         INNER JOIN "user" u ON u."id" = a."userID"
-                        WHERE t."referrerID" = :referrerID AND u."id" = :userID
+                        WHERE tm."referrerID" = :referrerID AND u."id" = :userID
                     ) tsub;
                 `, {
                     replacements: {referrerID: referrer.id, userID: req.user.id},
