@@ -86,7 +86,7 @@ module.exports = function (app, models) {
         } else if (event.type == eventTypes.PAYOUT_UPDATED) {
 
         } else if (event.type == eventTypes.CHARGE_SUCCEEDED) {
-
+            // TODO - execute transfers to associated mechanic/referrer 
         } else if (event.type == eventTypes.ACCOUNT_UPDATED) {
             const verification = event.data.object.verification;
             if (!verification) {
