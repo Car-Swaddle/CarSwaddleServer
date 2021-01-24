@@ -66,10 +66,13 @@ AutoServiceScheduler.prototype.scheduleAutoService = async function (user, statu
     const mechanicTransferAmount = prices.transferAmount;
     var referrerTransferAmount = null;
     if (payStructureID) {
+        console.info(`Using payment intents for this user ${user.id} with ties to pay structure ${payStructureID}`)
         const payStructure = this.models.PayStructure.findByPk(payStructureID);
         referrerTransferAmount = prices.subtotal * payStructure.percentageOfPurchase;
-        if (referrerTransferAmount > (prices.bookingFee + prices.bookingFeeDiscount)) {
-            referrerTransferAmount = prices.bookingFee + prices.bookingFeeDiscount;
+        if (referrerTransferAmount > (prices.subTotal * 0.5)) {
+            // Sanity check, should never be above 50% for a referrer
+            console.warn(`Referrer transfer amount was over 50%, check for user ${user.id}, pay structure ${payStructureID}`)
+            referrerTransferAmount = prices.subTotal * 0.5;
         }
         referrerTransferAmount = referrerTransferAmount >= 0 ? referrerTransferAmount : 0;
 
