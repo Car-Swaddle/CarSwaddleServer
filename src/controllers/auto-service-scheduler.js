@@ -63,17 +63,15 @@ AutoServiceScheduler.prototype.scheduleAutoService = async function (user, statu
     couponID, payStructureID, referrerID, notes, callback) {
     
     var paymentIntentID = null;
-    var mechanicTransferAmount = prices.transferAmount;
+    const mechanicTransferAmount = prices.transferAmount;
     var referrerTransferAmount = null;
     if (payStructureID) {
         const payStructure = this.models.PayStructure.findByPk(payStructureID);
         referrerTransferAmount = prices.subtotal * payStructure.percentageOfPurchase;
-        if (referrerTransferAmount > prices.subtotal) {
-            callback("Invalid referrer transfer amount")
-            return;
-        } else {
-            mechanicTransferAmount = mechanicTransferAmount - referrerTransferAmount;
+        if (referrerTransferAmount > (prices.bookingFee + prices.bookingFeeDiscount)) {
+            referrerTransferAmount = prices.bookingFee + prices.bookingFeeDiscount;
         }
+        referrerTransferAmount = referrerTransferAmount >= 0 ? referrerTransferAmount : 0;
 
         stripe.paymentIntents.create({
             amount: prices.total,
