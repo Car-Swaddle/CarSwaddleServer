@@ -314,6 +314,7 @@ module.exports = function (router, models) {
 
         var finalCoupon = requestCoupon;
         var payStructure = null;
+        var referrerID = null;
 
         if (req.user.activeReferrerID) {
             const referrer = await models.Referrer.findByPk(req.user.activeReferrerID, {
@@ -322,6 +323,7 @@ module.exports = function (router, models) {
                     {model: models.PayStructure}
                 ] 
             });
+            referrerID = referrer.id;
 
             var removeActiveReferrer = false;
             if (referrer.userID && req.user.id == referrer.userID) {
@@ -387,7 +389,7 @@ module.exports = function (router, models) {
 
         autoServiceScheduler.scheduleAutoService(req.user, status, scheduledDate, vehicleID, mechanicID, sourceID,
             prices, oilType, serviceEntities, address, locationID, taxRate,
-            finalCoupon ? finalCoupon.id : null, payStructure ? payStructure.id : null, notes, function (err, autoService) {
+            finalCoupon ? finalCoupon.id : null, payStructure ? payStructure.id : null, referrerID, notes, function (err, autoService) {
             if (!err) {
                 return res.json(autoService);
             } else {
