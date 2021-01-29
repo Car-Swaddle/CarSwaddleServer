@@ -314,6 +314,7 @@ module.exports = function (router, models) {
 
         var finalCoupon = requestCoupon;
         var payStructure = null;
+        var referrerID = null;
 
         if (req.user.activeReferrerID) {
             const referrer = await models.Referrer.findByPk(req.user.activeReferrerID, {
@@ -322,13 +323,15 @@ module.exports = function (router, models) {
                     {model: models.PayStructure}
                 ] 
             });
+            referrerID = referrer.id;
 
             var removeActiveReferrer = false;
             if (referrer.userID && req.user.id == referrer.userID) {
                 removeActiveReferrer = true;
             }
-            const referrerCoupon = referrer.getActiveCoupon();
-            const referrerPayStructure = referrer.getActivePayStructure();
+
+            const referrerCoupon = (await referrer.getCoupons()).find(c => c.id == referrer.activeCouponID);
+            const referrerPayStructure = (await referrer.getPayStructures()).find(ps => ps.id == referrer.activePayStructureID);
             if (referrerCoupon && !finalCoupon) {
                 finalCoupon = referrerCoupon;
             }
@@ -342,7 +345,7 @@ module.exports = function (router, models) {
                         SELECT DISTINCT a."id" FROM "transactionMetadata" tm
                         INNER JOIN "autoService" a ON tm."autoServiceID" = a."id"
                         INNER JOIN "user" u ON u."id" = a."userID"
-                        WHERE t."referrerID" = :referrerID AND u."id" = :userID
+                        WHERE tm."referrerID" = :referrerID AND u."id" = :userID
                     ) tsub;
                 `, {
                     replacements: {referrerID: referrer.id, userID: req.user.id},
@@ -387,7 +390,7 @@ module.exports = function (router, models) {
 
         autoServiceScheduler.scheduleAutoService(req.user, status, scheduledDate, vehicleID, mechanicID, sourceID,
             prices, oilType, serviceEntities, address, locationID, taxRate,
-            finalCoupon ? finalCoupon.id : null, payStructure ? payStructure.id : null, notes, function (err, autoService) {
+            finalCoupon ? finalCoupon.id : null, payStructure ? payStructure.id : null, referrerID, notes, function (err, autoService) {
             if (!err) {
                 return res.json(autoService);
             } else {

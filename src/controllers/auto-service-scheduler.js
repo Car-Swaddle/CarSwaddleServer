@@ -60,10 +60,45 @@ AutoServiceScheduler.prototype.findAutoServices = function (mechanicID, userID, 
 
 AutoServiceScheduler.prototype.scheduleAutoService = async function (user, status, scheduledDate, vehicleID, mechanicID, sourceID,
     prices, oilType, serviceEntities, location, locationID, taxRate,
-    couponID, payStructureID, notes, callback) {
+    couponID, payStructureID, referrerID, notes, callback) {
     
+    var paymentIntentID = null;
+    const mechanicTransferAmount = prices.transferAmount;
+    var referrerTransferAmount = null;
     if (payStructureID) {
-        // Create/confirm payment intent here
+        console.info(`Using payment intents for this user ${user.id} with ties to pay structure ${payStructureID}`)
+        const payStructure = await this.models.PayStructure.findByPk(payStructureID);
+        referrerTransferAmount = prices.subtotal * payStructure.percentageOfPurchase;
+        if (referrerTransferAmount > (prices.subTotal * 0.5)) {
+            // Sanity check, should never be above 50% for a referrer
+            console.warn(`Referrer transfer amount was over 50%, check for user ${user.id}, pay structure ${payStructureID}`)
+            referrerTransferAmount = prices.subTotal * 0.5;
+        }
+        referrerTransferAmount = referrerTransferAmount >= 0 ? referrerTransferAmount : 0;
+
+        try {
+            const paymentIntent = await stripe.paymentIntents.create({
+                amount: prices.total,
+                currency: 'usd',
+                payment_method: sourceID,
+                customer: user.stripeCustomerID,
+                confirm: true,
+                metadata: {
+                    user_id: user.id,
+                    mechanic_id: mechanicID,
+                    vehicle_id: vehicleID,
+                    scheduled_date: scheduledDate
+                }
+            });
+            paymentIntentID = paymentIntent.id;
+        } catch (error) {
+            console.error(`Error confirming payment intent: ${error}`);
+        }
+
+        if (!paymentIntentID) {
+            callback(`Unable to complete payment intent`, null)
+            return;
+        }
     } else {
         var invoice = await this.stripeCharges.updateDraft(user.stripeCustomerID, prices, {
             transferAmount: prices.transferAmount,
@@ -79,14 +114,13 @@ AutoServiceScheduler.prototype.scheduleAutoService = async function (user, statu
         }
     }
 
-    // Allow a payment intent storage here
+    // TODO - pass a transaction for all of these to allow reverts, create all at the same time and do notifications after all succeed
     this.createAutoService(user, mechanicID, status, scheduledDate, vehicleID, invoice, transfer, prices.transferAmount, sourceID, serviceEntities, locationID, location, couponID, notes, async (err, autoService) => {
         if (err) {
             callback(err, null);
             return;
         }
 
-        // TODO - transaction around these steps, hopefully create than all at the same time and do notifications after all succeed
         this.setupServiceEntities(serviceEntities, autoService, async (err, serviceEntities) => {
             const fetchedAutoService = await this.models.AutoService.findOne({
                 where: { id: autoService.id },
@@ -97,9 +131,8 @@ AutoServiceScheduler.prototype.scheduleAutoService = async function (user, statu
             this.sendNotification(user, mechanic, fetchedAutoService);
             this.reminder.scheduleRemindersForAutoService(fetchedAutoService);
 
-            const mechanicCost = parseInt(invoice.metadata.mechanicCost, 10);
-
-            this.createTransactionMetadata(mechanic, fetchedAutoService.location, mechanicCost, fetchedAutoService, fetchedAutoService.balanceTransactionID, async (err, transactionMetadata) => {
+            this.createTransactionMetadata(mechanic, fetchedAutoService.location, prices.mechanicCost, fetchedAutoService,
+                paymentIntentID, couponID, referrerID, payStructureID, mechanicTransferAmount, referrerTransferAmount, async (err, transactionMetadata) => {
                 const lastAutoService = await this.models.AutoService.findOne({
                     where: { id: fetchedAutoService.id },
                     include: this.includeDict(),
@@ -179,7 +212,6 @@ AutoServiceScheduler.prototype.createAutoService = async function (user, mechani
     }
 
     if (!vehicleID) { callback('invalid parameters, vehicleID', null); return; }
-    if (!invoice) { callback('invalid parameters, invoice'); return; }
     if (!sourceID) { callback('invalid parameters, sourceID'); return; }
     if (serviceEntities.length <= 0) { callback('invalid parameters, at least one serviceEntities', null); return; }
 
@@ -212,8 +244,8 @@ AutoServiceScheduler.prototype.createAutoService = async function (user, mechani
         status: status,
         notes: notes,
         scheduledDate: scheduledDate,
-        invoiceID: invoice.id,
-        chargeID: invoice.charge,
+        invoiceID: invoice ? invoice.id : "",
+        chargeID: invoice ? invoice.charge : "",
         transferID: transfer && transfer.id,
         balanceTransactionID: transfer && transfer.destination_payment.balance_transaction,
         transferAmount,
@@ -297,14 +329,26 @@ AutoServiceScheduler.prototype.isDateInMechanicSlot = async function (scheduledD
     return timeSpan != null
 }
 
-AutoServiceScheduler.prototype.createTransactionMetadata = async function (mechanic, location, mechanicCost, autoService, stripeTransactionID, callback) {
+AutoServiceScheduler.prototype.createTransactionMetadata = async function (mechanic, location, mechanicCost, autoService, 
+    paymentIntentID, couponID, referrerID, payStructureID, mechanicTransferAmount, referrerTransferAmount, callback) {
     const region = await mechanic.getRegion();
     if (!region) { callback('unable to get region', null) }
     const locationPoint = { latitude: location.point.coordinates[1], longitude: location.point.coordinates[0] };
     const regionPoint = { latitude: region.origin.coordinates[1], longitude: region.origin.coordinates[0] };
     const meters = distance.metersBetween(locationPoint, regionPoint);
 
-    const transactionMetadata = await this.models.TransactionMetadata.create({ id: uuidV1(), stripeTransactionID: stripeTransactionID, mechanicCost: mechanicCost, drivingDistance: meters });
+    const transactionMetadata = await this.models.TransactionMetadata.create({
+        id: uuidV1(),
+        stripeTransactionID: autoService.balanceTransactionID,
+        mechanicCost: mechanicCost,
+        drivingDistance: meters,
+        stripePaymentIntentID: paymentIntentID,
+        couponID: couponID,
+        referrerID: referrerID,
+        payStructureID: payStructureID,
+        mechanicTransferAmount: mechanicTransferAmount,
+        referrerTransferAmount: referrerTransferAmount,
+    });
     if (!transactionMetadata) { callback('unable to get transactionMetadata', null) }
     transactionMetadata.setAutoService(autoService, { save: false });
     transactionMetadata.setMechanic(mechanic, { save: false });

@@ -45,20 +45,6 @@ const referrer = function (sequelize, DataTypes) {
         Referrer.hasMany(models.PayStructure, { foreignKey: "referrerID", allowNull: true, constraints: false });
     };
 
-    Referrer.getActiveCoupon = () => {
-        if (!this.getCoupons()) {
-            throw 'Coupons not fetched'
-        }
-        return this.getCoupons().find(c => c.getId() == this.getActiveCouponID());
-    }
-
-    Referrer.getActivePayStructure = () => {
-        if (!this.getPayStructures()) {
-            throw 'Pay structures not fetched'
-        }
-        return this.getPayStructures().find(ps => ps.getId() == this.getActivePayStructureID());
-    }
-
     return Referrer;
 };
 
