@@ -212,7 +212,6 @@ AutoServiceScheduler.prototype.createAutoService = async function (user, mechani
     }
 
     if (!vehicleID) { callback('invalid parameters, vehicleID', null); return; }
-    // if (!invoice) { callback('invalid parameters, invoice'); return; }
     if (!sourceID) { callback('invalid parameters, sourceID'); return; }
     if (serviceEntities.length <= 0) { callback('invalid parameters, at least one serviceEntities', null); return; }
 
@@ -245,8 +244,8 @@ AutoServiceScheduler.prototype.createAutoService = async function (user, mechani
         status: status,
         notes: notes,
         scheduledDate: scheduledDate,
-        invoiceID: invoice ? invoice.id : "none",
-        chargeID: invoice ? invoice.charge : "none",
+        invoiceID: invoice ? invoice.id : "",
+        chargeID: invoice ? invoice.charge : "",
         transferID: transfer && transfer.id,
         balanceTransactionID: transfer && transfer.destination_payment.balance_transaction,
         transferAmount,
