@@ -123,15 +123,11 @@ AutoServiceScheduler.prototype.scheduleAutoService = async function (user, statu
         await this.createTransactionMetadata(mechanic, autoService.location, prices.mechanicCost, autoService,
             paymentIntentID, couponID, referrerID, payStructureID, mechanicTransferAmount, referrerTransferAmount, transaction);
 
-        await transaction.commit();
-
         await stripe.paymentIntents.confirm(paymentIntentID);
+
+        await transaction.commit();
     } catch (error) {
-        try {
-            await transaction.rollback();
-        } catch (rollbackError) {
-            console.error(`Unable to rollback transaction, maybe have been committed already`)
-        }
+        await transaction.rollback();
         console.error(`Unable to complete schedule for user ${user.id}: ${error} ${error.stack}`)
         callback(error, null);
         return;
