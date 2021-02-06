@@ -63,26 +63,45 @@ AutoServiceScheduler.prototype.scheduleAutoService = async function (user, statu
     couponID, payStructureID, referrerID, notes, callback) {
     
     var paymentIntentID = null;
+    const usePaymentIntent = payStructureID != null;
     const mechanicTransferAmount = prices.transferAmount;
     var referrerTransferAmount = null;
-    if (payStructureID) {
-        console.info(`Using payment intents for this user ${user.id} with ties to pay structure ${payStructureID}`)
-        const payStructure = await this.models.PayStructure.findByPk(payStructureID);
-        referrerTransferAmount = prices.subtotal * payStructure.percentageOfPurchase;
-        if (referrerTransferAmount > (prices.subTotal * 0.5)) {
-            // Sanity check, should never be above 50% for a referrer
-            console.warn(`Referrer transfer amount was over 50%, check for user ${user.id}, pay structure ${payStructureID}`)
-            referrerTransferAmount = prices.subTotal * 0.5;
-        }
-        referrerTransferAmount = referrerTransferAmount >= 0 ? referrerTransferAmount : 0;
+    var autoService = null;
+    var transaction = await this.models.sequelize.transaction();
+    const mechanic = await this.models.Mechanic.findByPk(mechanicID);
 
-        try {
+    try {
+
+        if (payStructureID) {
+            console.info(`Using payment intents for this user ${user.id} with ties to pay structure ${payStructureID}`)
+            const payStructure = await this.models.PayStructure.findByPk(payStructureID);
+            referrerTransferAmount = prices.subtotal * payStructure.percentageOfPurchase;
+            if (referrerTransferAmount > (prices.subTotal * 0.5)) {
+                // Sanity check, should never be above 50% for a referrer
+                console.warn(`Referrer transfer amount was over 50%, check for user ${user.id}, pay structure ${payStructureID}`)
+                referrerTransferAmount = prices.subTotal * 0.5;
+            }
+            referrerTransferAmount = referrerTransferAmount >= 0 ? referrerTransferAmount : 0;
+        }
+
+        autoService = await this.createAutoService(user, mechanicID, status, scheduledDate, vehicleID, invoice, transfer, prices.transferAmount, sourceID, serviceEntities, locationID, location, couponID, notes, transaction);
+
+        await this.setupServiceEntities(serviceEntities, autoService, transaction);
+
+        // Refetch to get all relationships
+        autoService = await this.models.AutoService.findOne({
+            where: { id: autoService.id },
+            transaction: transaction,
+            include: this.includeDict(),
+        });
+
+        if (usePaymentIntent) {
             const paymentIntent = await stripe.paymentIntents.create({
                 amount: prices.total,
                 currency: 'usd',
                 payment_method: sourceID,
                 customer: user.stripeCustomerID,
-                confirm: true,
+                transfer_group: autoService.id,
                 metadata: {
                     user_id: user.id,
                     mechanic_id: mechanicID,
@@ -91,57 +110,37 @@ AutoServiceScheduler.prototype.scheduleAutoService = async function (user, statu
                 }
             });
             paymentIntentID = paymentIntent.id;
-        } catch (error) {
-            console.error(`Error confirming payment intent: ${error}`);
+        } else {
+            var invoice = await this.stripeCharges.updateDraft(user.stripeCustomerID, prices, {
+                transferAmount: prices.transferAmount,
+                mechanicCost: prices.mechanicCost,
+                mechanicID,
+                oilType,
+            }, taxRate);
+            var { invoice, transfer } = await this.stripeCharges.payInvoices(invoice.id, sourceID, mechanicID, prices.transferAmount);
         }
 
-        if (!paymentIntentID) {
-            callback(`Unable to complete payment intent`, null)
-            return;
-        }
-    } else {
-        var invoice = await this.stripeCharges.updateDraft(user.stripeCustomerID, prices, {
-            transferAmount: prices.transferAmount,
-            mechanicCost: prices.mechanicCost,
-            mechanicID,
-            oilType,
-        }, taxRate);
-        var { invoice, transfer } = await this.stripeCharges.payInvoices(invoice.id, sourceID, mechanicID, prices.transferAmount);
+        await this.createTransactionMetadata(mechanic, autoService.location, prices.mechanicCost, autoService,
+            paymentIntentID, couponID, referrerID, payStructureID, mechanicTransferAmount, referrerTransferAmount, transaction);
 
-        if (!invoice) {
-            callback('unable to create charge', null);
-            return
+        await transaction.commit();
+
+        await stripe.paymentIntents.confirm(paymentIntentID);
+    } catch (error) {
+        try {
+            await transaction.rollback();
+        } catch (rollbackError) {
+            console.error(`Unable to rollback transaction, maybe have been committed already`)
         }
+        console.error(`Unable to complete schedule for user ${user.id}: ${error} ${error.stack}`)
+        callback(error, null);
+        return;
     }
 
-    // TODO - pass a transaction for all of these to allow reverts, create all at the same time and do notifications after all succeed
-    this.createAutoService(user, mechanicID, status, scheduledDate, vehicleID, invoice, transfer, prices.transferAmount, sourceID, serviceEntities, locationID, location, couponID, notes, async (err, autoService) => {
-        if (err) {
-            callback(err, null);
-            return;
-        }
-
-        this.setupServiceEntities(serviceEntities, autoService, async (err, serviceEntities) => {
-            const fetchedAutoService = await this.models.AutoService.findOne({
-                where: { id: autoService.id },
-                include: this.includeDict(),
-            });
-
-            const mechanic = await this.models.Mechanic.findByPk(mechanicID);
-            this.sendNotification(user, mechanic, fetchedAutoService);
-            this.reminder.scheduleRemindersForAutoService(fetchedAutoService);
-
-            this.createTransactionMetadata(mechanic, fetchedAutoService.location, prices.mechanicCost, fetchedAutoService,
-                paymentIntentID, couponID, referrerID, payStructureID, mechanicTransferAmount, referrerTransferAmount, async (err, transactionMetadata) => {
-                const lastAutoService = await this.models.AutoService.findOne({
-                    where: { id: fetchedAutoService.id },
-                    include: this.includeDict(),
-                });
-
-                callback(err, lastAutoService);
-            });
-        });
-    });
+    // Everything completed successfully - send notifications
+    this.sendNotification(user, mechanic, autoService);
+    this.reminder.scheduleRemindersForAutoService(autoService);    
+    callback(null, autoService);
 }
 
 AutoServiceScheduler.prototype.sendNotification = function (user, mechanic, autoService) {
@@ -149,7 +148,7 @@ AutoServiceScheduler.prototype.sendNotification = function (user, mechanic, auto
     this.emailer.sendMechanicNewServiceEmail(user, mechanic, autoService);
 }
 
-AutoServiceScheduler.prototype.setupServiceEntities = async function (serviceEntities, autoService, callback) {
+AutoServiceScheduler.prototype.setupServiceEntities = async function (serviceEntities, autoService, transaction) {
     var entityTypeToSpecificEntities = {};
 
     for (var i = 0; i < serviceEntities.length; i++) {
@@ -169,75 +168,78 @@ AutoServiceScheduler.prototype.setupServiceEntities = async function (serviceEnt
         for (var j = 0; j < specificServices.length; j++) {
             if (key == 'OIL_CHANGE') {
                 const specificService = specificServices[j];
-                const p = this.createOilChange(specificService, key, autoService);
+                const p = this.createOilChange(specificService, key, autoService, transaction);
                 serviceEntityPromises.push(p);
             }
         }
     }
 
     const values = await Promise.all(serviceEntityPromises);
-    var err = values == null ? 'unable to create service entities' : null;
-    callback(err, values);
+    if (values == null) {
+        throw('unable to create service entities')
+    }
 }
 
-AutoServiceScheduler.prototype.createOilChange = function (service, key, autoService) {
-    const self = this;
-    return this.models.OilChange.create({
+AutoServiceScheduler.prototype.createOilChange = async function (service, key, autoService, transaction) {
+    const oilChange = await this.models.OilChange.create({
         id: uuidV1(),
         oilType: service.oilType
-    }).then(oilChange => {
-        return self.models.ServiceEntity.create({
-            id: uuidV1(),
-            entityType: key,
-            autoService: autoService,
-            oilChange: oilChange
-        }).then(serviceEntity => {
-            serviceEntity.setOilChange(oilChange);
-            serviceEntity.setAutoService(autoService);
-            return serviceEntity.save();
-        });
-    })
+    }, { transaction: transaction});
+
+    const serviceEntity = await this.models.ServiceEntity.create({
+        id: uuidV1(),
+        entityType: key,
+        autoService: autoService,
+        oilChange: oilChange
+    }, { transaction: transaction});
+    
+    // Do we need this? Seems like they should be set above
+    serviceEntity.setOilChange(oilChange);
+    serviceEntity.setAutoService(autoService);
+    await serviceEntity.save({transaction: transaction});
 }
 
-AutoServiceScheduler.prototype.createAutoService = async function (user, mechanicID, status, scheduledDate, vehicleID, invoice, transfer, transferAmount, sourceID, serviceEntities, locationID, location, couponID, notes, callback) {
-    if (this.models.AutoService.isValidStatus(status) == false) { callback('Invalid status:' + status, null); return; }
-    if (!scheduledDate) { callback('invalid parameters, scheduledDate', null); return; }
+AutoServiceScheduler.prototype.createAutoService = async function (user, mechanicID, status, scheduledDate, vehicleID, invoice, transfer, transferAmount, sourceID, serviceEntities, locationID, location, couponID, notes, transaction) {
+    if (this.models.AutoService.isValidStatus(status) == false) { 
+        throw('Invalid status:' + status);
+    }
+    if (!scheduledDate) {
+        throw('invalid parameters, scheduledDate');
+    }
 
     const inTimeSlot = await this.isDateInMechanicSlot(scheduledDate, user, mechanicID);
     const isAlreadyScheduled = await this.isDatePreviouslyScheduled(scheduledDate, user, mechanicID);
 
     if (this.isValidScheduledDate(scheduledDate, user) == false || inTimeSlot == false || isAlreadyScheduled == true) {
-        callback('invalid parameters, scheduledDate is not available or an invalid date', null);
-        return;
+        throw('invalid parameters, scheduledDate is not available or an invalid date');
     }
 
-    if (!vehicleID) { callback('invalid parameters, vehicleID', null); return; }
-    if (!sourceID) { callback('invalid parameters, sourceID'); return; }
-    if (serviceEntities.length <= 0) { callback('invalid parameters, at least one serviceEntities', null); return; }
+    if (!vehicleID) { throw('invalid parameters, vehicleID'); }
+    if (!sourceID) { throw('invalid parameters, sourceID'); }
+    if (serviceEntities.length <= 0) { throw('invalid parameters, at least one serviceEntities'); }
 
     var locationPromise = null;
     if (locationID != null) {
-        locationPromise = this.models.Location.findByPk(locationID);
+        locationPromise = this.models.Location.findByPk(locationID, {transaction: transaction});
     } else if (location != null && location.latitude != null && location.longitude != null) {
         var point = { type: 'Point', coordinates: [location.longitude, location.latitude] };
         locationPromise = this.models.Location.create({
             point: point,
             streetAddress: location.streetAddress,
             id: uuidV1(),
-        });
+        }, {transaction: transaction});
     } else {
-        callback('invalid parameters, need locationID or location', null);
-        return;
+        throw('invalid parameters, need locationID or location');
     }
 
-    if (!mechanicID) { callback('invalid parameters, mechanicID', null); return; }
+    if (!mechanicID) { throw('invalid parameters, mechanicID'); }
 
     const fetchedLocation = await locationPromise;
-    if (!fetchedLocation) { callback('invalid parameters, no location', null); return; }
-    const mechanic = await this.models.Mechanic.findByPk(mechanicID);
-    if (!mechanic) { callback('invalid parameters, no location', null); return; }
-    const vehicle = await this.models.Vehicle.findByPk(vehicleID);
-    if (!vehicle) { callback('invalid parameters, no location', null); return; }
+    if (!fetchedLocation) { throw('invalid parameters, no location'); }
+    const mechanic = await this.models.Mechanic.findByPk(mechanicID, {transaction: transaction});
+    if (!mechanic) { throw('invalid parameters, no location'); }
+    const vehicle = await this.models.Vehicle.findByPk(vehicleID, {transaction: transaction});
+    if (!vehicle) { throw('invalid parameters, no location'); }
 
     const autoService = await this.models.AutoService.create({
         id: uuidV1(),
@@ -248,15 +250,23 @@ AutoServiceScheduler.prototype.createAutoService = async function (user, mechani
         chargeID: invoice ? invoice.charge : "",
         transferID: transfer && transfer.id,
         balanceTransactionID: transfer && transfer.destination_payment.balance_transaction,
-        transferAmount,
-        couponID,
-    });
-    autoService.setMechanic(mechanic, { save: false });
-    autoService.setUser(user, { save: false });
-    autoService.setVehicle(vehicle, { save: false });
-    autoService.setLocation(fetchedLocation, { save: false });
-    const newAutoService = await autoService.save();
-    callback(null, newAutoService);
+        transferAmount: transferAmount,
+        couponID: couponID,
+        mechanic: mechanic,
+        user: user,
+        vehicle: vehicle,
+    }, {transaction: transaction});
+
+    fetchedLocation.setAutoService(autoService, {save: false});
+    await fetchedLocation.save({transaction: transaction})
+
+    // // TODO - save these in the above create
+    // autoService.setMechanic(mechanic, { save: false });
+    // autoService.setUser(user, { save: false });
+    // autoService.setVehicle(vehicle, { save: false });
+    // autoService.setLocation(fetchedLocation, { save: false });
+    // return await autoService.save({transaction: transaction});
+    return autoService;
 }
 
 AutoServiceScheduler.prototype.isValidScheduledDate = function (scheduledDateString, user) {
@@ -330,9 +340,9 @@ AutoServiceScheduler.prototype.isDateInMechanicSlot = async function (scheduledD
 }
 
 AutoServiceScheduler.prototype.createTransactionMetadata = async function (mechanic, location, mechanicCost, autoService, 
-    paymentIntentID, couponID, referrerID, payStructureID, mechanicTransferAmount, referrerTransferAmount, callback) {
+    paymentIntentID, couponID, referrerID, payStructureID, mechanicTransferAmount, referrerTransferAmount, transaction) {
     const region = await mechanic.getRegion();
-    if (!region) { callback('unable to get region', null) }
+    if (!region) { throw('unable to get region'); }
     const locationPoint = { latitude: location.point.coordinates[1], longitude: location.point.coordinates[0] };
     const regionPoint = { latitude: region.origin.coordinates[1], longitude: region.origin.coordinates[0] };
     const meters = distance.metersBetween(locationPoint, regionPoint);
@@ -348,15 +358,18 @@ AutoServiceScheduler.prototype.createTransactionMetadata = async function (mecha
         payStructureID: payStructureID,
         mechanicTransferAmount: mechanicTransferAmount,
         referrerTransferAmount: referrerTransferAmount,
-    });
-    if (!transactionMetadata) { callback('unable to get transactionMetadata', null) }
+    }, {transaction: transaction});
+
+    if (!transactionMetadata) { throw('unable to get transactionMetadata') }
     transactionMetadata.setAutoService(autoService, { save: false });
     transactionMetadata.setMechanic(mechanic, { save: false });
     autoService.transactionMetadata = transactionMetadata;
-    await transactionMetadata.save();
-    await autoService.save();
 
-    callback(null, transactionMetadata);
+    // TODO - do we need a double save here?
+    await transactionMetadata.save({transaction: transaction});
+    await autoService.save({transaction: transaction});
+
+    return transactionMetadata;
 }
 
 

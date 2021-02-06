@@ -70,6 +70,18 @@ const transactionMetadata = function (sequelize, DataTypes) {
         TransactionMetadata.hasMany(models.TransactionReceipt, { foreignKey: 'transactionMetadataID' });
     };
 
+    TransactionMetadata.fetchWithPayStructureID = (payStructureID) => {
+        if (!payStructureID) {
+            return Promise.resolve(null);
+        }
+
+        return TransactionMetadata.findOne({
+            where: {
+                payStructureID: payStructureID
+            }
+        });
+    };
+
     return TransactionMetadata;
 };
 
