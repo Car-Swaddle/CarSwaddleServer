@@ -283,6 +283,8 @@ module.exports = function (router, models) {
             couponID,
         } = req.body;
 
+        const usePaymentIntent = req.query.usePaymentIntent || false;
+
         const oilChangeService = serviceEntities.find(x => x.entityType === 'OIL_CHANGE');
         const oilType = oilChangeService && oilChangeService.specificService.oilType;
 
@@ -316,7 +318,7 @@ module.exports = function (router, models) {
         var payStructure = null;
         var referrerID = null;
 
-        if (req.user.activeReferrerID) {
+        if (usePaymentIntent && req.user.activeReferrerID) {
             const referrer = await models.Referrer.findByPk(req.user.activeReferrerID, {
                 include: [
                     {model: models.Coupon},
@@ -390,7 +392,7 @@ module.exports = function (router, models) {
 
         autoServiceScheduler.scheduleAutoService(req.user, status, scheduledDate, vehicleID, mechanicID, sourceID,
             prices, oilType, serviceEntities, address, locationID, taxRate,
-            finalCoupon ? finalCoupon.id : null, payStructure ? payStructure.id : null, referrerID, notes, function (err, autoService) {
+            finalCoupon ? finalCoupon.id : null, payStructure ? payStructure.id : null, referrerID, usePaymentIntent, notes, function (err, autoService) {
             if (!err) {
                 return res.json(autoService);
             } else {

@@ -76,12 +76,21 @@ StripeCharges.prototype.monthlyDebitFee = function (mechanicPayment) {
 
 StripeCharges.prototype.executeTransfers = async function(paymentIntentID) {
     const transactionMetadata = await this.models.TransactionMetadata.fetchWithPayStructureID(paymentIntentID);
+    const autoServiceID = transactionMetadata.autoServiceID;
 
     if (transactionMetadata.mechanicTransferAmount && transactionMetadata.mechanicTransferAmount != 0) {
         if (transactionMetadata.stripeMechanicTransferID) {
             console.warn(`Mechanic transaction id already found: ${transactionMetadata.stripeMechanicTransferID}`)
         } else {
-            // Perform transfer
+            const mechanic = await transactionMetadata.getMechanic();
+            const transfer = await stripe.transfers.create({
+                amount: transactionMetadata.mechanicTransferAmount,
+                current: 'usd',
+                destination: mechanic.stripeAccountID,
+                description: `Transfer to mechanic ${mechanic.id}`,
+                transfer_group: autoServiceID,
+            });
+            transactionMetadata.setStripeMechanicTransferID(transfer.id);
         }
     }
 
@@ -89,9 +98,19 @@ StripeCharges.prototype.executeTransfers = async function(paymentIntentID) {
         if (transactionMetadata.stripeReferrerTransferID) {
             console.warn(`Referrer transaction id already found: ${transactionMetadata.stripeReferrerTransferID}`)
         } else {
-            // Perform transfer
+            const referrer = await this.models.Referrer.findByPk(transactionMetadata.referrerID);
+            const transfer = await stripe.transfers.create({
+                amount: transactionMetadata.referrerTransferAmount,
+                current: 'usd',
+                destination: referrer.stripeExpressAccountID,
+                description: `Transfer to referrer ${referrer.id}`,
+                transfer_group: autoServiceID,
+            });
+            transactionMetadata.setStripeReferrerTransferID(transfer.id);
         }
     }
+
+    await transactionMetadata.save();
 }
 
 StripeCharges.prototype.payInvoices = async function(invoiceID, sourceID, mechanicID, transferAmount) {

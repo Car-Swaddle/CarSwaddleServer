@@ -119,6 +119,7 @@ module.exports = function (app, models) {
             console.info(event.data.object);
             const paymentIntentId = event.data.object.id;
             stripeCharges.executeTransfers(paymentIntentId);
+            return res.json({ received: true })
         }
 
         return res.json({ received: true });

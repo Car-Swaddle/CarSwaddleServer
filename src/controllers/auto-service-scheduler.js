@@ -60,10 +60,9 @@ AutoServiceScheduler.prototype.findAutoServices = function (mechanicID, userID, 
 
 AutoServiceScheduler.prototype.scheduleAutoService = async function (user, status, scheduledDate, vehicleID, mechanicID, sourceID,
     prices, oilType, serviceEntities, location, locationID, taxRate,
-    couponID, payStructureID, referrerID, notes, callback) {
+    couponID, payStructureID, referrerID, usePaymentIntent, notes, callback) {
     
     var paymentIntentID = null;
-    const usePaymentIntent = payStructureID != null;
     const mechanicTransferAmount = prices.transferAmount;
     var referrerTransferAmount = null;
     var autoService = null;
@@ -123,7 +122,9 @@ AutoServiceScheduler.prototype.scheduleAutoService = async function (user, statu
         await this.createTransactionMetadata(mechanic, autoService.location, prices.mechanicCost, autoService,
             paymentIntentID, couponID, referrerID, payStructureID, mechanicTransferAmount, referrerTransferAmount, transaction);
 
-        await stripe.paymentIntents.confirm(paymentIntentID);
+        if (usePaymentIntent) {
+            await stripe.paymentIntents.confirm(paymentIntentID);
+        }
 
         await transaction.commit();
     } catch (error) {
