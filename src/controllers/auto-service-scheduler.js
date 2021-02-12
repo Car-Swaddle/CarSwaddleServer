@@ -74,9 +74,9 @@ AutoServiceScheduler.prototype.scheduleAutoService = async function (user, statu
         if (payStructureID) {
             console.info(`Using payment intents for this user ${user.id} with ties to pay structure ${payStructureID}`)
             const payStructure = await this.models.PayStructure.findByPk(payStructureID);
-            referrerTransferAmount = prices.subtotal * payStructure.percentageOfPurchase;
+            referrerTransferAmount = Math.abs(prices.bookingFee + prices.bookingFeeDiscount) * payStructure.percentageOfProfit;
             if (referrerTransferAmount > (prices.subTotal * 0.5)) {
-                // Sanity check, should never be above 50% for a referrer
+                // Sanity check, should never be above 50% of our cost for a referrer
                 console.warn(`Referrer transfer amount was over 50%, check for user ${user.id}, pay structure ${payStructureID}`)
                 referrerTransferAmount = prices.subTotal * 0.5;
             }
@@ -249,13 +249,12 @@ AutoServiceScheduler.prototype.createAutoService = async function (user, mechani
         balanceTransactionID: transfer && transfer.destination_payment.balance_transaction,
         transferAmount: transferAmount,
         couponID: couponID,
-        mechanic: mechanic,
-        user: user,
-        vehicle: vehicle,
+        mechanicID: mechanic.id,
+        userID: user.id,
+        vehicleID: vehicle.id,
     }, {transaction: transaction});
 
-    fetchedLocation.setAutoService(autoService, {save: false});
-    await fetchedLocation.save({transaction: transaction})
+    await fetchedLocation.setAutoService(autoService.id, {transaction: transaction});
 
     // // TODO - save these in the above create
     // autoService.setMechanic(mechanic, { save: false });
@@ -355,16 +354,19 @@ AutoServiceScheduler.prototype.createTransactionMetadata = async function (mecha
         payStructureID: payStructureID,
         mechanicTransferAmount: mechanicTransferAmount,
         referrerTransferAmount: referrerTransferAmount,
+        autoServiceID: autoService.id,
+        mechanicID: mechanic.id,
+
     }, {transaction: transaction});
 
     if (!transactionMetadata) { throw('unable to get transactionMetadata') }
-    transactionMetadata.setAutoService(autoService, { save: false });
-    transactionMetadata.setMechanic(mechanic, { save: false });
-    autoService.transactionMetadata = transactionMetadata;
+    // transactionMetadata.setAutoService(autoService, { save: false });
+    // transactionMetadata.setMechanic(mechanic, { save: false });
+    // autoService.transactionMetadata = transactionMetadata;
 
-    // TODO - do we need a double save here?
-    await transactionMetadata.save({transaction: transaction});
-    await autoService.save({transaction: transaction});
+    // // TODO - do we need a double save here?
+    // await transactionMetadata.save({transaction: transaction});
+    // await autoService.save({transaction: transaction});
 
     return transactionMetadata;
 }

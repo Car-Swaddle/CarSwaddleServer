@@ -8,7 +8,7 @@ module.exports = {
 
 
     let definition = await queryInterface.describeTable(transactionMetadataTableName);
-    if (definition.paymentIntentID) {
+    if (definition.stripePaymentIntentID) {
         console.warn(`Payment intent id already exists on ${transactionMetadataTableName}, skipping migration`);
         return;
     }

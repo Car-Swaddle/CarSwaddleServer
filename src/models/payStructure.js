@@ -5,7 +5,7 @@ const payStructure = function (sequelize, DataTypes) {
             primaryKey: true,
             unique: true
         },
-        percentageOfPurchase: {
+        percentageOfProfit: {
             type: DataTypes.DECIMAL(5,4), // 0.0000
             allowNull: false
         },
