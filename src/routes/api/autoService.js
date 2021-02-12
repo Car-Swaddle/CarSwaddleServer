@@ -382,7 +382,8 @@ module.exports = function (router, models) {
 
             if (removeActiveReferrer === true) {
                 payStructure = null;
-                await models.User.upsert({id: req.user.id, activeReferrerID: null}, {fields: ["activeReferrerID"]});
+                req.user.activeReferrerID = null;
+                await req.user.save({ fields: ['activeReferrerID'] });
             }
         }
 
