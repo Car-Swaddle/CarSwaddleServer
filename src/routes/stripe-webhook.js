@@ -114,12 +114,6 @@ module.exports = function (app, models) {
                 pushService.sendMechanicNotification(mechanic, alert, null, null, title);
                 return res.json({ received: true });
             }
-        } else if (event.type == eventTypes.PAYMENT_INTENT_SUCCEEDED) {
-            console.info("Got payment intent confirm event")
-            console.info(event.data.object);
-            const paymentIntentId = event.data.object.id;
-            stripeCharges.executeTransfers(paymentIntentId);
-            return res.json({ received: true })
         }
 
         return res.json({ received: true });
@@ -146,6 +140,11 @@ module.exports = function (app, models) {
             }
         } else if(event.type == eventTypes.TRANSFER_REVERSED) {
             // const { amount_reversed, destination } = event.data.object;
+        } else if (event.type == eventTypes.PAYMENT_INTENT_SUCCEEDED) {
+            const paymentIntentId = event.data.object.id;
+            console.info(`Got payment intent confirm event ${paymentIntentId}`);
+            await stripeCharges.executeTransfers(paymentIntentId);
+            return res.json({ received: true })
         }
 
         return res.json({ received: true });

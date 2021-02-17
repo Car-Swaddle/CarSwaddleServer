@@ -256,12 +256,6 @@ AutoServiceScheduler.prototype.createAutoService = async function (user, mechani
 
     await fetchedLocation.setAutoService(autoService.id, {transaction: transaction});
 
-    // // TODO - save these in the above create
-    // autoService.setMechanic(mechanic, { save: false });
-    // autoService.setUser(user, { save: false });
-    // autoService.setVehicle(vehicle, { save: false });
-    // autoService.setLocation(fetchedLocation, { save: false });
-    // return await autoService.save({transaction: transaction});
     return autoService;
 }
 
@@ -356,17 +350,9 @@ AutoServiceScheduler.prototype.createTransactionMetadata = async function (mecha
         referrerTransferAmount: referrerTransferAmount,
         autoServiceID: autoService.id,
         mechanicID: mechanic.id,
-
     }, {transaction: transaction});
 
     if (!transactionMetadata) { throw('unable to get transactionMetadata') }
-    // transactionMetadata.setAutoService(autoService, { save: false });
-    // transactionMetadata.setMechanic(mechanic, { save: false });
-    // autoService.transactionMetadata = transactionMetadata;
-
-    // // TODO - do we need a double save here?
-    // await transactionMetadata.save({transaction: transaction});
-    // await autoService.save({transaction: transaction});
 
     return transactionMetadata;
 }
