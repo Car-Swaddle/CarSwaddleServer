@@ -86,7 +86,7 @@ module.exports = function (app, models) {
         } else if (event.type == eventTypes.PAYOUT_UPDATED) {
 
         } else if (event.type == eventTypes.CHARGE_SUCCEEDED) {
-            // TODO - execute transfers to associated mechanic/referrer 
+
         } else if (event.type == eventTypes.ACCOUNT_UPDATED) {
             const verification = event.data.object.verification;
             if (!verification) {
@@ -140,6 +140,11 @@ module.exports = function (app, models) {
             }
         } else if(event.type == eventTypes.TRANSFER_REVERSED) {
             // const { amount_reversed, destination } = event.data.object;
+        } else if (event.type == eventTypes.PAYMENT_INTENT_SUCCEEDED) {
+            const paymentIntentId = event.data.object.id;
+            console.info(`Got payment intent confirm event ${paymentIntentId}`);
+            await stripeCharges.executeTransfers(paymentIntentId);
+            return res.json({ received: true })
         }
 
         return res.json({ received: true });
@@ -183,6 +188,8 @@ module.exports = function (app, models) {
         TRANSFER_CREATED: 'transfer.created',
         TRANSFER_REVERSED: 'transfer.reversed',
         INVOICE_PAYMENT_SUCCEEDED: 'invoice.payment_succeeded',
+        PAYMENT_INTENT_SUCCEEDED: 'payment_intent.succeeded',
+        PAYMENT_INTENT_PAYMENT_FAILED: 'payment_intent.payment_failed',
     }
 
     const payoutFailures = {

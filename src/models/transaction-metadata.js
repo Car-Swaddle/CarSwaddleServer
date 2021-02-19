@@ -70,6 +70,18 @@ const transactionMetadata = function (sequelize, DataTypes) {
         TransactionMetadata.hasMany(models.TransactionReceipt, { foreignKey: 'transactionMetadataID' });
     };
 
+    TransactionMetadata.fetchWithPaymentIntentID = async (stripePaymentIntentID) => {
+        if (!stripePaymentIntentID) {
+            return Promise.resolve(null);
+        }
+
+        return await TransactionMetadata.findOne({
+            where: {
+                stripePaymentIntentID: stripePaymentIntentID
+            }
+        });
+    };
+
     return TransactionMetadata;
 };
 

@@ -74,11 +74,52 @@ StripeCharges.prototype.monthlyDebitFee = function (mechanicPayment) {
     return stripeConnectMonthlyDebit;
 }
 
-// TODO - function to confirm payment intent and set up mechanic + referrer payouts
+StripeCharges.prototype.executeTransfers = async function(paymentIntentID) {
+    const transactionMetadata = await this.models.TransactionMetadata.fetchWithPaymentIntentID(paymentIntentID);
+    const autoServiceID = transactionMetadata.autoServiceID;
 
-// Separate function fired off the `charge.succeeded` event before transferring any funds (https://stripe.com/docs/api/events/types#event_types-charge.succeeded)
-// Use source_transaction to tie to payment intent (https://stripe.com/docs/connect/charges-transfers#transfer-availability)
-// Maybe we don't need this if we only accept credit cards/apple pay? Does apply pay allow ACH transactions?
+    if (transactionMetadata.mechanicTransferAmount && transactionMetadata.mechanicTransferAmount != 0) {
+        if (!transactionMetadata.stripeMechanicTransferID) {
+            const mechanic = await transactionMetadata.getMechanic();
+            if (mechanic && mechanic.stripeAccountID) {
+                const transfer = await stripe.transfers.create({
+                    amount: transactionMetadata.mechanicTransferAmount,
+                    currency: 'usd',
+                    destination: mechanic.stripeAccountID,
+                    description: `Transfer to mechanic ${mechanic.id}`,
+                    transfer_group: autoServiceID,
+                });
+                transactionMetadata.stripeMechanicTransferID = transfer.id;
+            } else {
+                console.warn(`Mechanic missing or no stripe account id ${transactionMetadata.mechanicID}`)
+            }
+        } else {
+            console.warn(`Mechanic transaction id already found: ${transactionMetadata.stripeMechanicTransferID}`)
+        }
+    }
+
+    if (transactionMetadata.referrerTransferAmount && transactionMetadata.referrerTransferAmount != 0) {
+        if (!transactionMetadata.stripeReferrerTransferID) {
+            const referrer = await this.models.Referrer.findByPk(transactionMetadata.referrerID);
+            if (referrer && referrer.stripeExpressAccountID) {
+                const transfer = await stripe.transfers.create({
+                    amount: transactionMetadata.referrerTransferAmount,
+                    currency: 'usd',
+                    destination: referrer.stripeExpressAccountID,
+                    description: `Transfer to referrer ${referrer.id}`,
+                    transfer_group: autoServiceID,
+                });
+                transactionMetadata.stripeReferrerTransferID = transfer.id;
+            } else {
+                console.warn(`No referrer stripe account, can't transfer for id ${transactionMetadata.referrerID}`)
+            }
+        } else {
+            console.warn(`Referrer transaction id already found: ${transactionMetadata.stripeReferrerTransferID}`)
+        }
+    }
+
+    await transactionMetadata.save();
+}
 
 StripeCharges.prototype.payInvoices = async function(invoiceID, sourceID, mechanicID, transferAmount) {
     const mechanic = await this.models.Mechanic.findByPk(mechanicID);

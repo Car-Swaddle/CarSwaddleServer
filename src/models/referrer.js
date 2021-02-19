@@ -5,7 +5,7 @@ const referrer = function (sequelize, DataTypes) {
             primaryKey: true,
             unique: true
         },
-        // Pseudo-enum for source: affiliate, email, ad, campaign, etc
+        // Pseudo-enum for source: user, email, ad, campaign, etc
         sourceType: {
             type: DataTypes.STRING,
             allowNull: false

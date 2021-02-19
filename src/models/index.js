@@ -21,20 +21,21 @@ if (process.env.DATABASE_URL) {
     'kylekendall',
     'password', {
       dialect: 'postgres',
-      dialectOptions: {
-        statement_timeout: 30000,
-        query_timeout: 30000,
-        connnectionTimeoutMillis: 30000,
-        idle_in_transaction_session_timeout: 60000
-      },
       host: process.env.LOCAL_DATABASE_URL || 'localhost',
       port: 5432,
-      pool: {
-        max: 5,
-        min: 0,
-        acquire: 30000,
-        idle: 10000
-      }
+      // TODO - re-enable these once migrated to sequelize v5+
+      // dialectOptions: {
+      //   statement_timeout: 30000,
+      //   query_timeout: 30000,
+      //   connnectionTimeoutMillis: 30000,
+      //   idle_in_transaction_session_timeout: 60000
+      // },
+      // pool: {
+      //   max: 5,
+      //   min: 0,
+      //   acquire: 30000,
+      //   idle: 10000
+      // }
     }
   );
 }
