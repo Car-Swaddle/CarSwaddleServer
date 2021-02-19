@@ -8,6 +8,7 @@ const { DateTime } = require('luxon');
 const reminderFile = require('../notifications/reminder.js');
 const stripeChargesFile = require('../controllers/stripe-charges.js');
 const emailFile = require('../notifications/email.js');
+const models = require('../models/index.js');
 
 module.exports = function (models) {
     return new AutoServiceScheduler(models);
@@ -81,6 +82,10 @@ AutoServiceScheduler.prototype.scheduleAutoService = async function (user, statu
                 referrerTransferAmount = prices.subTotal * 0.5;
             }
             referrerTransferAmount = referrerTransferAmount >= 0 ? referrerTransferAmount : 0;
+        }
+
+        if (couponID) {
+            await this.models.Coupon.redeem(couponID, mechanicID, transaction);
         }
 
         autoService = await this.createAutoService(user, mechanicID, status, scheduledDate, vehicleID, invoice, transfer, prices.transferAmount, sourceID, serviceEntities, locationID, location, couponID, notes, transaction);

@@ -130,14 +130,19 @@ const coupon = function (sequelize, DataTypes) {
         });
     };
 
-    Coupon.redeem = (couponId, mechanicId) => {
+    Coupon.redeem = (couponId, mechanicId, transaction) => {
         if (!couponId) {
             return Promise.resolve(null);
         }
 
+        var updateOptions = redeemableQuery(couponId, mechanicId);
+        if (transaction) {
+            updateOptions.transaction = transaction;
+        }
+
         const update = Coupon.update({
             redemptions: sequelize.literal('redemptions + 1')
-        }, redeemableQuery(couponId, mechanicId));
+        }, updateOptions);
 
         return update.then(res => {
             return res[0] === 1
