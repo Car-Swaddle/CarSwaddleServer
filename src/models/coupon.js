@@ -56,64 +56,27 @@ const coupon = function (sequelize, DataTypes) {
         Coupon.belongsTo(models.Referrer, { foreignKey: 'referrerID', allowNull: true })
     };
 
-    const { Op } = sequelize;
-
-    function redeemableQuery(couponId, mechanicId) {
-        return {
+    Coupon.findRedeemable = async (couponId, currentUserId, mechanicId) => {
+        const coupon = await Coupon.findOne({
             where: {
-                id: couponId,
-                [Op.and]: [{
-                    [Op.or]: [{
-                        isCorporate: true
-                    }, {
-                        createdByMechanicID: mechanicId,
-                    }]
-                }, {
-                    [Op.or]: [{
-                        maxRedemptions: null
-                    }, {
-                        redemptions: {
-                            [Op.lt]: {
-                                [Op.col]: 'maxRedemptions'
-                            }
-                        }
-                    }]
-                }, {
-                    [Op.or]: [{
-                        redeemBy: null
-                    }, {
-                        redeemBy: {
-                            [Op.gt]: new Date(),
-                        }
-                    }]
-                }]
+                id: couponId
             }
-        };
-    }
-
-    Coupon.findRedeemable = async (couponId, mechanicId) => {
-        const redeemableCoupon = await Coupon.findOne(
-            redeemableQuery(couponId, mechanicId)
-        );
+        });
         var error = null;
 
-        if (!redeemableCoupon) {
-            const coupon = await Coupon.findByPk(couponId);
-
-            if (!coupon) {
-                error = 'INCORRECT_CODE';
-            } else if (coupon.redeemBy && coupon.redeemBy.getTime() < Date.now()) {
-                error = 'EXPIRED';
-            } else if (!coupon.isCorporate && coupon.createdByMechanicID !== mechanicId) {
-                error = 'INCORRECT_MECHANIC';
-            } else if (coupon.redemptions >= coupon.maxRedemptions) {
-                error = 'DEPLETED_REDEMPTIONS';
-            } else {
-                error = 'OTHER';
-            }
+        if (!coupon) {
+            error = 'INCORRECT_CODE';
+        } else if (coupon.redeemBy && coupon.redeemBy.getTime() < Date.now()) {
+            error = 'EXPIRED';
+        } else if (!coupon.isCorporate && coupon.createdByUserID && coupon.createdByUserID === currentUserId) {
+            error = 'SELF_REDEEM';
+        } else if (!coupon.isCorporate && coupon.createdByMechanicID && coupon.createdByMechanicID !== mechanicId) {
+            error = 'INCORRECT_MECHANIC';
+        } else if (coupon.redemptions >= coupon.maxRedemptions) {
+            error = 'DEPLETED_REDEMPTIONS';
         }
 
-        return { coupon: redeemableCoupon, error };
+        return { coupon: error == null ? coupon : null, error };
     }
 
     Coupon.undoRedeem = (coupon) => {
@@ -130,14 +93,23 @@ const coupon = function (sequelize, DataTypes) {
         });
     };
 
-    Coupon.redeem = (couponId, mechanicId) => {
+    Coupon.redeem = (couponId, transaction) => {
         if (!couponId) {
             return Promise.resolve(null);
         }
 
+        var updateOptions = {
+            where: {
+                id: couponId
+            }
+        }
+        if (transaction) {
+            updateOptions.transaction = transaction;
+        }
+
         const update = Coupon.update({
             redemptions: sequelize.literal('redemptions + 1')
-        }, redeemableQuery(couponId, mechanicId));
+        }, updateOptions);
 
         return update.then(res => {
             return res[0] === 1

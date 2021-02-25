@@ -19,15 +19,30 @@ module.exports = function (router, models) {
         const [
             location,
             mechanic,
-            { coupon: couponEntity, error: couponError },
+            { coupon: requestedCoupon, error: couponError },
         ] = await Promise.all([
             models.Location.findBySearch(locationID, address),
             models.Mechanic.findByPk(mechanicID),
-            models.Coupon.findRedeemable(coupon, mechanicID),
+            models.Coupon.findRedeemable(coupon, req.user.id, mechanicID),
         ]);
 
-        if(coupon && !couponEntity) {
+        if(coupon && !requestedCoupon) {
             return res.status(422).send({ code: couponError });
+        }
+
+        var finalCoupon = requestedCoupon;
+        // Only attempt to apply a referrer coupon if they didn't have one
+        if (!finalCoupon && req.user.activeReferrerID) {
+            const referrer = await models.Referrer.findByPk(req.user.activeReferrerID, {
+                include: [
+                    {model: models.Coupon},
+                ] 
+            });
+
+            const referrerRedeemableCoupon = models.Coupon.findRedeemable(referrer.activeCouponID, req.user.id, mechanicID);
+            if (referrerRedeemableCoupon) {
+                finalCoupon = referrerRedeemableCoupon;
+            }
         }
 
         if (location == null || mechanic == null) {
@@ -35,7 +50,7 @@ module.exports = function (router, models) {
         }
 
         const taxRate = await taxes.taxRateForLocation(location);
-        const prices = await billingCalculations.calculatePrices(mechanic, location, oilType, vehicleID, couponEntity, taxRate);
+        const prices = await billingCalculations.calculatePrices(mechanic, location, oilType, vehicleID, finalCoupon, taxRate);
         const meta = { oilType, mechanicID, locationID: location.id };
 
         await stripeChargesFile.updateDraft(stripeCustomerID, prices, meta, taxRate);

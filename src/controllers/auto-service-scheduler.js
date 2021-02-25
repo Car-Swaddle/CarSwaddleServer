@@ -83,6 +83,10 @@ AutoServiceScheduler.prototype.scheduleAutoService = async function (user, statu
             referrerTransferAmount = referrerTransferAmount >= 0 ? referrerTransferAmount : 0;
         }
 
+        if (couponID) {
+            await this.models.Coupon.redeem(couponID, transaction);
+        }
+
         autoService = await this.createAutoService(user, mechanicID, status, scheduledDate, vehicleID, invoice, transfer, prices.transferAmount, sourceID, serviceEntities, locationID, location, couponID, notes, transaction);
 
         await this.setupServiceEntities(serviceEntities, autoService, transaction);
