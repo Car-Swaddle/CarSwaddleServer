@@ -23,7 +23,7 @@ module.exports = function (router, models) {
         ] = await Promise.all([
             models.Location.findBySearch(locationID, address),
             models.Mechanic.findByPk(mechanicID),
-            models.Coupon.findRedeemable(coupon, mechanicID),
+            models.Coupon.findRedeemable(coupon, req.user.id, mechanicID),
         ]);
 
         if(coupon && !requestedCoupon) {
@@ -39,7 +39,7 @@ module.exports = function (router, models) {
                 ] 
             });
 
-            const referrerRedeemableCoupon = models.Coupon.findRedeemable(referrer.activeCouponID, mechanicID);
+            const referrerRedeemableCoupon = models.Coupon.findRedeemable(referrer.activeCouponID, req.user.id, mechanicID);
             if (referrerRedeemableCoupon) {
                 finalCoupon = referrerRedeemableCoupon;
             }
