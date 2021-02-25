@@ -3,20 +3,14 @@ version: '3.7'
 services:
 
     db:
-        image: kartoza/postgis:13.0
+        image: postgis/postgis:13-3.1
         restart: on-failure
         ports:
             - 5432:5432
         environment:
             - POSTGRES_USER=kylekendall
-            - POSTGRES_PASS=password
-            - POSTGRES_DBNAME=carswaddle
-            - POSTGRES_MULTIPLE_EXTENSIONS=postgis,hstore,postgis_topology
-            - ALLOW_IP_RANGE=0.0.0.0/0
-        healthcheck:
-            test: "exit 0"
-        volumes:
-            - postgres-data:/var/lib/postgresql
+            - POSTGRES_PASSWORD=password
+            - POSTGRES_DB=carswaddle
         networks:
             - carswaddle-net
     
@@ -40,7 +34,6 @@ services:
             retries: 3
 
 volumes:
-    postgres-data:
     s3:
 
 networks:
