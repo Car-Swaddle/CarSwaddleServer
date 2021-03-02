@@ -1,6 +1,6 @@
 import { VehicleLookup } from "../data/vehicle-lookup";
 
-const vehicle = function (sequelize, DataTypes) {
+export default function(sequelize, DataTypes) {
     const Vehicle = sequelize.define('vehicle', {
         id: {
             type: DataTypes.STRING,
@@ -47,5 +47,3 @@ const vehicle = function (sequelize, DataTypes) {
 
     return Vehicle;
 };
-
-module.exports = vehicle;

@@ -3,6 +3,7 @@ const DataTypes = require('sequelize/lib/data-types');
 const Reminder = require('../notifications/reminder.js');
 const Umzug = require('umzug');
 const logger = require('pino')()
+import vehicle from "./vehicle";
 
 var sequelize = null;
 // console.log('process.env.DATABASE: ' + process.env.DATABASE_URL);
@@ -52,7 +53,7 @@ const models = {
   OilChange: require('./oilChange')(sequelize, DataTypes),
   Price: require('./price')(sequelize, DataTypes),
   PricePart: require('./pricePart')(sequelize, DataTypes),
-  Vehicle: sequelize.import('./vehicle'), // require not working with the typescript import in this file for some reason
+  Vehicle: vehicle(sequelize, DataTypes),
   VehicleDescription: require('./vehicleDescription')(sequelize, DataTypes),
   Mechanic: require('./mechanic')(sequelize, DataTypes),
   Region: require('./region')(sequelize, DataTypes),
