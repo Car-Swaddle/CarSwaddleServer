@@ -1,6 +1,8 @@
 const { Sequelize } = require('sequelize');
+const DataTypes = require('sequelize/lib/data-types');
 const Reminder = require('../notifications/reminder.js');
 const Umzug = require('umzug');
+const logger = require('pino')()
 
 var sequelize = null;
 // console.log('process.env.DATABASE: ' + process.env.DATABASE_URL);
@@ -11,7 +13,8 @@ if (process.env.DATABASE_URL) {
   sequelize = new Sequelize(process.env.DATABASE_URL, {
     dialect:  'postgres',
     protocol: 'postgres',
-    logging:  true // false
+    logging: (sql, timing) => logger.info({sql: sql, timing: timing}), // false to disable
+    benchmark: true,
     // TODO - pool and add timeouts for prod
   });
 } else {
@@ -23,6 +26,8 @@ if (process.env.DATABASE_URL) {
       dialect: 'postgres',
       host: process.env.LOCAL_DATABASE_URL || 'localhost',
       port: 5432,
+      logging: (sql, timing) => logger.info({sql: sql, timing: timing}),
+      benchmark: true,
       // TODO - re-enable these once migrated to sequelize v5+
       // dialectOptions: {
       //   statement_timeout: 30000,
@@ -41,35 +46,35 @@ if (process.env.DATABASE_URL) {
 }
 
 const models = {
-  User: sequelize.import('./user'),
-  AutoService: sequelize.import('./autoService'),
-  Location: sequelize.import('./location'),
-  OilChange: sequelize.import('./oilChange'),
-  Price: sequelize.import('./price'),
-  PricePart: sequelize.import('./pricePart'),
-  Vehicle: sequelize.import('./vehicle'),
-  VehicleDescription: sequelize.import('./vehicleDescription'),
-  Mechanic: sequelize.import('./mechanic'),
-  Region: sequelize.import('./region'),
-  TemplateTimeSpan: sequelize.import('./templateTimeSpan'),
-  ServiceEntity: sequelize.import('./serviceEntity'),
-  DeviceToken: sequelize.import('./deviceToken'),
-  Address: sequelize.import('./address'),
-  Review: sequelize.import('./review'),
-  Verification: sequelize.import('./verification'),
-  TransactionMetadata: sequelize.import('./transaction-metadata'),
-  TransactionReceipt: sequelize.import('./transaction-receipt'),
-  MechanicMonthDebit: sequelize.import('./mechanic-month-debit'),
-  MechanicPayoutDebit: sequelize.import('./mechanic-payout-debit'),
-  OilChangePricing: sequelize.import('./oilChangePricing'),
-  PasswordReset: sequelize.import('./passwordReset'),
-  SubscriptionSettings: sequelize.import('./subscriptionSettings'),
-  Authority: sequelize.import('./authority'),
-  AuthorityConfirmation: sequelize.import('./authorityConfirmation'),
-  AuthorityRequest: sequelize.import('./authorityRequest'),
-  Coupon: sequelize.import('./coupon'),
-  Referrer: sequelize.import('./referrer'),
-  PayStructure: sequelize.import('./payStructure')
+  User: require('./user')(sequelize, DataTypes),
+  AutoService: require('./autoService')(sequelize, DataTypes),
+  Location: require('./location')(sequelize, DataTypes),
+  OilChange: require('./oilChange')(sequelize, DataTypes),
+  Price: require('./price')(sequelize, DataTypes),
+  PricePart: require('./pricePart')(sequelize, DataTypes),
+  Vehicle: sequelize.import('./vehicle'), // require not working with the typescript import in this file for some reason
+  VehicleDescription: require('./vehicleDescription')(sequelize, DataTypes),
+  Mechanic: require('./mechanic')(sequelize, DataTypes),
+  Region: require('./region')(sequelize, DataTypes),
+  TemplateTimeSpan: require('./templateTimeSpan')(sequelize, DataTypes),
+  ServiceEntity: require('./serviceEntity')(sequelize, DataTypes),
+  DeviceToken: require('./deviceToken')(sequelize, DataTypes),
+  Address: require('./address')(sequelize, DataTypes),
+  Review: require('./review')(sequelize, DataTypes),
+  Verification: require('./verification')(sequelize, DataTypes),
+  TransactionMetadata: require('./transaction-metadata')(sequelize, DataTypes),
+  TransactionReceipt: require('./transaction-receipt')(sequelize, DataTypes),
+  MechanicMonthDebit: require('./mechanic-month-debit')(sequelize, DataTypes),
+  MechanicPayoutDebit: require('./mechanic-payout-debit')(sequelize, DataTypes),
+  OilChangePricing: require('./oilChangePricing')(sequelize, DataTypes),
+  PasswordReset: require('./passwordReset')(sequelize, DataTypes),
+  SubscriptionSettings: require('./subscriptionSettings')(sequelize, DataTypes),
+  Authority: require('./authority')(sequelize, DataTypes),
+  AuthorityConfirmation: require('./authorityConfirmation')(sequelize, DataTypes),
+  AuthorityRequest: require('./authorityRequest')(sequelize, DataTypes),
+  Coupon: require('./coupon')(sequelize, DataTypes),
+  Referrer: require('./referrer')(sequelize, DataTypes),
+  PayStructure: require('./payStructure')(sequelize, DataTypes),
 };
 
 Object.keys(models).forEach(key => {

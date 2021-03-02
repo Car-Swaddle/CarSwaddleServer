@@ -50,7 +50,6 @@ module.exports = function (router, models) {
     });
 
     router.get('/nearest-mechanics', bodyParser.json(), function (req, res) {
-        console.log('nearest-mechanics GET');
         var query = req.query;
         var latitude = parseFloat(query.latitude);
         var longitude = parseFloat(query.longitude);

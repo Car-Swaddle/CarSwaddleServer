@@ -18,8 +18,10 @@ const authority = function (sequelize, DataTypes) {
         editCarSwaddleCoupon: 'editCarSwaddleCoupon',
         readAuthorities: 'readAuthorities',
         editAuthorities: 'editAuthorities',
+        readMechanics: 'readMechanics',
         editMechanics: 'editMechanics',
-        readMechanics: 'readMechanics'
+        readReferrers: 'readReferrers',
+        editReferrers: 'editReferrers',
     };
 
     Authority.associate = models => {
