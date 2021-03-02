@@ -10,7 +10,7 @@ module.exports = (router, models) => {
 
     router.get('/referrers/:referrerID', bodyParser.json(), async function (req, res) {
         // req.params.referrerID
-        return res.json([]);
+        return res.json({});
     });
 
     router.post('/referrers', bodyParser.json(), async function (req, res) {
@@ -22,6 +22,26 @@ module.exports = (router, models) => {
     });
 
     router.delete('/referrers/:referrerID', bodyParser.json(), async function (req, res) {
+        return res.json({});
+    });
+
+    router.get('/pay-structures', bodyParser.json(), async function (req, res) {
+        return res.json([]);
+    });
+
+    router.get('/pay-structures/:payStructureID', bodyParser.json(), async function (req, res) {
+        return res.json({});
+    });
+
+    router.post('/pay-structures', bodyParser.json(), async function (req, res) {
+        return res.json({});
+    });
+
+    router.put('/pay-structures/:payStructureID', bodyParser.json(), async function (req, res) {
+        return res.json({});
+    });
+
+    router.delete('/pay-structures/:payStructureID', bodyParser.json(), async function (req, res) {
         return res.json({});
     });
 
