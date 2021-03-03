@@ -13,6 +13,7 @@ module.exports = function (app, models) {
     require('./mechanic.js')(router, models);
     require('./vehicle.js')(router, models);
     require('./price.js')(router, models);
+    require('./referrer.js')(router, models);
     require('./stripe.js')(router, models);
     require('./review.js')(router, models);
     require('./logout.js')(router, models);
