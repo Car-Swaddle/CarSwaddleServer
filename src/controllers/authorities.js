@@ -1,8 +1,8 @@
-const constants = require('./constants.js');
 const { Op } = require('sequelize');
 const uuidV1 = require('uuid/v1');
 // const stripe = require('stripe')(constants.STRIPE_SECRET_KEY);
 const emailFile = require('../notifications/email');
+const { Util } = require('../util/util')
 
 module.exports = function (models) {
     return new AuthoritiesController(models);
@@ -149,4 +149,18 @@ AuthoritiesController.prototype.fetchAuthorityForUser = function (userID, author
     return this.models.Authority.findOne({
         where: { userID: userID, authorityName: authority }
     });
+}
+
+AuthoritiesController.prototype.checkAuthority = async function(req, res, authority) {
+    const hasAuthority = await this.hasAuthority(req.user.id, authority);
+    if (!hasAuthority) {
+        res.status(403).send(`Missing required authority: ${authority}`);
+        // Throw so we don't attempt to continue processing the request
+        throw Error(`Missing required authority: ${authority}`);
+    }
+}
+
+AuthoritiesController.prototype.hasAuthority = async function(userId, authority) {
+    const fetchedAuthority = this.fetchAuthorityForUser(userId, authority);
+    return Util.notNull(fetchedAuthority);
 }

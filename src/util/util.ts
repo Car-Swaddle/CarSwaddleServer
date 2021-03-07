@@ -31,4 +31,12 @@ export class Util {
     static areNullOrNumbers(...arr: any[]): boolean {
         return arr.every(x => this.isNullOrNumber(x));
     }
+
+    static isNull(obj: any | null): boolean {
+        return typeof obj === 'undefined' || obj === null;
+    }
+
+    static notNull(obj: any | null): boolean {
+        return !this.isNull(obj);
+    }
 }
