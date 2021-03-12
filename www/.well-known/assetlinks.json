@@ -22,4 +22,22 @@
     "sha256_cert_fingerprints":
     ["B3:BA:1F:9E:1D:E2:7D:30:9B:3D:FB:CB:D0:3B:99:F5:AB:65:0E:97:67:D6:79:3A:12:1D:20:58:57:4D:6F:30", "0E:FD:59:FA:20:B4:B5:5F:6F:DD:44:C1:60:12:67:D7:29:66:50:19:4C:EB:DC:D8:51:96:F6:C4:97:69:8F:27"]
   }
+},
+{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "com.carswaddle.carswaddlemechanic",
+    "sha256_cert_fingerprints":
+    ["0E:FD:59:FA:20:B4:B5:5F:6F:DD:44:C1:60:12:67:D7:29:66:50:19:4C:EB:DC:D8:51:96:F6:C4:97:69:8F:27"]
+  }
+},
+{
+  "relation": ["delegate_permission/common.get_login_creds"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "com.carswaddle.carswaddlemechanic",
+    "sha256_cert_fingerprints":
+    ["0E:FD:59:FA:20:B4:B5:5F:6F:DD:44:C1:60:12:67:D7:29:66:50:19:4C:EB:DC:D8:51:96:F6:C4:97:69:8F:27"]
+  }
 }]
