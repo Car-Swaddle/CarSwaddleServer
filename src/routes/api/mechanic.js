@@ -112,6 +112,7 @@ module.exports = function (router, models) {
                 didChangeMechanic = true
             }
             if (body.token != null) {
+                var pushType = body.pushTokenType ?? "APNS";
                 didChangeMechanic = true
                 var promise = models.DeviceToken.findOne({
                     where: {
@@ -119,10 +120,15 @@ module.exports = function (router, models) {
                         mechanicID: mechanic.id
                     }
                 }).then(deviceToken => {
+                    if (pushType && pushType != "APNS" && pushType != "FCM") {
+                        console.log(`Invalid push type: ${pushType}`);
+                        return null;
+                    }
                     if (deviceToken == null) {
                         return models.DeviceToken.create({
                             id: uuidV1(),
-                            token: body.token
+                            token: body.token,
+                            pushType: pushType
                         }).then(deviceToken => {
                             mechanic.addDeviceToken(deviceToken);
                             return mechanic.save();
