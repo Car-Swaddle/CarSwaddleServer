@@ -9,7 +9,9 @@ module.exports = (router, models) => {
     router.get('/referrers', express.json(), async function (req, res) {
         await authoritiesController.checkAuthority(req, res, readAuthority);
                 
-        referrerController.getReferrers().then((referrers) => {
+        const offset = req.query.offset || 0;
+        const limit = req.query.limit || 50;
+        referrerController.getReferrers(limit, offset).then((referrers) => {
             res.json(referrers);
         }).catch((error) => {
             res.status(400).json({error: "Unable to list referrers"});
@@ -118,4 +120,3 @@ module.exports = (router, models) => {
 
     return router;
 };
-
