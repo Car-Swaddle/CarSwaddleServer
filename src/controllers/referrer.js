@@ -16,7 +16,10 @@ module.exports = class ReferrerController {
     }
 
     async getReferrers() {
-        return this.models.Referrer.findAll();
+        return this.models.Referrer.findAll({
+                limit: limit,
+                offset: offset,
+        });
     }
 
     async updateReferrer(referrer) {
