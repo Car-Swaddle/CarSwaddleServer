@@ -13,6 +13,11 @@ if (process.env.DATABASE_URL) {
   // the application is executed on Heroku
   sequelize = new Sequelize(process.env.DATABASE_URL, {
     dialect:  'postgres',
+    dialectOptions: {
+      ssl: {
+        rejectUnauthorized: false
+      }
+    },
     protocol: 'postgres',
     logging: (sql, timing) => logger.info({sql: sql, timing: timing}), // false to disable
     benchmark: true,
