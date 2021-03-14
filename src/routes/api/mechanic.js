@@ -129,6 +129,7 @@ module.exports = function (router, models) {
                             token: body.token,
                             pushType: pushType
                         }).then(deviceToken => {
+                            console.log(`Registered push ${deviceToken}`);
                             mechanic.addDeviceToken(deviceToken);
                             return mechanic.save();
                         });

@@ -169,6 +169,7 @@ class PushService {
 
     sendMechanicNotification(mechanic, body, payload, badge, title) {
         return mechanic.getDeviceTokens().then(tokens => {
+            console.info(`got tokens ${tokens}`);
             tokens.forEach(token => {
                 if (token.pushType == APNS_PUSH_TYPE) {
                     var notification = this.createAPNSNotification(body, payload, badge, title);
