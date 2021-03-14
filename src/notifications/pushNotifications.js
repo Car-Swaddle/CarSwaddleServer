@@ -180,7 +180,13 @@ class PushService {
                         console.log(JSON.stringify(result, null, 4));
                     });
                 } else if (token.pushType == FCM_PUSH_TYPE) {
-                    console.error("FCM pushes for mechanic not setup");
+                    this.carSwaddleFirebaseAdmin.messaging().send(this.createFCMNotification(body, payload, title, token.token))
+                        .then((response) => {
+                            console.info(`Send FCM with response: ${response}`);
+                        })
+                        .catch((error) => {
+                            console.error(`Error sending message for user ${mechanic.id} device token ${token.token} error ${error}`);
+                        })
                 }
             });
         });
