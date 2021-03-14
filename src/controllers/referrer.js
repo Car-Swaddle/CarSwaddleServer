@@ -7,6 +7,31 @@ module.exports = class ReferrerController {
         this.authorities = authoritiesFile(models);
     }
 
+    async createReferrer(referrer) {
+        return this.models.Referrer.create(referrer);
+    }
+
+    async getReferrer(referrerID) {
+        return this.models.Referrer.findByPk(referrerID);
+    }
+
+    async getReferrers() {
+        return this.models.Referrer.findAll();
+    }
+
+    async updateReferrer(referrer) {
+        return this.models.Referrer.update(referrer, {
+            where: {
+                id: referrer.id
+            }
+        });
+    }
+
+    async deleteReferrer(referrerID) {
+        const referrer = await this.getReferrer(referrerID);
+        return referrer ? referrer.destroy() : Promise.reject();
+    }
+
     async createPayStructure(payStructure) {
         return this.models.PayStructure.create(payStructure);
     }

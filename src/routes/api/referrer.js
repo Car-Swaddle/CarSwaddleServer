@@ -1,5 +1,4 @@
-const constants = require('../../controllers/constants');
-const bodyParser = require('body-parser');
+const express = require('express');
 
 module.exports = (router, models) => {
     const authoritiesController = require('../../controllers/authorities')(models);
@@ -7,34 +6,61 @@ module.exports = (router, models) => {
     const readAuthority = models.Authority.NAME.readReferrers;
     const editAuthority = models.Authority.NAME.editReferrers;
     
-    router.get('/referrers', bodyParser.json(), async function (req, res) {
-        // TODO - can we move this to middleware somehow?
+    router.get('/referrers', express.json(), async function (req, res) {
         await authoritiesController.checkAuthority(req, res, readAuthority);
-        return res.json([]);
+                
+        referrerController.getReferrers().then((referrers) => {
+            res.json(referrers);
+        }).catch((error) => {
+            res.status(400).json({error: "Unable to list referrers"});
+            req.log.warn(error);
+        });
     });
 
-    router.get('/referrers/:referrerID', bodyParser.json(), async function (req, res) {
+    router.get('/referrers/:referrerID', express.json(), async function (req, res) {
         await authoritiesController.checkAuthority(req, res, readAuthority);
-        // req.params.referrerID
-        return res.json({});
+        
+        referrerController.getReferrer(req.params.referrerID).then((referrer) => {
+            res.json(referrer);
+        }).catch((error) => {
+            res.status(400).json({error: "Unable to get referrer"});
+            req.log.warn(error);
+        });
     });
 
-    router.post('/referrers', bodyParser.json(), async function (req, res) {
+    router.post('/referrers', express.json(), async function (req, res) {
         await authoritiesController.checkAuthority(req, res, editAuthority);
-        return res.json({});
+        referrerController.createReferrer(req.body).then((created) => {
+            res.json(created);
+        }).catch((error) => {
+            res.status(400).json({error: "Unable to create referrer"});
+            req.log.warn(error);
+        })
     });
 
-    router.put('/referrers/:referrerID', bodyParser.json(), async function (req, res) {
+    router.put('/referrers/:referrerID', express.json(), async function (req, res) {
         await authoritiesController.checkAuthority(req, res, editAuthority);
-        return res.json({});
+
+        req.body.id = req.params.referrerID;
+        referrerController.updateReferrer(req.body).then((created) => {
+            res.json(created);
+        }).catch((error) => {
+            res.status(400).json({error: "Unable to update referrer"});
+            req.log.warn(error);
+        })
     });
 
-    router.delete('/referrers/:referrerID', bodyParser.json(), async function (req, res) {
+    router.delete('/referrers/:referrerID', express.json(), async function (req, res) {
         await authoritiesController.checkAuthority(req, res, editAuthority);
-        return res.end();
+        referrerController.deleteReferrer(req.params.referrerID).then(() => {
+            res.end();
+        }).catch((error) => {
+            res.status(400).json({error: "Unable to delete referrer"});
+            req.log.warn(error);
+        })
     });
 
-    router.get('/pay-structures', bodyParser.json(), async function (req, res) {
+    router.get('/pay-structures', express.json(), async function (req, res) {
         await authoritiesController.checkAuthority(req, res, readAuthority);
         
         referrerController.getPayStructures().then((payStructures) => {
@@ -45,7 +71,7 @@ module.exports = (router, models) => {
         });
     });
 
-    router.get('/pay-structures/:payStructureID', bodyParser.json(), async function (req, res) {
+    router.get('/pay-structures/:payStructureID', express.json(), async function (req, res) {
         await authoritiesController.checkAuthority(req, res, readAuthority);
 
         referrerController.getPayStructure(req.params.payStructureID).then((payStructure) => {
@@ -56,7 +82,7 @@ module.exports = (router, models) => {
         });
     });
 
-    router.post('/pay-structures', bodyParser.json(), async function (req, res) {
+    router.post('/pay-structures', express.json(), async function (req, res) {
         await authoritiesController.checkAuthority(req, res, editAuthority);
         // TODO - validation
         referrerController.createPayStructure(req.body).then((created) => {
@@ -67,9 +93,10 @@ module.exports = (router, models) => {
         })
     });
 
-    router.put('/pay-structures/:payStructureID', bodyParser.json(), async function (req, res) {
+    router.put('/pay-structures/:payStructureID', express.json(), async function (req, res) {
         await authoritiesController.checkAuthority(req, res, editAuthority);
         // TODO - validation
+        req.body.id = req.params.payStructureID;
         referrerController.updatePayStructure(req.body).then((created) => {
             res.json(created);
         }).catch((error) => {
@@ -78,7 +105,7 @@ module.exports = (router, models) => {
         })
     });
 
-    router.delete('/pay-structures/:payStructureID', bodyParser.json(), async function (req, res) {
+    router.delete('/pay-structures/:payStructureID', express.json(), async function (req, res) {
         await authoritiesController.checkAuthority(req, res, editAuthority);
         
         referrerController.deletePayStructure(req.params.payStructureID).then(() => {
