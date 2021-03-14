@@ -25,6 +25,11 @@ if (process.env.DATABASE_URL) {
     'kylekendall',
     'password', {
       dialect: 'postgres',
+      dialectOptions: {
+        ssl: {
+          rejectUnauthorized: false
+          }
+      },
       host: process.env.LOCAL_DATABASE_URL || 'localhost',
       port: 5432,
       logging: (sql, timing) => logger.info({sql: sql, timing: timing}),
