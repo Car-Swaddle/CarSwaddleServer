@@ -15,7 +15,7 @@ module.exports = class ReferrerController {
         return this.models.Referrer.findByPk(referrerID);
     }
 
-    async getReferrers() {
+    async getReferrers(limit, offset) {
         return this.models.Referrer.findAll({
                 limit: limit,
                 offset: offset,
