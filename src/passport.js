@@ -75,7 +75,7 @@ module.exports = function (models) {
                                 email: email,
                                 phoneNumber: req.body.phoneNumber,
                                 password: models.User.generateHash(password),
-                                referrerID: req.body.referrerID
+                                signUpReferrerID: req.body.referrerID
                             }).then((user) => {
                                 var json = JSON.stringify({
                                     'user': user.toJSON(),
