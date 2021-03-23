@@ -50,7 +50,6 @@ module.exports = function (router, models) {
     });
 
     router.get('/nearest-mechanics', bodyParser.json(), function (req, res) {
-        console.log('nearest-mechanics GET');
         var query = req.query;
         var latitude = parseFloat(query.latitude);
         var longitude = parseFloat(query.longitude);
@@ -59,17 +58,17 @@ module.exports = function (router, models) {
         const maxDistance = parseFloat(query.maxDistance) || 100000;
 
         models.sequelize.query(`
-            SELECT *, u.id as "userID", m.id as "id", r.id as "regionID", ST_Distance(ST_SetSRID(r.origin, 4326), ST_SetSRID(ST_MakePoint(?, ?), 4326), false) AS "distance"
+            SELECT *, u.id as "userID", m.id as "id", r.id as "regionID", ST_Distance(ST_SetSRID(r.origin, 4326), ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326), false) AS "distance"
             FROM "user" AS u
             INNER JOIN mechanic as m ON m."userID" = u.id
             INNER JOIN region AS r ON m.id = r."mechanicID"
-            AND ST_Distance(ST_SetSRID(r.origin, 4326), ST_SetSRID(ST_MakePoint(?, ?), 4326), false) < r.radius
+            AND ST_Distance(ST_SetSRID(r.origin, 4326), ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326), false) < r.radius
             AND m."isActive" = true AND m."isAllowed" = true
-            AND ST_Distance(ST_SetSRID(r.origin, 4326), ST_SetSRID(ST_MakePoint(?, ?), 4326), false) <= ?
-            ORDER BY ST_Distance(ST_SetSRID(r.origin, 4326), ST_SetSRID(ST_MakePoint(?, ?), 4326), false)
-            FETCH FIRST ? ROWS ONLY
+            AND ST_Distance(ST_SetSRID(r.origin, 4326), ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326), false) <= :maxDistance
+            ORDER BY ST_Distance(ST_SetSRID(r.origin, 4326), ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326), false)
+            FETCH FIRST :limit ROWS ONLY
             `, {
-            replacements: [longitude, latitude, longitude, latitude, longitude, latitude, maxDistance, longitude, latitude, limit],
+            replacements: {longitude: longitude, latitude: latitude, maxDistance: maxDistance, limit: limit},
             type: models.sequelize.QueryTypes.SELECT,
             model: models.User
         }).then(users => {
@@ -112,6 +111,7 @@ module.exports = function (router, models) {
                 didChangeMechanic = true
             }
             if (body.token != null) {
+                var pushType = body.pushTokenType ?? "APNS";
                 didChangeMechanic = true
                 var promise = models.DeviceToken.findOne({
                     where: {
@@ -119,11 +119,17 @@ module.exports = function (router, models) {
                         mechanicID: mechanic.id
                     }
                 }).then(deviceToken => {
+                    if (pushType && pushType != "APNS" && pushType != "FCM") {
+                        console.log(`Invalid push type: ${pushType}`);
+                        return null;
+                    }
                     if (deviceToken == null) {
                         return models.DeviceToken.create({
                             id: uuidV1(),
-                            token: body.token
+                            token: body.token,
+                            pushType: pushType
                         }).then(deviceToken => {
+                            console.log(`Registered push ${deviceToken}`);
                             mechanic.addDeviceToken(deviceToken);
                             return mechanic.save();
                         });

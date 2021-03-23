@@ -74,6 +74,7 @@ BillingCalculations.prototype.calculatePrices = async function(mechanic, locatio
         mechanicCostPrice = Math.round((subtotalPrice + discountPrice) * .7)
     }
 
+    const total = discountPrice + oilChangePrice + distancePrice + bookingFeePrice + processingFeePrice + bookingFeeDiscountPrice;
     return {
         oilChange: oilChangePrice,
         distance: distancePrice,
@@ -84,6 +85,7 @@ BillingCalculations.prototype.calculatePrices = async function(mechanic, locatio
         processingFee: processingFeePrice,
         transferAmount: transferAmountPrice,
         mechanicCost: mechanicCostPrice,
+        total: total,
     };
 }
 

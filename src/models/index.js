@@ -1,6 +1,9 @@
 const { Sequelize } = require('sequelize');
+const DataTypes = require('sequelize/lib/data-types');
 const Reminder = require('../notifications/reminder.js');
 const Umzug = require('umzug');
+const logger = require('pino')()
+import vehicle from "./vehicle";
 
 var sequelize = null;
 // console.log('process.env.DATABASE: ' + process.env.DATABASE_URL);
@@ -16,7 +19,9 @@ if (process.env.DATABASE_URL) {
       }
     },
     protocol: 'postgres',
-    logging:  true // false
+    logging: (sql, timing) => logger.info({sql: sql, timing: timing}), // false to disable
+    benchmark: true,
+    // TODO - pool and add timeouts for prod
   });
 } else {
   // Local machine natively or docker
@@ -26,46 +31,63 @@ if (process.env.DATABASE_URL) {
     'password', {
       dialect: 'postgres',
       host: process.env.LOCAL_DATABASE_URL || 'localhost',
-      port: 5432
+      port: 5432,
+      logging: (sql, timing) => logger.info({sql: sql, timing: timing}),
+      benchmark: true,
+      // TODO - re-enable these once migrated to sequelize v5+
+      // dialectOptions: {
+      //   statement_timeout: 30000,
+      //   query_timeout: 30000,
+      //   connnectionTimeoutMillis: 30000,
+      //   idle_in_transaction_session_timeout: 60000
+      // },
+      // pool: {
+      //   max: 5,
+      //   min: 0,
+      //   acquire: 30000,
+      //   idle: 10000
+      // }
     }
   );
 }
 
 const models = {
-  User: sequelize.import('./user'),
-  AutoService: sequelize.import('./autoService'),
-  Location: sequelize.import('./location'),
-  OilChange: sequelize.import('./oilChange'),
-  Price: sequelize.import('./price'),
-  PricePart: sequelize.import('./pricePart'),
-  Vehicle: sequelize.import('./vehicle'),
-  VehicleDescription: sequelize.import('./vehicleDescription'),
-  Mechanic: sequelize.import('./mechanic'),
-  Region: sequelize.import('./region'),
-  TemplateTimeSpan: sequelize.import('./templateTimeSpan'),
-  ServiceEntity: sequelize.import('./serviceEntity'),
-  DeviceToken: sequelize.import('./deviceToken'),
-  Address: sequelize.import('./address'),
-  Review: sequelize.import('./review'),
-  Verification: sequelize.import('./verification'),
-  TransactionMetadata: sequelize.import('./transaction-metadata'),
-  TransactionReceipt: sequelize.import('./transaction-receipt'),
-  MechanicMonthDebit: sequelize.import('./mechanic-month-debit'),
-  MechanicPayoutDebit: sequelize.import('./mechanic-payout-debit'),
-  OilChangePricing: sequelize.import('./oilChangePricing'),
-  PasswordReset: sequelize.import('./passwordReset'),
-  SubscriptionSettings: sequelize.import('./subscriptionSettings'),
-  Authority: sequelize.import('./authority'),
-  AuthorityConfirmation: sequelize.import('./authorityConfirmation'),
-  AuthorityRequest: sequelize.import('./authorityRequest'),
-  Coupon: sequelize.import('./coupon'),
+  User: require('./user')(sequelize, DataTypes),
+  AutoService: require('./autoService')(sequelize, DataTypes),
+  Location: require('./location')(sequelize, DataTypes),
+  OilChange: require('./oilChange')(sequelize, DataTypes),
+  Price: require('./price')(sequelize, DataTypes),
+  PricePart: require('./pricePart')(sequelize, DataTypes),
+  Vehicle: vehicle(sequelize, DataTypes),
+  VehicleDescription: require('./vehicleDescription')(sequelize, DataTypes),
+  Mechanic: require('./mechanic')(sequelize, DataTypes),
+  Region: require('./region')(sequelize, DataTypes),
+  TemplateTimeSpan: require('./templateTimeSpan')(sequelize, DataTypes),
+  ServiceEntity: require('./serviceEntity')(sequelize, DataTypes),
+  DeviceToken: require('./deviceToken')(sequelize, DataTypes),
+  Address: require('./address')(sequelize, DataTypes),
+  Review: require('./review')(sequelize, DataTypes),
+  Verification: require('./verification')(sequelize, DataTypes),
+  TransactionMetadata: require('./transaction-metadata')(sequelize, DataTypes),
+  TransactionReceipt: require('./transaction-receipt')(sequelize, DataTypes),
+  MechanicMonthDebit: require('./mechanic-month-debit')(sequelize, DataTypes),
+  MechanicPayoutDebit: require('./mechanic-payout-debit')(sequelize, DataTypes),
+  OilChangePricing: require('./oilChangePricing')(sequelize, DataTypes),
+  PasswordReset: require('./passwordReset')(sequelize, DataTypes),
+  SubscriptionSettings: require('./subscriptionSettings')(sequelize, DataTypes),
+  Authority: require('./authority')(sequelize, DataTypes),
+  AuthorityConfirmation: require('./authorityConfirmation')(sequelize, DataTypes),
+  AuthorityRequest: require('./authorityRequest')(sequelize, DataTypes),
+  Coupon: require('./coupon')(sequelize, DataTypes),
+  Referrer: require('./referrer')(sequelize, DataTypes),
+  PayStructure: require('./payStructure')(sequelize, DataTypes),
 };
 
 Object.keys(models).forEach(key => {
-  console.log(key);
+  // console.debug(key);
   if ('associate' in models[key]) {
     models[key].associate(models);
-    console.log('associated ' + key);
+    // console.debug('associated ' + key);
   }
 });
 
@@ -80,18 +102,14 @@ const umzug = new Umzug({
   storageOptions: { sequelize }
 });
 
-// {force: true}
-sequelize.sync().then(async function() {
-  console.log("synced");
-  // Run all migrations
-  await umzug.up();
-  console.log("Migrated");
+umzug.up().then(() => {
+  console.log("Finished migrations")
   const reminder = new Reminder(models);
   reminder.rescheduleRemindersForAllAutoServices();
+})
+.catch((err) => {
+  console.error("Error during migrations: " + err);
 });
-// .catch((err) => {
-//   console.log("error: " + err);
-// });
 
 models.sequelize = sequelize;
 models.Sequelize = Sequelize;

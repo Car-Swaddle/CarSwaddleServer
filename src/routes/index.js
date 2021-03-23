@@ -1,4 +1,3 @@
-const express = require('express');
 
 module.exports = function (app, models, passport) {
     require('./auth.js')(app, models, passport);
