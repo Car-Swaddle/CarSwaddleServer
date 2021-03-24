@@ -188,10 +188,10 @@ module.exports = function (router, models) {
       didChangeUser = true;
     }
 
-    // if (body.password != null) {
-    //   user.timeZone = body.timeZone;
-    //   didChangeUser = true;
-    // }
+    if (body.referrerID != null) {
+      user.activeReferrerID = body.referrerID;
+      didChangeUser = true;
+    }
 
     if (body.adminKey != null && body.adminKey == constants.ADMIN_SECRET) {
       user.adminAttribute = models.User.ADMIN_ATTRIBUTE.admin;
