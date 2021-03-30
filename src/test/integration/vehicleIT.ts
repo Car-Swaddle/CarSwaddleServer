@@ -20,7 +20,7 @@ describe('Vehicle api', function() {
         })
         .set("Authorization", "bearer " + jwt)
         .expect(200)
-        .then(resp => {
+        .then((resp: any) => {
             assert.equal(resp.body.vehicleDescription.make, 'Toyota');
             assert.equal(resp.body.vehicleDescription.model, 'Corolla');
             assert.equal(resp.body.vehicleDescription.trim, 'LE');
@@ -37,7 +37,7 @@ describe('Vehicle api', function() {
         })
         .set("Authorization", "bearer " + jwt)
         .expect(200)
-        .then(resp => {
+        .then((resp: any) => {
             assert.equal(resp.body.licensePlate, 'ABC 123');
             assert.equal(resp.body.state, 'UT');
         })
@@ -51,7 +51,7 @@ describe('Vehicle api', function() {
         })
         .set("Authorization", "bearer " + jwt)
         .expect(200)
-        .then(resp => {
+        .then((resp: any) => {
             console.log("NEXT");
             host_request.put('/api/vehicle')
             .send({
@@ -62,7 +62,7 @@ describe('Vehicle api', function() {
                 }
             })
             .expect(200)
-            .then(r => {
+            .then((r: any) => {
                 assert.isNull(r.body.licensePlate);
                 assert.isNull(r.body.state);
                 assert.equal(r.body.vehicleDescription.make, 'Toyota');

@@ -17,7 +17,6 @@ console.log(__dirname)
 // bodyParser.limit = '500mb';
 
 const app = express();
-app.use(express.static(__dirname + '/../www'));
 app.use(pino);
 
 express.static.mime.define({'application/pkcs7-mime': ['apple-app-site-association']});
@@ -34,3 +33,5 @@ console.log('working on ' + port);
 const passport = require('./passport')(models);
 
 require('./routes')(app, models, passport);
+// Should serve from /build/public
+app.use(express.static(__dirname + '/public'));

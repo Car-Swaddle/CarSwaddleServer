@@ -17,7 +17,7 @@
     "busboy-body-parser": "^0.3.2",
     "connect-busboy": "0.0.2",
     "dateformat": "^3.0.3",
-    "eslint": "^5.15.0",
+    "eslint": "^7.11.0",
     "express": "^4.16.4",
     "express-fileupload": "^1.1.1-alpha.3",
     "firebase-admin": "^9.4.1",
@@ -44,7 +44,7 @@
     "ts-node": "^8.8.1",
     "tsc": "^1.20150623.0",
     "twilio": "^3.41.1",
-    "typescript": "^3.8.3",
+    "typescript": "^4.1.2",
     "umzug": "^2.3.0",
     "uuid": "^3.3.2"
   },
@@ -62,12 +62,12 @@
     "supertest": "^4.0.2"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && (cd ./web && yarn run build)",
     "deps": "docker-compose -f docker-compose.deps.yml up",
     "test": "docker-compose -f docker-compose.test.yml up --build --abort-on-container-exit",
-    "test:local": "yarn run build && node --inspect=0.0.0.0:9228 built/test-run.js",
+    "test:local": "yarn run build && node --inspect=0.0.0.0:9228 build/test-run.js",
     "start": "nodemon",
-    "start:prod": "node built/server.js"
+    "start:prod": "node build/server.js"
   },
   "repository": {
     "type": "git",
@@ -76,6 +76,5 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "homepage": "https://bitbucket.org/kkendall33/carswaddleserver#readme",
-  "description": ""
+  "homepage": "https://bitbucket.org/kkendall33/carswaddleserver#readme"
 }
