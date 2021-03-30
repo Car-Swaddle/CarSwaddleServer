@@ -44,7 +44,7 @@ export class VehicleService {
         }
     }
 
-    public async createVehicle(toCreate, user): Promise<any> {
+    public async createVehicle(toCreate: any, user: any): Promise<any> {
         if (!VehicleService.isValidVehicle(toCreate)) {
             return Promise.reject(new Error('Must provide one of vin, licensePlate or vehicleDescription.'));
         }
@@ -68,7 +68,7 @@ export class VehicleService {
         return this.getVehicle(vehicleID);
     }
 
-    public async updateVehicle(updated, user): Promise<any> {
+    public async updateVehicle(updated: any, user: any): Promise<any> {
         if (!VehicleService.isValidVehicle(updated)) {
             return Promise.reject(new Error('Must provide one of vin, licensePlate or vehicleDescription.'));
         }
@@ -104,7 +104,7 @@ export class VehicleService {
         return this.getVehicle(updated.id);
     }
 
-    private buildVehicleDescription(descriptionJSON, vehicleID): any {
+    private buildVehicleDescription(descriptionJSON: any, vehicleID: string): any {
         return this.models.VehicleDescription.build({
             id: uuidV1(),
             make: descriptionJSON.make,
@@ -116,7 +116,7 @@ export class VehicleService {
         });
     }
 
-    public static isValidVehicle(v): boolean {
+    public static isValidVehicle(v: any): boolean {
         if (!v) {
             return false;
         }
@@ -126,7 +126,7 @@ export class VehicleService {
         return hasVin || hasLicensePlate || hasDescription;
     }
 
-    public static isValidDescription(d): boolean {
+    public static isValidDescription(d: any): boolean {
         return d && Util.areStrings(d.make, d.model) && Util.isNullOrNumber(d.year) && Util.areNullOrStrings(d.style, d.trim);
     }
 

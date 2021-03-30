@@ -33,4 +33,4 @@ console.log('working on ' + port);
 const passport = require('./passport')(models);
 
 require('./routes')(app, models, passport);
-app.use(express.static(__dirname + '/../www'));
+app.use(express.static(__dirname + '/../public'));

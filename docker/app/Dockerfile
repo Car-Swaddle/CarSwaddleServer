@@ -24,4 +24,4 @@ EXPOSE 9229/tcp
 EXPOSE 3000/tcp
 
 # wait for db to come up before running
-CMD ["dockerize", "-wait", "tcp://db:5432", "-wait", "tcp://s3:9000", "-timeout", "10s", "node", "--inspect=0.0.0.0:9229", "built/server.js"]
+CMD ["dockerize", "-wait", "tcp://db:5432", "-wait", "tcp://s3:9000", "-timeout", "10s", "node", "--inspect=0.0.0.0:9229", "build/server.js"]
