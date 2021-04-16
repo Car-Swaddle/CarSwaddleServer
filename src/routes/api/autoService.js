@@ -388,7 +388,7 @@ module.exports = function (router, models) {
         }
 
         const taxRate = await taxes.taxRateForLocation(location);
-        const prices = await billingCalculations.calculatePrices(mechanic, location, oilType, vehicleID, finalCoupon ? finalCoupon.id : null, taxRate);
+        const prices = await billingCalculations.calculatePrices(mechanic, location, oilType, vehicleID, finalCoupon, taxRate);
 
         autoServiceScheduler.scheduleAutoService(req.user, status, scheduledDate, vehicleID, mechanicID, sourceID,
             prices, oilType, serviceEntities, address, locationID, taxRate,
