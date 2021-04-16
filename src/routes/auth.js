@@ -6,7 +6,6 @@ const bodyParser = require('body-parser');
 const accountCreationFile = require('../controllers/account-creation.js');
 const express = require('express');
 
-
 module.exports = function (app, models, passport) {
 
     const emailFile = require('../notifications/email.js');
