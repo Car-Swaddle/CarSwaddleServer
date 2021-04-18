@@ -8,32 +8,30 @@ class LoginPage extends React.Component {
     constructor(props: any) {
         super(props);
 
-        // redirect to home if already logged in
-        if (authenticationService.currentToken) { 
-            // this.props.history.push('/');
-        }
+        // TODO - hit something to check if logged in? Look for cookie?
+        // When logged in: this.props.history.push('/');
     }
 
     render() {
         return (
             <div>
                 <div className="alert alert-info">
-                    Username: test<br />
+                    Email: test<br />
                     Password: test
                 </div>
                 <h2>Login</h2>
                 <Formik
                     initialValues={{
-                        username: '',
+                        email: '',
                         password: ''
                     }}
                     validationSchema={Yup.object().shape({
-                        username: Yup.string().required('Username is required'),
+                        email: Yup.string().required('Email is required'),
                         password: Yup.string().required('Password is required')
                     })}
-                    onSubmit={({ username, password }, { setStatus, setSubmitting }) => {
+                    onSubmit={({ email, password }, { setStatus, setSubmitting }) => {
                         setStatus();
-                        authenticationService.login(username, password)
+                        authenticationService.login(email, password)
                             .then(
                                 token => {
                                     console.log("Got token");
@@ -49,9 +47,9 @@ class LoginPage extends React.Component {
                     render={({ errors, status, touched, isSubmitting }) => (
                         <Form>
                             <div className="form-group">
-                                <label htmlFor="username">Username</label>
-                                <Field name="username" type="text" className={'form-control' + (errors.username && touched.username ? ' is-invalid' : '')} />
-                                <ErrorMessage name="username" component="div" className="invalid-feedback" />
+                                <label htmlFor="email">Email</label>
+                                <Field name="email" type="text" className={'form-control' + (errors.email && touched.email ? ' is-invalid' : '')} />
+                                <ErrorMessage name="email" component="div" className="invalid-feedback" />
                             </div>
                             <div className="form-group">
                                 <label htmlFor="password">Password</label>

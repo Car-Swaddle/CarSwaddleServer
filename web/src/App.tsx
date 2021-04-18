@@ -15,7 +15,7 @@ class App extends React.Component<{}, {currentToken: string | null}> {
     }
 
     componentDidMount() {
-      authenticationService.currentToken.subscribe(x => this.setState({ currentToken: x }));
+        
     }
 
     logout() {

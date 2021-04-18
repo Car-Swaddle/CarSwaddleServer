@@ -1,8 +1,4 @@
 const jwt = require('jsonwebtoken');
-const uuidV1 = require('uuid/v1');
-const constants = require('../controllers/constants.js');
-const stripe = require('stripe')(constants.STRIPE_SECRET_KEY);
-const bodyParser = require('body-parser');
 const accountCreationFile = require('../controllers/account-creation.js');
 const express = require('express');
 
@@ -33,6 +29,7 @@ module.exports = function (app, models, passport) {
                         return res.json({ user, mechanic, token });
                     });
                 } else {
+                    res.setHeader('Set-Cookie', 'cs-jwt=' + token);
                     return res.json({ user, token });
                 }
             });
