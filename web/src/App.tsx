@@ -3,7 +3,7 @@ import { BrowserRouter, Route, Link } from 'react-router-dom';
 
 import { authenticationService } from './_services/authenticationService';
 import ProtectedRoute from './_components/ProtectedRoute';
-import { LoginPage } from './LoginPage/LoginPage';
+import LoginPage from './LoginPage/LoginPage';
 
 class App extends React.Component<{}, {currentToken: string | null}> {
     constructor(props: any) {
@@ -15,7 +15,7 @@ class App extends React.Component<{}, {currentToken: string | null}> {
     }
 
     componentDidMount() {
-      authenticationService.currentToken.subscribe(x => this.setState({ currentToken: x }));
+        
     }
 
     logout() {

@@ -1,7 +1,6 @@
 const express = require('express');
 const models = require('./models');
 const constants = require('./controllers/constants');
-const bodyParser = require('body-parser');
 const stripe = require("stripe")(constants.STRIPE_SECRET_KEY);
 const pino = require('pino-http')(require('./util/pino-config'));
 
