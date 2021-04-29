@@ -1,5 +1,9 @@
-
+const crypto = require("crypto");
 export class Util {
+    static generateRandomHex(length: number): string {
+        return crypto.randomBytes(length).toString('hex').slice(-1 * length);
+    }
+
     static isString (obj: any | null): boolean {
         return obj && Object.prototype.toString.call(obj) === '[object String]';
     }

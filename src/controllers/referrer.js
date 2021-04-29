@@ -1,5 +1,6 @@
 const authoritiesFile = require('./authorities')
 const { Util } = require('../util/util');
+const uuidV1 = require('uuid/v1');
 
 module.exports = class ReferrerController {
     constructor(models) {
@@ -8,6 +9,8 @@ module.exports = class ReferrerController {
     }
 
     async createReferrer(referrer) {
+        // Generate short id designed to be shared
+        referrer.id = Util.generateRandomHex(4);
         return this.models.Referrer.create(referrer);
     }
 
@@ -36,6 +39,7 @@ module.exports = class ReferrerController {
     }
 
     async createPayStructure(payStructure) {
+        payStructure.id = uuidV1();
         return this.models.PayStructure.create(payStructure);
     }
 

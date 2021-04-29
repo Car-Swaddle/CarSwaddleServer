@@ -5,6 +5,12 @@ module.exports = (router, models) => {
     const referrerController = new (require('../../controllers/referrer'))(models);
     const readAuthority = models.Authority.NAME.readReferrers;
     const editAuthority = models.Authority.NAME.editReferrers;
+
+    async function checkIsCurrentReferrerOrAdmin(req, res) {
+        // TODO - fetch and check matching user
+
+        await authoritiesController.checkAuthority(req, res, readAuthority);
+    }
     
     router.get('/referrers', express.json(), async function (req, res) {
         await authoritiesController.checkAuthority(req, res, readAuthority);
@@ -20,7 +26,7 @@ module.exports = (router, models) => {
     });
 
     router.get('/referrers/:referrerID', express.json(), async function (req, res) {
-        await authoritiesController.checkAuthority(req, res, readAuthority);
+        checkIsCurrentReferrerOrAdmin(req, res);
         
         referrerController.getReferrer(req.params.referrerID).then((referrer) => {
             res.json(referrer);
@@ -30,8 +36,21 @@ module.exports = (router, models) => {
         });
     });
 
+    router.get('/referrers/:referrerID/summary', express.json(), async function (req, res) {
+        checkIsCurrentReferrerOrAdmin(req, res);
+        
+        // TODO
+    });
+
+    router.get('/referrers/:referrerID/transactions', express.json(), async function (req, res) {
+        checkIsCurrentReferrerOrAdmin(req, res);
+        
+        // TODO
+    });
+
     router.post('/referrers', express.json(), async function (req, res) {
         await authoritiesController.checkAuthority(req, res, editAuthority);
+
         referrerController.createReferrer(req.body).then((created) => {
             res.json(created);
         }).catch((error) => {
@@ -40,8 +59,14 @@ module.exports = (router, models) => {
         })
     });
 
+    router.post('/referrers/:referrerID/payout', express.json(), async function (req, res) {
+        checkIsCurrentReferrerOrAdmin(req, res);
+
+        // TODO
+    });
+
     router.put('/referrers/:referrerID', express.json(), async function (req, res) {
-        await authoritiesController.checkAuthority(req, res, editAuthority);
+        checkIsCurrentReferrerOrAdmin(req, res);
 
         req.body.id = req.params.referrerID;
         referrerController.updateReferrer(req.body).then((created) => {
@@ -54,6 +79,7 @@ module.exports = (router, models) => {
 
     router.delete('/referrers/:referrerID', express.json(), async function (req, res) {
         await authoritiesController.checkAuthority(req, res, editAuthority);
+
         referrerController.deleteReferrer(req.params.referrerID).then(() => {
             res.end();
         }).catch((error) => {
