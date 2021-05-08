@@ -1,11 +1,12 @@
-const authoritiesFile = require('./authorities')
 const { Util } = require('../util/util');
 const uuidV1 = require('uuid/v1');
+const { Referrer, PayStructure, sequelize } = require('../../models');
+const stripeChargesFile = require('../controllers/stripe-charges.js');
+const referrer = require('../models/referrer');
 
 module.exports = class ReferrerController {
-    constructor(models) {
-        this.models = models;
-        this.authorities = authoritiesFile(models);
+    constructor() {
+        this.stripeCharges = stripeChargesFile(models);
     }
 
     async createReferrer(referrer) {
@@ -15,18 +16,53 @@ module.exports = class ReferrerController {
     }
 
     async getReferrer(referrerID) {
-        return this.models.Referrer.findByPk(referrerID);
+        return Referrer.findByPk(referrerID);
     }
 
     async getReferrers(limit, offset) {
-        return this.models.Referrer.findAll({
+        return Referrer.findAll({
                 limit: limit,
                 offset: offset,
         });
     }
 
+    async getReferrerSummary(referrerID) {
+        const pending = await sequelize.query('SELECT COALESCE(SUM("referrerTransferAmount"), 0) FROM "transactionMetadata" WHERE "referrerID" = ? AND "stripeReferrerTransferID" IS NULL;', {
+            replacements: [referrerID],
+            type: this.models.sequelize.QueryTypes.SELECT,
+            plain: true
+        });
+
+        const lifetimeEarnings = await sequelize.query('SELECT COALESCE(SUM("referrerTransferAmount"), 0) FROM "transactionMetadata" WHERE "referrerID" = ? AND "stripeReferrerTransferID" IS NOT NULL;', {
+            replacements: [referrerID],
+            type: this.models.sequelize.QueryTypes.SELECT,
+            plain: true
+        });
+
+        return { pending, lifetimeEarnings };
+    }
+
+    async getReferrerTransactions(limit, offset) {
+        const [results, _] = await sequelize.query('SELECT "createdAt", "referrerTransferAmount" as amount, "stripeReferrerTransferID" as "transferID" FROM "transactionMetadata" WHERE "referrerID" = ? AND "referrerTransferAmount" > 0 LIMIT ? OFFSET ? ORDER BY "createdAt" DESC', {
+            replacements: [referrerID, limit, offset],
+            type: this.models.sequelize.QueryTypes.SELECT
+        });
+
+        return results;
+    }
+
+    async executeReferrerPayout(referrerID) {
+        await stripeCharges.executeReferrerPayout(referrerID);
+    }
+
+    async createReferrer(referrer) {
+        // Generate short id designed to be shared
+        referrer.id = Util.generateRandomHex(4);
+        return Referrer.create(referrer);
+    }
+
     async updateReferrer(referrer) {
-        return this.models.Referrer.update(referrer, {
+        return Referrer.update(referrer, {
             where: {
                 id: referrer.id
             }
@@ -40,19 +76,19 @@ module.exports = class ReferrerController {
 
     async createPayStructure(payStructure) {
         payStructure.id = uuidV1();
-        return this.models.PayStructure.create(payStructure);
+        return PayStructure.create(payStructure);
     }
 
     async getPayStructure(payStructureID) {
-        return this.models.PayStructure.findByPk(payStructureID);
+        return PayStructure.findByPk(payStructureID);
     }
 
     async getPayStructures() {
-        return this.models.PayStructure.findAll();
+        return PayStructure.findAll();
     }
 
     async updatePayStructure(payStructure) {
-        return this.models.PayStructure.update(payStructure, {
+        return PayStructure.update(payStructure, {
             where: {
                 id: payStructure.id
             }

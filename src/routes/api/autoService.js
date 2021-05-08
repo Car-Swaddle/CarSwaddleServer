@@ -21,8 +21,6 @@ module.exports = function (router, models) {
     const reminderFile = require('../../notifications/reminder.js');
     const reminder = new reminderFile(models);
 
-    const Op = models.Sequelize.Op;
-
     router.get('/auto-service-details', bodyParser.json(), function (req, res) {
         if (!req.query.autoServiceID) {
             return res.status(422).send();
