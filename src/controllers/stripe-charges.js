@@ -2,6 +2,7 @@ const constants = require('./constants.js');
 const uuidV1 = require('uuid/v1');
 const stripe = require('stripe')(constants.STRIPE_SECRET_KEY);
 const Email = require('../notifications/email');
+const { Op } = require("sequelize");
 
 const ALL_PRICE_TYPES = ['discount', 'oilChange', 'distance', 'bookingFee', 'processingFee', 'bookingFeeDiscount'];
 
@@ -99,6 +100,11 @@ StripeCharges.prototype.executeMechanicTransfer = async function(paymentIntentID
         currency: 'usd',
         destination: mechanic.stripeAccountID,
         description: `Transfer to mechanic ${mechanic.id}`,
+        metadata: {
+            mechanicID: mechanic.id,
+            autoServiceID: autoServiceID,
+            paymentIntentID: paymentIntentID,
+        },
         transfer_group: autoServiceID,
     });
     transactionMetadata.stripeMechanicTransferID = transfer.id;
@@ -109,35 +115,60 @@ StripeCharges.prototype.executeMechanicTransfer = async function(paymentIntentID
 StripeCharges.prototype.executeReferrerPayout = async function(referrerID) {
     const referrer = await this.models.Referrer.findByPk(referrerID);
 
-    // TODO - fetch outstanding referrer transactions, sum transfer value and execute in single transaction, persist 
-}
-
-StripeCharges.prototype.executeReferrerTransfer = async function(transactionMetadata, referrer) {
-    if (!transactionMetadata.referrerTransferAmount || transactionMetadata.referrerTransferAmount == 0) {
-        console.warn(`No referrer amounts to transferrer: ${transactionMetadata.id}`)
-        return;
-    }
-
-    if (transactionMetadata.stripeReferrerTransferID) {
-        console.warn(`Referrer transaction id already found: ${transactionMetadata.stripeReferrerTransferID}`)
-        return;
-    }
-
     if (!referrer || !referrer.stripeExpressAccountID) {
-        console.warn(`No referrer stripe account, can't transfer for id ${transactionMetadata.id}`)
+        console.warn(`No referrer stripe account, can't transfer for ${referrerID}`);
         return;
     }
+
+    const transactionMetadataList = await this.models.TransactionMetadata.findAll({
+        where: {
+            referrerID: referrerID,
+            stripeReferrerTransferID: {
+                [Op.is]: null,
+            }
+        }
+    })
+
+    const total = transactionMetadataList.reduce((acc, metadata) => {
+        return acc + metadata.referrerTransferAmount ?? 0;
+    }, 0);
+
+    const metadataIds = transactionMetadataList.map((metadata) => {
+        return metadata.id;
+    });
 
     const transfer = await stripe.transfers.create({
-        amount: transactionMetadata.referrerTransferAmount,
+        amount: total,
         currency: 'usd',
         destination: referrer.stripeExpressAccountID,
         description: `Transfer to referrer ${referrer.id}`,
-        transfer_group: autoServiceID,
+        metadata: {
+            referrerID: referrer.id,
+            metadataIds: metadataIds,
+        },
     });
 
-    transactionMetadata.stripeReferrerTransferID = transfer.id;
-    await transactionMetadata.save();
+    if (!transfer || !transfer.id) {
+        throw "Failed to create transfer";
+    }
+
+    try {
+        await TransactionMetadata.update(
+            { stripeReferrerTransferID: transfer.id },
+            {
+                where: {
+                    id: {
+                        [Op.in]: metadataIds
+                    }
+                }
+            }
+        );
+    } catch (e) {
+        await stripe.transfers.createReversal(
+            transfer.id,
+        )
+        throw `Failed to persist stripe transfer id: ${transfer.id}, reversed`
+    }
 }
 
 StripeCharges.prototype.payInvoices = async function(invoiceID, sourceID, mechanicID, transferAmount) {
