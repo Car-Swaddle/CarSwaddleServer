@@ -2,7 +2,6 @@ const { Util } = require('../util/util');
 const uuidV1 = require('uuid/v1');
 const { Referrer, PayStructure, sequelize } = require('../../models');
 const stripeChargesFile = require('../controllers/stripe-charges.js');
-const referrer = require('../models/referrer');
 
 module.exports = class ReferrerController {
     constructor() {
