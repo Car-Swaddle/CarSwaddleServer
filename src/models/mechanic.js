@@ -48,7 +48,7 @@ const mechanic = function (sequelize, DataTypes) {
         chargeForTravel: {
             type: DataTypes.BOOLEAN,
             allowNull: false,
-            defaultValue: true
+            defaultValue: false
         }
     },
         {
