@@ -1,6 +1,6 @@
 const { Util } = require('../util/util');
 const uuidV1 = require('uuid/v1');
-const models = require('../../models');
+const models = require('../models');
 const { Referrer, PayStructure, sequelize } = models;
 const stripeCharges = require('../controllers/stripe-charges.js')(models);
 const { QueryTypes } = require('sequelize');
