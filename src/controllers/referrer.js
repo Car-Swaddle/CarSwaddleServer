@@ -1,18 +1,11 @@
 const { Util } = require('../util/util');
 const uuidV1 = require('uuid/v1');
-const { Referrer, PayStructure, sequelize } = require('../../models');
-const stripeChargesFile = require('../controllers/stripe-charges.js');
+const models = require('../../models');
+const { Referrer, PayStructure, sequelize } = models;
+const stripeCharges = require('../controllers/stripe-charges.js')(models);
+const { QueryTypes } = require('sequelize');
 
 module.exports = class ReferrerController {
-    constructor() {
-        this.stripeCharges = stripeChargesFile(models);
-    }
-
-    async createReferrer(referrer) {
-        // Generate short id designed to be shared
-        referrer.id = Util.generateRandomHex(4);
-        return this.models.Referrer.create(referrer);
-    }
 
     async getReferrer(referrerID) {
         return Referrer.findByPk(referrerID);
@@ -28,13 +21,13 @@ module.exports = class ReferrerController {
     async getReferrerSummary(referrerID) {
         const pending = await sequelize.query('SELECT COALESCE(SUM("referrerTransferAmount"), 0) FROM "transactionMetadata" WHERE "referrerID" = ? AND "stripeReferrerTransferID" IS NULL;', {
             replacements: [referrerID],
-            type: this.models.sequelize.QueryTypes.SELECT,
+            type: QueryTypes.SELECT,
             plain: true
         });
 
         const lifetimeEarnings = await sequelize.query('SELECT COALESCE(SUM("referrerTransferAmount"), 0) FROM "transactionMetadata" WHERE "referrerID" = ? AND "stripeReferrerTransferID" IS NOT NULL;', {
             replacements: [referrerID],
-            type: this.models.sequelize.QueryTypes.SELECT,
+            type: QueryTypes.SELECT,
             plain: true
         });
 
@@ -44,7 +37,7 @@ module.exports = class ReferrerController {
     async getReferrerTransactions(limit, offset) {
         const [results, _] = await sequelize.query('SELECT "createdAt", "referrerTransferAmount" as amount, "stripeReferrerTransferID" as "transferID" FROM "transactionMetadata" WHERE "referrerID" = ? AND "referrerTransferAmount" > 0 LIMIT ? OFFSET ? ORDER BY "createdAt" DESC', {
             replacements: [referrerID, limit, offset],
-            type: this.models.sequelize.QueryTypes.SELECT
+            type: QueryTypes.SELECT
         });
 
         return results;

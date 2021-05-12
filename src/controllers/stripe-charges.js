@@ -137,6 +137,15 @@ StripeCharges.prototype.executeReferrerPayout = async function(referrerID) {
         return metadata.id;
     });
 
+    async function updateMetadataStripeTransferID(value, ids) {
+        await TransactionMetadata.update(
+            { stripeReferrerTransferID: value },
+            { where: { id: { [Op.in]: ids } } }
+        );
+    }
+
+    await updateMetadataStripeTransferID("IN_PROGRESS", metadataIds);
+
     const transfer = await stripe.transfers.create({
         amount: total,
         currency: 'usd',
@@ -149,20 +158,12 @@ StripeCharges.prototype.executeReferrerPayout = async function(referrerID) {
     });
 
     if (!transfer || !transfer.id) {
+        await updateMetadataStripeTransferID(null, metadataIds);
         throw "Failed to create transfer";
     }
 
     try {
-        await TransactionMetadata.update(
-            { stripeReferrerTransferID: transfer.id },
-            {
-                where: {
-                    id: {
-                        [Op.in]: metadataIds
-                    }
-                }
-            }
-        );
+        await updateMetadataStripeTransferID(transfer.id, metadataIds);
     } catch (e) {
         await stripe.transfers.createReversal(
             transfer.id,
