@@ -31,12 +31,12 @@ module.exports = function (models) {
         var token = null;
 
         // Auth header 
-        if (req && req.headers && req.headers.authorization) {
+        if (req.headers && req.headers["authorization"]) {
             token = ExtractJWT.fromAuthHeaderAsBearerToken()(req);
         }
 
         // Browser cookie
-        if (req && req.cookies) {
+        if (req.cookies) {
             token = req.cookies["cs-jwt"];
         }
 
