@@ -36,7 +36,7 @@ module.exports = function (models) {
         }
 
         // Browser cookie
-        if (req.cookies) {
+        if (!token && req.cookies && req.cookies["cw-jwt"]) {
             token = req.cookies["cs-jwt"];
         }
 

@@ -9,11 +9,11 @@ module.exports = {
     },
     serializers: {
         req: function customReqSerializer (req) {
-            delete req.headers;
+            // delete req.headers;
             return req;
         },
         res: function customResSerializer (res) {
-            delete res.headers;
+            // delete res.headers;
             if (res && res.raw && res.raw.req && res.raw.req.user) {
                 res.userId = res.raw.req.user.id;
             }
