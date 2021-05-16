@@ -1,10 +1,11 @@
 const express = require('express');
 const models = require('../../models')
 const { Authority, Referrer } = models;
-const referrerController = require('../../controllers/referrer');
+const ReferrerController = require('../../controllers/referrer');
 
 module.exports = (router) => {
     const authoritiesController = require('../../controllers/authorities')(models);
+    const referrerController = new ReferrerController();
     const readAuthority = Authority.NAME.readReferrers;
     const editAuthority = Authority.NAME.editReferrers;
 
@@ -35,6 +36,15 @@ module.exports = (router) => {
         });
     });
 
+    router.get('/referrers/current-user', express.json(), async function (req, res) {
+        referrerController.getReferrerForUserID(req.user.id).then((referrer) => {
+            res.json(referrer);
+        }).catch((error) => {
+            res.status(400).json({error: "Unable to get referrer"});
+            req.log.warn(error);
+        });
+    });
+
     router.get('/referrers/:referrerID', express.json(), async function (req, res) {
         await checkIsCurrentReferrerOrAdmin(req.params.referrerID, req, res);
 
@@ -60,7 +70,7 @@ module.exports = (router) => {
     router.get('/referrers/:referrerID/transactions', express.json(), async function (req, res) {
         await checkIsCurrentReferrerOrAdmin(req.params.referrerID, req, res);
         
-        referrerController.getReferrerTransactions(req.params.limit ?? 100, req.params.offset ?? 0).then((transactions) => {
+        referrerController.getReferrerTransactions(req.params.referrerID, req.params.limit ?? 100, req.params.offset ?? 0).then((transactions) => {
             res.json(transactions);
         }).catch((error) => {
             res.status(400).json({error: "Unable to get referrer transactions"});
