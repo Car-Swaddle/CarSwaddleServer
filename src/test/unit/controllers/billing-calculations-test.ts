@@ -19,7 +19,7 @@ describe("Billing Calculations", function() {
         rate: 0.0715,
     };
     const coupon = {
-        discountBookingFee: true,
+        discountBookingFee: false,
     }
 
     it("should return correct billing value", async function() {
