@@ -16,7 +16,7 @@ module.exports = function (router, models) {
     const autoServiceScheduler = require('../../controllers/auto-service-scheduler.js')(models);
     const billingCalculations = require('../../controllers/billing-calculations')(models);
     const taxes = require('../../controllers/taxes')(models);
-    const vehicleService = new VehicleService(models);
+    const vehicleService = new VehicleService();
 
     const reminderFile = require('../../notifications/reminder.js');
     const reminder = new reminderFile(models);

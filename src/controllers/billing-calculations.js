@@ -1,6 +1,7 @@
 const distance = require('../routes/distance');
 const constants = require('./constants');
-const { VehicleService } = require('./vehicle')
+const { OilChangePricing } = require('../models');
+const { VehicleService } = require('./vehicle');
 
 // All in cents
 // const centsPerMile = 78;
@@ -17,9 +18,8 @@ const { VehicleService } = require('./vehicle')
 
 const METERS_TO_MILES = 1609.344;
 
-function BillingCalculations(models) {
-    this.models = models;
-    this.vehicleService = new VehicleService(models);
+function BillingCalculations(_) {
+    this.vehicleService = new VehicleService();
 }
 
 BillingCalculations.prototype.calculateCouponDiscount = function(coupon, subTotal) {
@@ -37,28 +37,22 @@ BillingCalculations.prototype.calculateCouponDiscount = function(coupon, subTota
 }
 
 BillingCalculations.prototype.calculatePrices = async function(mechanic, location, oilType, vehicleID, coupon, taxRate) {
-    const [
-        region,
-        oilChangePricing,
-    ] = await Promise.all([
-        mechanic.getRegion(),
-        this.models.OilChangePricing.findOne({ where: { mechanicID: mechanic.id } }),
-    ]);
-
-    const locationPoint = { latitude: location.point.coordinates[1], longitude: location.point.coordinates[0] };
-    const regionPoint = { latitude: region.origin.coordinates[1], longitude: region.origin.coordinates[0] };
-    const meters = distance.metersBetween(locationPoint, regionPoint);
-    const miles = meters / METERS_TO_MILES;
-
-    const vehicle = vehicleID ? this.vehicleService.getVehicle(vehicleID) : null;
-    const centsPerMile = (oilChangePricing && oilChangePricing.centsPerMile) || constants.DEFAULT_CENTS_PER_MILE;
-    const oilChangePrice = centsForOilType(oilType, oilChangePricing, vehicle) || constants.DEFAULT_CONVENTIONAL_PRICE;
-    var distancePrice =  Math.round((centsPerMile * miles) * 2);
+    const oilChangePricing = await OilChangePricing.findOne({ where: { mechanicID: mechanic.id } });
 
     // If the mechanic doesn't charge for travel, set to 0
-    if (!mechanic.chargeForTravel) {
-        distancePrice = 0.0;
+    var distancePrice = 0.0;
+    if (mechanic.chargeForTravel) {
+        const region = await mechanic.getRegion();
+        const locationPoint = { latitude: location.point.coordinates[1], longitude: location.point.coordinates[0] };
+        const regionPoint = { latitude: region.origin.coordinates[1], longitude: region.origin.coordinates[0] };
+        const meters = distance.metersBetween(locationPoint, regionPoint);
+        const miles = meters / METERS_TO_MILES;
+        const centsPerMile = (oilChangePricing && oilChangePricing.centsPerMile) || constants.DEFAULT_CENTS_PER_MILE;
+        distancePrice =  Math.round((centsPerMile * miles) * 2);
     }
+
+    const vehicle = vehicleID ? this.vehicleService.getVehicle(vehicleID) : null;
+    const oilChangePrice = centsForOilType(oilType, oilChangePricing, vehicle) || constants.DEFAULT_CONVENTIONAL_PRICE;
 
     const subtotalPrice = oilChangePrice + distancePrice;
     const discountPrice = coupon ? this.calculateCouponDiscount(coupon, subtotalPrice) : null;

@@ -15,6 +15,7 @@ class VehicleSpecs {
 }
 
 export class VehicleLookup {
+
     static listYears(make?: string, model?: string): number[] {
         const prep = this.queryPrep(make, model);
         const stmt = db.prepare("SELECT DISTINCT v.year FROM vehicle v WHERE v.id IN (SELECT docid FROM vehicle_fts " + prep.whereClause + ") ORDER BY v.year DESC");
