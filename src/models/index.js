@@ -102,14 +102,14 @@ const umzug = new Umzug({
   storageOptions: { sequelize }
 });
 
-// umzug.up().then(() => {
-//   console.log("Finished migrations")
-//   const reminder = new Reminder(models);
-//   reminder.rescheduleRemindersForAllAutoServices();
-// })
-// .catch((err) => {
-//   console.error("Error during migrations: " + err);
-// });
+umzug.up().then(() => {
+  console.log("Finished migrations")
+  const reminder = new Reminder(models);
+  reminder.rescheduleRemindersForAllAutoServices();
+})
+.catch((err) => {
+  console.error("Error during migrations: " + err);
+});
 
 models.sequelize = sequelize;
 models.Sequelize = Sequelize;
