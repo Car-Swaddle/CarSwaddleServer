@@ -36,10 +36,12 @@ BillingCalculations.prototype.calculateCouponDiscount = function(coupon, subTota
     return Math.max(Math.round(discount), -subTotal);
 }
 
-BillingCalculations.prototype.calculatePrices = async function(mechanic, location, oilType, vehicleID, coupon, taxRate) {
+BillingCalculations.prototype.calculatePrices = async function(mechanic, location, oilType, vehicleID, coupon, taxMetadata) {
     const oilChangePricing = await OilChangePricing.findOne({ where: { mechanicID: mechanic.id } });
 
-    // TODO - if tax rate is 0 or missing, throw?
+    if (!taxMetadata || !taxMetadata.rate) {
+        throw "No tax metadata, can't calculate price"
+    }
 
     // If the mechanic doesn't charge for travel, set to 0
     var distancePrice = 0.0;
@@ -61,7 +63,7 @@ BillingCalculations.prototype.calculatePrices = async function(mechanic, locatio
     const bookingFeePrice = Math.round(constants.BOOKING_FEE_PERCENTAGE * subtotalPrice);
     const bookingFeeDiscountPrice = coupon && coupon.discountBookingFee ? -bookingFeePrice : null;
 
-    const processingFeePrice = calculateProcessingFee(oilChangePrice, distancePrice, discountPrice, bookingFeePrice, bookingFeeDiscountPrice, taxRate);
+    const { processingFeePrice, salesTax } = calculateProcessingFeeTaxes(oilChangePrice, distancePrice, discountPrice, bookingFeePrice, bookingFeeDiscountPrice, taxMetadata.rate);
     var mechanicCostPrice = Math.round(subtotalPrice * .7);
     var transferAmountPrice = subtotalPrice;
 
@@ -70,7 +72,7 @@ BillingCalculations.prototype.calculatePrices = async function(mechanic, locatio
         mechanicCostPrice = Math.round((subtotalPrice + discountPrice) * .7)
     }
 
-    const total = discountPrice + oilChangePrice + distancePrice + bookingFeePrice + processingFeePrice + bookingFeeDiscountPrice;
+    const total = discountPrice + oilChangePrice + distancePrice + bookingFeePrice + bookingFeeDiscountPrice + processingFeePrice + salesTax;
     return {
         oilChange: oilChangePrice,
         distance: distancePrice,
@@ -78,52 +80,40 @@ BillingCalculations.prototype.calculatePrices = async function(mechanic, locatio
         bookingFeeDiscount: bookingFeeDiscountPrice,
         discount: discountPrice,
         subtotal: subtotalPrice,
-        processingFee: processingFeePrice,
+        processingFee: processingFeePrice, // TODO - @kyle, will this mess up the client if I don't include taxes here?
+        salesTax: salesTax,
         transferAmount: transferAmountPrice,
         mechanicCost: mechanicCostPrice,
         total: total,
     };
 }
 
-function calculateProcessingFee(oilChange, distance, discountPrice, bookingFee, bookingFeeDiscount, taxRate) {
-    // d = ((s+b)+0.30)/(1-0.029)
-    // fee = d - (s+b)
-    // The mechanic will make a little bit more than what we will take out for the stripeConnectProcessFee because we add
-    // the product of the stripeConectFee and the entire total instead of just what the mechanic gets. The profit goes to
-    // the mechanic.
-    
-    // Covers Stripe charge fee %3 and the connect payout volume %0.25 fee
+function calculateProcessingFeeTaxes(oilChange, distance, discountPrice, bookingFee, bookingFeeDiscount, taxRate) {
+    // Covers Stripe 2.9% charge rate and the connect payout volume 0.25% rate
     const stripeProcessPercentage = 0.029;
     const stripeConnectProcessPercentage = 0.0025;
-    const calculateStripeScalingFees = (value) => {
-        return Math.round((value * stripeProcessPercentage) + (value * stripeConnectProcessPercentage));
-    };
+    const stripeTotalProcessPercentage = stripeProcessPercentage + stripeConnectProcessPercentage;
     const stripeProcessTransactionFee = 30; // In cents, per-transaction fee
 
-    const calculateTaxes = (value) => {
-        return Math.round(value * (taxRate?.rate ?? 0));
-    }
+    // P = stripe transaction rate
+    // C = stripe transaction flat fee
+    // T = tax rate
+
+    // system of linear equations with substitution https://math.stackexchange.com/questions/3242360/what-math-is-this 
+    // a = ((P + PT)x + C) / (1 - PT) = total transaction fee
+    // b = T(x + a) = taxes
+    // c = a + b + x = amount charged to customer
+    // x = subtotal
 
     const subtotal = (oilChange || 0) + (distance || 0) + (discountPrice || 0) + (bookingFee || 0) + (bookingFeeDiscount || 0);
-    const subtotalStripeFees = calculateStripeScalingFees(subtotal) + stripeProcessTransactionFee;
 
-    const initialTaxable = subtotal + subtotalStripeFees;
-    const initialTaxes = calculateTaxes(initialTaxable);
-    const estimatedTaxStripeTransactionFee = calculateStripeScalingFees(initialTaxes); // Rough estimate of stripe charges 
+    // TODO - this is still slightly off, something about how/when we calculate the flat fee cost
+    const processingFee = Math.round((((stripeTotalProcessPercentage + (stripeTotalProcessPercentage * taxRate)) * subtotal))
+        / (1 - (stripeTotalProcessPercentage * taxRate)));
 
-    const finalTaxable = initialTaxable + estimatedTaxStripeTransactionFee;
-    const finalTaxes = calculateTaxes(finalTaxable);
+    const taxes = Math.round(taxRate * (subtotal + processingFee + stripeProcessTransactionFee));
 
-    return subtotalStripeFees + finalTaxes;
-
-    // const estimatedTaxes = Math.round(feeTotal * taxRate?.rate ?? 0);
-    // const totalPlusTax = feeTotal + estimatedTaxes;
-
-    // const connectFee = (totalPlusTax / (1.0 - (stripeConnectProcessPercentage))) - totalPlusTax;
-    // const basePrice = totalPlusTax + (totalPlusTax * constants.BOOKING_FEE_PERCENTAGE) + connectFee;
-    // const total = (basePrice + stripeProcessTransactionFee) / (1.0 - (stripeProcessPercentage));
-
-    // return Math.round(total - basePrice);
+    return { processingFeePrice: processingFee + stripeProcessTransactionFee, salesTax: taxes }
 }
 
 function centsForOilType(oilType, oilChangePricing, vehicle) {

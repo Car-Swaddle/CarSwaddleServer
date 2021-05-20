@@ -15,7 +15,7 @@ describe("Billing Calculations", function() {
         id: "12345",
         chargeForTravel: false,
     }
-    const taxRate = {
+    const taxMetadata = {
         rate: 0.0715,
     };
     const coupon = {
@@ -25,8 +25,14 @@ describe("Billing Calculations", function() {
     it("should return correct billing value", async function() {
         sinon.stub(OilChangePricing, "findOne").returns(fakePricing);
         const billingCalculations = BillingCalculations();
-        const out = await billingCalculations.calculatePrices(fakeMechanic, null, "SYNTHETIC", null, coupon, taxRate);
-        // TODO - verify these values
-        console.log(out);
+        const prices = await billingCalculations.calculatePrices(fakeMechanic, null, "SYNTHETIC", null, coupon, taxMetadata);
+        
+        console.log(prices);
+
+        assert.equal(prices.oilChange, 6600);
+        assert.equal(prices.bookingFee, 660);
+        assert.equal(prices.salesTax, Math.round((prices.total - prices.salesTax) * taxMetadata.rate));
+        assert.equal(prices.processingFee, Math.round((prices.total - 30) * 0.0315));
+        // assert.equal(prices.total, 8075);
     });
 })
