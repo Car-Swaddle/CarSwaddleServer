@@ -30,23 +30,36 @@ module.exports = class ReferrerController {
     }
 
     async getReferrerSummary(referrerID) {
-        const pending = await sequelize.query('SELECT COALESCE(SUM("referrerTransferAmount"), 0) as pending FROM "transactionMetadata" WHERE "referrerID" = ? AND "stripeReferrerTransferID" IS NULL;', {
+        // Total amount from transactions that can be paid immediately
+        const pending = await sequelize.query(
+            `SELECT COALESCE(SUM(tm."referrerTransferAmount"), 0) as pending ` +
+            `FROM "transactionMetadata" tm INNER JOIN "autoService" service ON tm."autoServiceID" = service.id AND service.status = 'COMPLETED' ` +
+            `WHERE tm."referrerID" = ? AND tm."stripeReferrerTransferID" IS NULL;`, {
             replacements: [referrerID],
             type: QueryTypes.SELECT,
             plain: true
         });
 
-        const lifetime = await sequelize.query('SELECT COALESCE(SUM("referrerTransferAmount"), 0) as lifetime FROM "transactionMetadata" WHERE "referrerID" = ?;', {
+        // Total amount from transactions already paid
+        const lifetimePaid = await sequelize.query(
+            `SELECT COALESCE(SUM(tm."referrerTransferAmount"), 0) as lifetime ` +
+            `FROM "transactionMetadata" tm ` +
+            `WHERE tm."referrerID" = ? AND tm."stripeReferrerTransferID" IS NOT NULL;`, {
             replacements: [referrerID],
             type: QueryTypes.SELECT,
             plain: true
         });
 
-        return { pending: parseInt(pending.pending ?? 0), lifetime: parseInt(lifetime.lifetime ?? 0) };
+        return { pending: parseInt(pending.pending ?? 0), lifetimePaid: parseInt(lifetimePaid.lifetime ?? 0) };
     }
 
+    /// Relevant referrer transactions for all completed services
     async getReferrerTransactions(referrerID, limit, offset) {
-        const results = await sequelize.query('SELECT "createdAt", "referrerTransferAmount" as amount, "stripeReferrerTransferID" as "transferID" FROM "transactionMetadata" WHERE "referrerID" = ? AND "referrerTransferAmount" > 0 ORDER BY "createdAt" DESC LIMIT ? OFFSET ?', {
+        const results = await sequelize.query(
+            `SELECT service."scheduledDate" as date, tm."referrerTransferAmount" as amount, tm."stripeReferrerTransferID" as "transferID" ` +
+            `FROM "transactionMetadata" tm INNER JOIN "autoService" service ON tm."autoServiceID" = service.id AND service.status = 'COMPLETED' ` +
+            `WHERE tm."referrerID" = ? AND tm."referrerTransferAmount" > 0 ` + 
+            `ORDER BY service."scheduledDate" DESC LIMIT ? OFFSET ?`, {
             replacements: [referrerID, limit, offset],
             type: QueryTypes.SELECT
         });

@@ -120,18 +120,31 @@ StripeCharges.prototype.executeReferrerPayout = async function(referrerID) {
         return;
     }
 
+    // Include all transactions where we haven't attempted a transfer and the service is completed
     const transactionMetadataList = await this.models.TransactionMetadata.findAll({
         where: {
             referrerID: referrerID,
             stripeReferrerTransferID: {
                 [Op.is]: null,
+            },
+        },
+        include: [
+            {
+                model: this.models.AutoService,
+                where: {
+                    status: this.models.AutoService.STATUS.completed,
+                }
             }
-        }
+        ]
     })
 
     const total = transactionMetadataList.reduce((acc, metadata) => {
         return acc + metadata.referrerTransferAmount ?? 0;
     }, 0);
+
+    if (total < 1000) {
+        throw "No payouts with less than $10 outstanding"
+    }
 
     const metadataIds = transactionMetadataList.map((metadata) => {
         return metadata.id;
