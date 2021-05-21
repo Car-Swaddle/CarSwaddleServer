@@ -89,31 +89,34 @@ BillingCalculations.prototype.calculatePrices = async function(mechanic, locatio
 }
 
 function calculateProcessingFeeTaxes(oilChange, distance, discountPrice, bookingFee, bookingFeeDiscount, taxRate) {
-    // Covers Stripe 2.9% charge rate and the connect payout volume 0.25% rate
+    // Covers Stripe 2.9% charge rate
     const stripeProcessPercentage = 0.029;
-    const stripeConnectProcessPercentage = 0.0025;
-    const stripeTotalProcessPercentage = stripeProcessPercentage + stripeConnectProcessPercentage;
     const stripeProcessTransactionFee = 30; // In cents, per-transaction fee
 
-    // P = stripe transaction rate
-    // C = stripe transaction flat fee
-    // T = tax rate
+    const calculateStripeScalingFee = (value) => {
+        return Math.round(value * stripeProcessPercentage);
+    };
 
-    // system of linear equations with substitution https://math.stackexchange.com/questions/3242360/what-math-is-this 
-    // a = ((P + PT)x + C) / (1 - PT) = total transaction fee
-    // b = T(x + a) = taxes
-    // c = a + b + x = amount charged to customer
-    // x = subtotal
+    const calculateTax = (value) => {
+        return Math.round(value * taxRate);
+    }
 
-    const subtotal = (oilChange || 0) + (distance || 0) + (discountPrice || 0) + (bookingFee || 0) + (bookingFeeDiscount || 0);
+    // Add stripe flat fee to this subtotal so it is included in all the scaling fees/tax
+    const subtotal = (oilChange || 0) + (distance || 0) + (discountPrice || 0) + (bookingFee || 0) + (bookingFeeDiscount || 0) + stripeProcessTransactionFee;
+    const subtotalStripeFee = calculateStripeScalingFee(subtotal);
 
-    // TODO - this is still slightly off, something about how/when we calculate the flat fee cost
-    const processingFee = Math.round((((stripeTotalProcessPercentage + (stripeTotalProcessPercentage * taxRate)) * subtotal))
-        / (1 - (stripeTotalProcessPercentage * taxRate)));
+    const initialTaxable = subtotal + subtotalStripeFee;
+    const initialTaxes = calculateTax(initialTaxable);
+    const estimatedTaxStripeFee = calculateStripeScalingFee(initialTaxes);
 
-    const taxes = Math.round(taxRate * (subtotal + processingFee + stripeProcessTransactionFee));
+    // Recalculate taxes with transaction fee included
+    // Final transaction fee could be slightly higher because of the additional tax on the stripe transaction but should be minimal/rounding error
+    const finalTaxable = initialTaxable + estimatedTaxStripeFee;
+    const finalTaxes = calculateTax(finalTaxable);
 
-    return { processingFeePrice: processingFee + stripeProcessTransactionFee, salesTax: taxes }
+    const finalProcessingFee = subtotalStripeFee + estimatedTaxStripeFee + stripeProcessTransactionFee;
+
+    return { processingFeePrice: finalProcessingFee, salesTax: finalTaxes }
 }
 
 function centsForOilType(oilType, oilChangePricing, vehicle) {

@@ -22,17 +22,16 @@ describe("Billing Calculations", function() {
         discountBookingFee: false,
     }
 
-    it("should return correct billing value", async function() {
+    it("should return correct billing values", async function() {
         sinon.stub(OilChangePricing, "findOne").returns(fakePricing);
         const billingCalculations = BillingCalculations();
         const prices = await billingCalculations.calculatePrices(fakeMechanic, null, "SYNTHETIC", null, coupon, taxMetadata);
-        
-        console.log(prices);
 
         assert.equal(prices.oilChange, 6600);
         assert.equal(prices.bookingFee, 660);
         assert.equal(prices.salesTax, Math.round((prices.total - prices.salesTax) * taxMetadata.rate));
-        assert.equal(prices.processingFee, Math.round((prices.total - 30) * 0.0315));
-        // assert.equal(prices.total, 8075);
+        // Can be a rounding error here depending on input numbers
+        assert.closeTo(prices.processingFee, Math.round((prices.total - prices.processingFee) * 0.029) + 30, 1);
+        assert.equal(prices.total, prices.oilChange + prices.bookingFee + prices.salesTax + prices.processingFee);
     });
 })

@@ -1,5 +1,5 @@
 const Database = require("better-sqlite3");
-const db = new Database(__dirname + "/../../resources/vehicle-lookup.db", {readonly: true, fileMustExist: true, verbose: console.log});
+const db = new Database(__dirname + "/../../resources/vehicle-lookup.db", {readonly: true, fileMustExist: true});
 
 class VehicleSpecs {
     id!: number
