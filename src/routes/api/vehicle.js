@@ -1,10 +1,11 @@
 const bodyParser = require('body-parser');
-const vehicleLookup = require('../../data/vehicle-lookup').VehicleLookup
-const util = require('../../util/util').Util
-const VehicleService = require('../../controllers/vehicle').VehicleService
+const { VehicleLookup } = require('../../data/vehicle-lookup');
+const { Util } = require('../../util/util');
+const { VehicleService } = require('../../controllers/vehicle');
 
 module.exports = function (router, models) {
-    const vehicleService = new VehicleService(models);
+    const vehicleService = new VehicleService();
+    const vehicleLookup = 
 
     router.get('/vehicle/lookup/:field', bodyParser.json(), (req, res, next) => {
         const field = req.params.field;
@@ -15,12 +16,12 @@ module.exports = function (router, models) {
         const make = req.query.make;
         const model = req.query.model;
         const engine = req.query.engine;
-        if (!util.isNullOrNumber(year) || !util.areNullOrStrings(make, model, engine)) {
+        if (!Util.isNullOrNumber(year) || !Util.areNullOrStrings(make, model, engine)) {
             return res.status(400).send({message: "Invalid query params"});
         }
         switch (field) {
             case "YEAR":
-                return res.status(200).send(vehicleLookup.listYears(make, model));
+                return res.status(200).send(VehicleLookup.listYears(make, model));
             case "MAKE":
                 return res.status(200).send(vehicleLookup.listMakes(make, year));
             case "MODEL":

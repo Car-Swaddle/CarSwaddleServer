@@ -102,7 +102,7 @@ Taxes.prototype.endOfYear = function (year) {
     return date
 };
 
-Taxes.prototype.taxRateForLocation = async function(location) {
+Taxes.prototype.taxMetadataForLocation = async function(location) {
     // TODO: Use spatial data to lookup tax rates for regions or use taxjar.
 
     return {

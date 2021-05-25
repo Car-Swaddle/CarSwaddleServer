@@ -15,7 +15,7 @@ module.exports = function (router, models) {
     const autoServiceScheduler = require('../../controllers/auto-service-scheduler.js')(models);
     const billingCalculations = require('../../controllers/billing-calculations')(models);
     const taxes = require('../../controllers/taxes')(models);
-    const vehicleService = new VehicleService(models);
+    const vehicleService = new VehicleService();
     const stripeCharges = require('../../controllers/stripe-charges.js')(models);
 
     const reminderFile = require('../../notifications/reminder.js');
@@ -389,8 +389,8 @@ module.exports = function (router, models) {
             }
         }
 
-        const taxRate = await taxes.taxRateForLocation(location);
-        const prices = await billingCalculations.calculatePrices(mechanic, location, oilType, vehicleID, finalCoupon ? finalCoupon.id : null, taxRate);
+        const taxMetadata = await taxes.taxMetadataForLocation(location);
+        const prices = await billingCalculations.calculatePrices(mechanic, location, oilType, vehicleID, finalCoupon ? finalCoupon.id : null, taxMetadata);
 
         autoServiceScheduler.scheduleAutoService(req.user, status, scheduledDate, vehicleID, mechanicID, sourceID,
             prices, oilType, serviceEntities, address, locationID, taxRate,

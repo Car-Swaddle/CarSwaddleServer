@@ -2,17 +2,16 @@ import { Util } from "../util/util";
 import { VehicleLookup } from "../data/vehicle-lookup";
 
 const uuidV1 = require('uuid/v1');
+const { Vehicle, VehicleDescription } = require('../models');
 
 export class VehicleService {
-    private models: any;
-    public constructor(models: any) { this.models = models; }
 
     public async getVehicle(id: string): Promise<any> {
         if (!id) {
             return Promise.reject(new Error("Missing id"));
         }
         // To check - do we need user id to fetch?
-        const vehicle = await this.models.Vehicle.findOne({
+        const vehicle = await Vehicle.findOne({
             where: { id: id },
             include: this.vehicleInclude()
         });
@@ -24,7 +23,7 @@ export class VehicleService {
         if (!userID) {
             return Promise.reject(new Error("Missing user id"));
         }
-        const vehicles = await this.models.Vehicle.findAll({
+        const vehicles = await Vehicle.findAll({
             where: {
               userID: userID
             },
@@ -50,7 +49,7 @@ export class VehicleService {
         }
 
         const vehicleID = uuidV1();
-        const vehicle = this.models.Vehicle.build({
+        const vehicle = Vehicle.build({
             id: vehicleID,
             name: toCreate.name || '',
             vin: toCreate.vin,
@@ -96,7 +95,7 @@ export class VehicleService {
             await description.save();
         } else if (!updated.vehicleDescription && existing.vehicleDescription) {
             // Delete vehicle description, was removed
-            await this.models.vehicleDescription.destroy({where: { id: existing.vehicleDescription.id } });
+            await VehicleDescription.destroy({where: { id: existing.vehicleDescription.id } });
         }
 
         existing.setUser(user, { save: false })
@@ -105,7 +104,7 @@ export class VehicleService {
     }
 
     private buildVehicleDescription(descriptionJSON: any, vehicleID: string): any {
-        return this.models.VehicleDescription.build({
+        return VehicleDescription.build({
             id: uuidV1(),
             make: descriptionJSON.make,
             model: descriptionJSON.model,
@@ -132,7 +131,7 @@ export class VehicleService {
 
     private vehicleInclude(): any[] {
         return [
-            this.models.VehicleDescription
+            VehicleDescription
         ]
     }
 }
