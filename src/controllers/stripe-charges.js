@@ -112,71 +112,51 @@ StripeCharges.prototype.executeMechanicTransfer = async function(paymentIntentID
     await transactionMetadata.save();
 }
 
-StripeCharges.prototype.executeReferrerPayout = async function(referrerID) {
-    const referrer = await this.models.Referrer.findByPk(referrerID);
+StripeCharges.prototype.createReferrerTransferIfNecessary = async function(autoServiceID) {
+    // Fetch matching transaction metadata
+    const transactionMetadata = await this.models.TransactionMetadata.findOne({
+        where: {
+            autoServiceID: autoServiceID
+        },
+    });
 
-    if (!referrer || !referrer.stripeExpressAccountID) {
-        console.warn(`No referrer stripe account, can't transfer for ${referrerID}`);
+    if (!transactionMetadata || !transactionMetadata.referrerID || transactionMetadata.stripeReferrerTransferID) {
         return;
     }
 
-    // Include all transactions where we haven't attempted a transfer and the service is completed
-    const transactionMetadataList = await this.models.TransactionMetadata.findAll({
-        where: {
-            referrerID: referrerID,
-            stripeReferrerTransferID: {
-                [Op.is]: null,
-            },
-        },
-        include: [
-            {
-                model: this.models.AutoService,
-                where: {
-                    status: this.models.AutoService.STATUS.completed,
-                }
-            }
-        ]
-    })
+    const referrer = await this.models.Referrer.findByPk(transactionMetadata.referrerID);
 
-    const total = transactionMetadataList.reduce((acc, metadata) => {
-        return acc + metadata.referrerTransferAmount ?? 0;
-    }, 0);
-
-    if (total < 1000) {
-        throw "No payouts with less than $10 outstanding"
+    if (!referrer || !referrer.stripeExpressAccountID) {
+        throw `No referrer stripe account, can't transfer for ${referrerID}`;
     }
 
-    const metadataIds = transactionMetadataList.map((metadata) => {
-        return metadata.id;
-    });
-
-    async function updateMetadataStripeTransferID(value, ids) {
+    async function updateMetadataStripeTransferID(transferID) {
         await TransactionMetadata.update(
-            { stripeReferrerTransferID: value },
-            { where: { id: { [Op.in]: ids } } }
+            { stripeReferrerTransferID: transferID },
+            { where: { id: transactionMetadata.id } }
         );
     }
 
-    await updateMetadataStripeTransferID("IN_PROGRESS", metadataIds);
+    await updateMetadataStripeTransferID("IN_PROGRESS");
 
     const transfer = await stripe.transfers.create({
-        amount: total,
+        amount: transactionMetadata.referrerTransferAmount,
         currency: 'usd',
         destination: referrer.stripeExpressAccountID,
         description: `Transfer to referrer ${referrer.id}`,
         metadata: {
             referrerID: referrer.id,
-            metadataIds: metadataIds,
+            autoServiceID: autoServiceID,
         },
     });
 
     if (!transfer || !transfer.id) {
-        await updateMetadataStripeTransferID(null, metadataIds);
+        await updateMetadataStripeTransferID(null);
         throw "Failed to create transfer";
     }
 
     try {
-        await updateMetadataStripeTransferID(transfer.id, metadataIds);
+        await updateMetadataStripeTransferID(transfer.id);
     } catch (e) {
         await stripe.transfers.createReversal(
             transfer.id,
