@@ -80,8 +80,8 @@ BillingCalculations.prototype.calculatePrices = async function(mechanic, locatio
         bookingFeeDiscount: bookingFeeDiscountPrice,
         discount: discountPrice,
         subtotal: subtotalPrice,
-        processingFee: processingFeePrice, // TODO - @kyle, will this mess up the client if I don't include taxes here?
-        salesTax: salesTax,
+        processingFee: processingFeePrice,
+        taxes: salesTax,
         transferAmount: transferAmountPrice,
         mechanicCost: mechanicCostPrice,
         total: total,

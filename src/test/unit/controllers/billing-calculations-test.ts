@@ -29,9 +29,9 @@ describe("Billing Calculations", function() {
 
         assert.equal(prices.oilChange, 6600);
         assert.equal(prices.bookingFee, 660);
-        assert.equal(prices.salesTax, Math.round((prices.total - prices.salesTax) * taxMetadata.rate));
+        assert.equal(prices.taxes, Math.round((prices.total - prices.taxes) * taxMetadata.rate));
         // Can be a rounding error here depending on input numbers
         assert.closeTo(prices.processingFee, Math.round((prices.total - prices.processingFee) * 0.029) + 30, 1);
-        assert.equal(prices.total, prices.oilChange + prices.bookingFee + prices.salesTax + prices.processingFee);
+        assert.equal(prices.total, prices.oilChange + prices.bookingFee + prices.taxes + prices.processingFee);
     });
 })
