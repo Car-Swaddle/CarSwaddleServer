@@ -370,10 +370,11 @@ module.exports = function (router, models) {
 
     router.get('/mechanic/pricing', bodyParser.json(), asyncMiddleware(async function (req, res) {
         try {
+            const mechanicId = request.query.mechanicId;
             const currentMechanic = await req.user.getMechanic();
             const oilChangePricing = await models.OilChangePricing.findOne({
                 where: {
-                    mechanicID: currentMechanic.id
+                    mechanicID: mechanicId || currentMechanic.id
                 }
             });
             return res.json(oilChangePricing);
