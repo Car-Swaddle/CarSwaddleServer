@@ -30,10 +30,10 @@ module.exports = class ReferrerController {
     }
 
     async getReferrerSummary(referrerID) {
-        // Total amount from transactions that can be paid immediately
+        // Total amount from services that haven't been completed yet
         const pending = await sequelize.query(
             `SELECT COALESCE(SUM(tm."referrerTransferAmount"), 0) as pending ` +
-            `FROM "transactionMetadata" tm INNER JOIN "autoService" service ON tm."autoServiceID" = service.id AND service.status = 'COMPLETED' ` +
+            `FROM "transactionMetadata" tm` +
             `WHERE tm."referrerID" = ? AND tm."stripeReferrerTransferID" IS NULL;`, {
             replacements: [referrerID],
             type: QueryTypes.SELECT,
@@ -56,8 +56,8 @@ module.exports = class ReferrerController {
     /// Relevant referrer transactions for all completed services
     async getReferrerTransactions(referrerID, limit, offset) {
         const results = await sequelize.query(
-            `SELECT service."scheduledDate" as date, tm."referrerTransferAmount" as amount, tm."stripeReferrerTransferID" as "transferID" ` +
-            `FROM "transactionMetadata" tm INNER JOIN "autoService" service ON tm."autoServiceID" = service.id AND service.status = 'COMPLETED' ` +
+            `SELECT service."scheduledDate" as date, service.status as status, tm."referrerTransferAmount" as amount, tm."stripeReferrerTransferID" as "transferID" ` +
+            `FROM "transactionMetadata" tm INNER JOIN "autoService" service ON tm."autoServiceID" = service.id ` +
             `WHERE tm."referrerID" = ? AND tm."referrerTransferAmount" > 0 ` + 
             `ORDER BY service."scheduledDate" DESC LIMIT ? OFFSET ?`, {
             replacements: [referrerID, limit, offset],
