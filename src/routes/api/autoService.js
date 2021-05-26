@@ -5,8 +5,7 @@ const pushService = require('../../notifications/pushNotifications.js');
 const bodyParser = require('body-parser');
 const constants = require('../../controllers/constants');
 const stripe = require('stripe')(constants.STRIPE_SECRET_KEY);
-const distance = require('../distance.js');
-const VehicleService = require('../../controllers/vehicle').VehicleService
+const { VehicleService } = require('../../controllers/vehicle')
 
 module.exports = function (router, models) {
 
@@ -17,11 +16,10 @@ module.exports = function (router, models) {
     const billingCalculations = require('../../controllers/billing-calculations')(models);
     const taxes = require('../../controllers/taxes')(models);
     const vehicleService = new VehicleService();
+    const stripeCharges = require('../../controllers/stripe-charges.js')(models);
 
     const reminderFile = require('../../notifications/reminder.js');
     const reminder = new reminderFile(models);
-
-    const Op = models.Sequelize.Op;
 
     router.get('/auto-service-details', bodyParser.json(), function (req, res) {
         if (!req.query.autoServiceID) {
@@ -216,6 +214,10 @@ module.exports = function (router, models) {
                             // pushService.sendUserNotification(user, alert, null, null, null);
                             pushService.sendUserMechanicChangedAutoServiceStatusNotification(user, newAutoService, body.status);
                             if (body.status == models.AutoService.STATUS.completed) {
+                                stripeCharges.createReferrerTransferIfNecessary(newAutoService.id).catch(error => {
+                                    console.warn(`Failed to transfer to referrer for auto service ${newAutoService.id} error: ${error}`);
+                                });
+
                                 pushService.sendRateMechanicNotificationToUserOf(newAutoService);
 
                                 reminder.scheduleNPSSurvey(user.firstName, user.email);

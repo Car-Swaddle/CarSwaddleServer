@@ -1,17 +1,34 @@
 const express = require('express');
+const models = require('../../models')
+const { Authority, Referrer } = models;
+const ReferrerController = require('../../controllers/referrer');
 
-module.exports = (router, models) => {
+module.exports = (router) => {
     const authoritiesController = require('../../controllers/authorities')(models);
-    const referrerController = new (require('../../controllers/referrer'))(models);
-    const readAuthority = models.Authority.NAME.readReferrers;
-    const editAuthority = models.Authority.NAME.editReferrers;
+    const referrerController = new ReferrerController();
+    const readAuthority = Authority.NAME.readReferrers;
+    const editAuthority = Authority.NAME.editReferrers;
+
+    async function checkIsCurrentReferrerOrAdmin(referrerId, req, res) {
+        if (await authoritiesController.hasAuthority(req, res, readAuthority)) {
+            return;
+        }
+        
+        const referrer = await Referrer.findByPk(referrerId);
+        if (!referrer) {
+            res.sendStatus(404);
+            throw 'Referrer not found';
+        }
+        if (referrer.userId !== req.user.id) {
+            res.sendStatus(403);
+            throw 'No access to referrer';
+        }
+    }
     
     router.get('/referrers', express.json(), async function (req, res) {
         await authoritiesController.checkAuthority(req, res, readAuthority);
-                
-        const offset = req.query.offset || 0;
-        const limit = req.query.limit || 50;
-        referrerController.getReferrers(limit, offset).then((referrers) => {
+
+        referrerController.getReferrers(req.params.limit ?? 100, req.params.offset ?? 0).then((referrers) => {
             res.json(referrers);
         }).catch((error) => {
             res.status(400).json({error: "Unable to list referrers"});
@@ -19,9 +36,18 @@ module.exports = (router, models) => {
         });
     });
 
+    router.get('/referrers/current-user', express.json(), async function (req, res) {
+        referrerController.getReferrerForUserID(req.user.id).then((referrer) => {
+            res.json(referrer);
+        }).catch((error) => {
+            res.status(400).json({error: "Unable to get referrer"});
+            req.log.warn(error);
+        });
+    });
+
     router.get('/referrers/:referrerID', express.json(), async function (req, res) {
-        await authoritiesController.checkAuthority(req, res, readAuthority);
-        
+        await checkIsCurrentReferrerOrAdmin(req.params.referrerID, req, res);
+
         referrerController.getReferrer(req.params.referrerID).then((referrer) => {
             res.json(referrer);
         }).catch((error) => {
@@ -30,8 +56,31 @@ module.exports = (router, models) => {
         });
     });
 
+    router.get('/referrers/:referrerID/summary', express.json(), async function (req, res) {
+        await checkIsCurrentReferrerOrAdmin(req.params.referrerID, req, res);
+        
+        referrerController.getReferrerSummary(req.params.referrerID).then((summary) => {
+            res.json(summary);
+        }).catch((error) => {
+            res.status(400).json({error: "Unable to get referrer summary"});
+            req.log.warn(error);
+        });
+    });
+
+    router.get('/referrers/:referrerID/transactions', express.json(), async function (req, res) {
+        await checkIsCurrentReferrerOrAdmin(req.params.referrerID, req, res);
+        
+        referrerController.getReferrerTransactions(req.params.referrerID, req.params.limit ?? 100, req.params.offset ?? 0).then((transactions) => {
+            res.json(transactions);
+        }).catch((error) => {
+            res.status(400).json({error: "Unable to get referrer transactions"});
+            req.log.warn(error);
+        });
+    });
+
     router.post('/referrers', express.json(), async function (req, res) {
         await authoritiesController.checkAuthority(req, res, editAuthority);
+
         referrerController.createReferrer(req.body).then((created) => {
             res.json(created);
         }).catch((error) => {
@@ -40,8 +89,19 @@ module.exports = (router, models) => {
         })
     });
 
+    router.post('/referrers/:referrerID/payout', express.json(), async function (req, res) {
+        await checkIsCurrentReferrerOrAdmin(req.params.referrerID, req, res);
+
+        referrerController.executeReferrerPayout(req.params.referrerID).then(() => {
+            res.sendStatus(200);
+        }).catch((error) => {
+            res.status(400).json({error: "Unable to payout transactions"});
+            req.log.warn(error);
+        })
+    });
+
     router.put('/referrers/:referrerID', express.json(), async function (req, res) {
-        await authoritiesController.checkAuthority(req, res, editAuthority);
+        await checkIsCurrentReferrerOrAdmin(req.params.referrerID, req, res);
 
         req.body.id = req.params.referrerID;
         referrerController.updateReferrer(req.body).then((created) => {
@@ -54,6 +114,7 @@ module.exports = (router, models) => {
 
     router.delete('/referrers/:referrerID', express.json(), async function (req, res) {
         await authoritiesController.checkAuthority(req, res, editAuthority);
+
         referrerController.deleteReferrer(req.params.referrerID).then(() => {
             res.end();
         }).catch((error) => {

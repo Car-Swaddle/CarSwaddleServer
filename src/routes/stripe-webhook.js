@@ -143,7 +143,7 @@ module.exports = function (app, models) {
         } else if (event.type == eventTypes.PAYMENT_INTENT_SUCCEEDED) {
             const paymentIntentId = event.data.object.id;
             console.info(`Got payment intent confirm event ${paymentIntentId}`);
-            await stripeCharges.executeTransfers(paymentIntentId);
+            await stripeCharges.executeMechanicTransfer(paymentIntentId);
             return res.json({ received: true })
         }
 
