@@ -79,7 +79,9 @@ module.exports = class ReferrerController {
 
     async createReferrer(referrer) {
         // Generate short id designed to be shared
-        referrer.id = Util.generateRandomHex(4);
+        const id = Util.generateRandomHex(4);
+        referrer.id = id;
+        referrer.externalID = `${id}`;
         return await Referrer.create(referrer);
     }
 
