@@ -164,6 +164,7 @@ function stripeCreateDict(ip, email, firstName, lastName, isMechanic) {
             first_name: firstName,
             last_name: lastName
         },
+        email: email,
         business_profile: {
             product_description: isMechanic ?
                 'This connect user is a mechanic who sells Oil changes through Car Swaddle' :

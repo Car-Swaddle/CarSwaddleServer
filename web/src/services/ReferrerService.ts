@@ -1,4 +1,4 @@
-import { handleResponse } from './HandleResponse'
+import { handleResponse } from './handleResponse'
 
 export const ReferrerService = {
     getCurrentUserReferrer,

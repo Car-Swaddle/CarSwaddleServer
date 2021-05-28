@@ -28,14 +28,6 @@ module.exports = function (app, models, passport) {
                     accountCreation.completeMechanicCreationOrUpdate(user, req.connection.remoteAddress, function (err, mechanic) {
                         return res.json({ user, mechanic, token });
                     });
-                } else if (req.query.isReferrer == "true") {
-                    accountCreation.completeReferrerCreation(user, req.connection.remoteAddress, function (err, referrer) {
-                        if (err) {
-                            req.log.warn(err);
-                            return res.json({ error: "Unable to find or complete referrer" });
-                        }
-                        return res.json({ user, referrer, token });
-                    });
                 } else {
                     res.setHeader('Set-Cookie', 'cs-jwt=' + token);
                     return res.json({ user, token });
@@ -76,14 +68,6 @@ module.exports = function (app, models, passport) {
                     if (req.query.isMechanic == "true") {
                         accountCreation.completeMechanicCreationOrUpdate(user, req.connection.remoteAddress, function (err, mechanic) {
                             return res.json({ user, mechanic, token });
-                        });
-                    } else if (req.query.isReferrer == "true") {
-                        accountCreation.completeReferrerCreation(user, req.connection.remoteAddress, function (err, referrer) {
-                            if (err) {
-                                req.log.warn(err);
-                                return res.json({ error: "Unable to complete referrer sign up" });
-                            }
-                            return res.json({ user, referrer, token });
                         });
                     } else {
                         return res.json({ user, token });

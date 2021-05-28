@@ -1,4 +1,4 @@
-import { AuthenticationService } from './AuthenticationService';
+import { AuthenticationService } from './authenticationService';
 
 export function handleResponse(response: any) {
     return response.json().then((data: any) => {

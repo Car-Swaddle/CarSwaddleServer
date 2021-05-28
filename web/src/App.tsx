@@ -1,12 +1,13 @@
 import React from 'react';
 import { BrowserRouter, Route, Link, Redirect } from 'react-router-dom';
 
-import { authenticationService } from './services/AuthenticationService';
+import { AuthenticationService } from './services/authenticationService';
 import LoginPage from './components/LoginPage';
 import AffiliateDashboard from './components/AffiliateDashboard';
+import StripeLanding from './components/StripeLanding';
 
 export default function App() {
-    const [authenticated, setAuthenticated] = React.useState(authenticationService.isAuthenticated());
+    const [authenticated, setAuthenticated] = React.useState(AuthenticationService.isAuthenticated());
 
     function finishedAuth() {
         setAuthenticated(true);
@@ -23,7 +24,8 @@ export default function App() {
                 </>
                 : <>
                 <Route path="/affiliate">
-                    <AffiliateDashboard />
+                    <StripeLanding />
+                    {/* <AffiliateDashboard /> */}
                 </Route>
                 <Redirect from="*" to="/affiliate" />
                 </>

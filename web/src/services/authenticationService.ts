@@ -1,4 +1,4 @@
-import { handleResponse } from './HandleResponse';
+import { handleResponse } from './handleResponse';
 
 export const AuthenticationService = {
     login,
@@ -18,9 +18,10 @@ function login(email: string, password: string) {
         }),
     };
 
-    return fetch(`/login?isReferrer=true`, requestOptions)
+    return fetch(`/login`, requestOptions)
         .then(handleResponse)
         .then(data => {
+            window.localStorage.setItem('user', JSON.stringify(data.user));
              // TODO - update state so we move to new page
             return data.token;
         });
