@@ -1,6 +1,6 @@
-import { handleResponse } from './handleResponse';
+import { handleResponse } from './HandleResponse';
 
-export const authenticationService = {
+export const AuthenticationService = {
     login,
     logout,
     isAuthenticated,

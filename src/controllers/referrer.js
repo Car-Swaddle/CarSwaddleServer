@@ -67,16 +67,6 @@ module.exports = class ReferrerController {
         return results;
     }
 
-    async executeReferrerPayout(referrerID) {
-        const referrer = this.getReferrer(referrerID);
-
-        if (!referrer || !referrer.stripeExpressAccountID) {
-            throw "Not a valid referrer or missing stripe account"
-        }
-
-        await stripeCharges.executeReferrerPayout(referrerID);
-    }
-
     async createReferrer(referrer) {
         // Generate short id designed to be shared
         referrer.id = Util.generateRandomHex(4);

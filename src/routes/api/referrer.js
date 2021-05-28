@@ -89,17 +89,6 @@ module.exports = (router) => {
         })
     });
 
-    router.post('/referrers/:referrerID/payout', express.json(), async function (req, res) {
-        await checkIsCurrentReferrerOrAdmin(req.params.referrerID, req, res);
-
-        referrerController.executeReferrerPayout(req.params.referrerID).then(() => {
-            res.sendStatus(200);
-        }).catch((error) => {
-            res.status(400).json({error: "Unable to payout transactions"});
-            req.log.warn(error);
-        })
-    });
-
     router.put('/referrers/:referrerID', express.json(), async function (req, res) {
         await checkIsCurrentReferrerOrAdmin(req.params.referrerID, req, res);
 

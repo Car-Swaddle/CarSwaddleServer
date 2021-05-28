@@ -1,7 +1,7 @@
 import React from 'react';
 
-import { authenticationService } from '../services/authenticationService';
-import { Container, Row, Col, Form, Button, Jumbotron } from 'react-bootstrap';
+import { AuthenticationService } from '../services/AuthenticationService';
+import { Container, Row, Col, Form, Button } from 'react-bootstrap';
 
 export type LoginPageProps = {
     finishedAuth: () => void,
@@ -17,7 +17,7 @@ export default function LoginPage({finishedAuth}: LoginPageProps) {
 
     function handleSubmit(event: any) {
         event.preventDefault();
-        authenticationService.login(email, password)
+        AuthenticationService.login(email, password)
         .then(token => {
             if (token && token.length) {
                 finishedAuth()

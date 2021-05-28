@@ -1,7 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Route, Link, Redirect } from 'react-router-dom';
 
-import { authenticationService } from './services/authenticationService';
+import { authenticationService } from './services/AuthenticationService';
 import LoginPage from './components/LoginPage';
 import AffiliateDashboard from './components/AffiliateDashboard';
 
