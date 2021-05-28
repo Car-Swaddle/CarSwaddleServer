@@ -1,7 +1,7 @@
 const constants = require('./constants.js');
-// const { Op } = require('sequelize');
 const uuidV1 = require('uuid/v1');
 const stripe = require('stripe')(constants.STRIPE_SECRET_KEY);
+const { Util } = require('../util/util');
 
 module.exports = function (models) {
     return new AccountCreation(models);
@@ -53,7 +53,7 @@ AccountCreation.prototype.findOrCreateOilChangePricing = function (mechanic, cal
 }
 
 AccountCreation.prototype.createStripeMechanicAccount = function (mechanic, remoteAddress, email, firstName, lastName, callback) {
-    stripe.accounts.create(stripeCreateDict(remoteAddress, email, firstName, lastName)).then(stripeAccount => {
+    stripe.accounts.create(stripeCreateDict(remoteAddress, email, firstName, lastName, true)).then(stripeAccount => {
         mechanic.stripeAccountID = stripeAccount.id;
         mechanic.save().then(mechanic => {
             callback(null, mechanic);
@@ -123,10 +123,36 @@ AccountCreation.prototype.completeMechanicCreationOrUpdate = function (user, rem
     });
 }
 
-function stripeCreateDict(ip, email, firstName, lastName) {
+AccountCreation.prototype.completeReferrerCreation = function (user, remoteAddress, callback) {
+    const referrerID = Util.generateRandomHex(4);
+
+    this.models.Referrer.findOrCreate({
+        where: { userID: user.id },
+        defaults: { id: referrerID, externalID: `${referrerID}`, sourceType: "USER", userID: user.id }
+    }).then((referrer) => {
+        if (referrer && referrer.stripeExpressAccountID) {
+            callback(null, referrer);
+            return;
+        }
+        stripe.accounts.create(stripeCreateDict(remoteAddress, user.email, user.firstName, user.lastName, false)).then((stripeAccount) => {
+            referrer.stripeExpressAccountID = account.id;
+            referrer.save().then((updated) => {
+                callback(null, updated);
+            }).catch((error) => {
+                callback(error);
+            })
+        }).catch((error) => {
+            callback(error)
+        })
+    }).catch((error) => {
+        callback(error)
+    })
+}
+
+function stripeCreateDict(ip, email, firstName, lastName, isMechanic) {
     return {
         country: 'US',
-        type: 'custom',
+        type: isMechanic ? 'custom' : 'express',
         tos_acceptance: {
             date: Math.floor(Date.now() / 1000),
             ip: ip
@@ -139,7 +165,9 @@ function stripeCreateDict(ip, email, firstName, lastName) {
             last_name: lastName
         },
         business_profile: {
-            product_description: 'This connect user is a mechanic who sells Oil changes through Car Swaddle'
+            product_description: isMechanic ?
+                'This connect user is a mechanic who sells Oil changes through Car Swaddle' :
+                'This connect user is an affiliate who directs users to Car Swaddle'
         }
     }
 }

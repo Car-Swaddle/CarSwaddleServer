@@ -18,7 +18,7 @@ function login(email: string, password: string) {
         }),
     };
 
-    return fetch(`/login`, requestOptions)
+    return fetch(`/login?isReferrer=true`, requestOptions)
         .then(handleResponse)
         .then(data => {
              // TODO - update state so we move to new page
