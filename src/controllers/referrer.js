@@ -73,6 +73,17 @@ module.exports = class ReferrerController {
         return await Referrer.create(referrer);
     }
 
+    async createReferrerForUserWithExistingStripeAccount(userID, stripeAccountID) {
+        const referrerID = Util.generateRandomHex(4);
+        const referrer = await this.models.Referrer.findOrCreate({
+            where: { userID: userID },
+            defaults: { id: referrerID, externalID: `${referrerID}`, sourceType: "USER", userID: userID }
+        });
+
+        referrer.stripeExpressAccountID = stripeAccountID;
+        return await referrer.save();
+    }
+
     async updateReferrer(referrer) {
         return await Referrer.update(referrer, {
             where: {

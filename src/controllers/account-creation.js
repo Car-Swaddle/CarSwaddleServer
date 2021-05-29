@@ -53,7 +53,7 @@ AccountCreation.prototype.findOrCreateOilChangePricing = function (mechanic, cal
 }
 
 AccountCreation.prototype.createStripeMechanicAccount = function (mechanic, remoteAddress, email, firstName, lastName, callback) {
-    stripe.accounts.create(stripeCreateDict(remoteAddress, email, firstName, lastName, true)).then(stripeAccount => {
+    stripe.accounts.create(stripeCreateDict(remoteAddress, email, firstName, lastName)).then(stripeAccount => {
         mechanic.stripeAccountID = stripeAccount.id;
         mechanic.save().then(mechanic => {
             callback(null, mechanic);
@@ -123,42 +123,21 @@ AccountCreation.prototype.completeMechanicCreationOrUpdate = function (user, rem
     });
 }
 
-AccountCreation.prototype.completeReferrerCreation = function (user, remoteAddress, callback) {
-    const referrerID = Util.generateRandomHex(4);
-
-    this.models.Referrer.findOrCreate({
-        where: { userID: user.id },
-        defaults: { id: referrerID, externalID: `${referrerID}`, sourceType: "USER", userID: user.id }
-    }).then((referrer) => {
-        if (referrer && referrer.stripeExpressAccountID) {
-            callback(null, referrer);
-            return;
-        }
-        stripe.accounts.create(stripeCreateDict(remoteAddress, user.email, user.firstName, user.lastName, false)).then((stripeAccount) => {
-            referrer.stripeExpressAccountID = account.id;
-            referrer.save().then((updated) => {
-                callback(null, updated);
-            }).catch((error) => {
-                callback(error);
-            })
-        }).catch((error) => {
-            callback(error)
-        })
-    }).catch((error) => {
-        callback(error)
-    })
-}
-
-function stripeCreateDict(ip, email, firstName, lastName, isMechanic) {
+function stripeCreateDict(ip, email, firstName, lastName) {
     return {
         country: 'US',
-        type: isMechanic ? 'custom' : 'express',
+        type: 'custom',
         tos_acceptance: {
             date: Math.floor(Date.now() / 1000),
             ip: ip
         },
         business_type: 'individual',
-        requested_capabilities: ['platform_payments'],
+        requested_capabilities: ['platform_payments'], // This appears to be removed in new api and replaced with `capabilities`
+        capabilities: {
+            transfers: { // renaming of 'platform_payments' for new api version
+                requested: true
+            }
+        },
         individual: {
             email: email,
             first_name: firstName,
@@ -166,9 +145,7 @@ function stripeCreateDict(ip, email, firstName, lastName, isMechanic) {
         },
         email: email,
         business_profile: {
-            product_description: isMechanic ?
-                'This connect user is a mechanic who sells Oil changes through Car Swaddle' :
-                'This connect user is an affiliate who directs users to Car Swaddle'
+            product_description: 'This connect user is a mechanic who sells Oil changes through Car Swaddle'
         }
     }
 }

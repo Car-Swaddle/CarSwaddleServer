@@ -1,10 +1,18 @@
 import { handleResponse } from './handleResponse';
+import { UserContext } from '../services/user-context';
+import { User, Referrer } from "../models"
 
 export const AuthenticationService = {
     login,
     logout,
     isAuthenticated,
 };
+
+type LoginResponse = {
+    token: string,
+    user: User,
+    referrer: Referrer
+}
 
 function login(email: string, password: string) {
     const requestOptions = {
@@ -20,9 +28,9 @@ function login(email: string, password: string) {
 
     return fetch(`/login`, requestOptions)
         .then(handleResponse)
-        .then(data => {
-            window.localStorage.setItem('user', JSON.stringify(data.user));
-             // TODO - update state so we move to new page
+        .then((data: LoginResponse) => {
+            UserContext.setCurrentUser(data.user);
+            UserContext.setCurrentReferrer(data.referrer);
             return data.token;
         });
 }

@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const accountCreationFile = require('../controllers/account-creation.js');
 const express = require('express');
+const ReferrerController = require("../controllers/referrer");
 
 module.exports = function (app, models, passport) {
 
@@ -8,6 +9,13 @@ module.exports = function (app, models, passport) {
     const emailer = new emailFile(models);
     const accountCreation = accountCreationFile(models);
     const resetPasswordController = require('../controllers/passwordReset')(models);
+    const referrerController = new ReferrerController();
+
+    const createJWTFromUser = (user) => {
+        return {
+            id: user.id
+        }
+    }
 
     app.post('/login', express.urlencoded({ extended: true }), function (req, res, next) {
         passport.authenticate('local-login', { session: false }, (err, user, info) => {
@@ -22,14 +30,17 @@ module.exports = function (app, models, passport) {
                     return res.send(err);
                 }
 
-                const token = jwt.sign(user.dataValues, 'your_jwt_secret');
+                const token = jwt.sign(createJWTFromUser(user), 'your_jwt_secret');
+                res.setHeader('Set-Cookie', 'cs-jwt=' + token);
 
                 if (req.query.isMechanic == "true") {
                     accountCreation.completeMechanicCreationOrUpdate(user, req.connection.remoteAddress, function (err, mechanic) {
                         return res.json({ user, mechanic, token });
                     });
+                } else if (req.query.isReferrer == "true") {
+                    const referrer = referrerController.getReferrerForUserID(user.id);
+                    return res.json({ user, referrer, token });
                 } else {
-                    res.setHeader('Set-Cookie', 'cs-jwt=' + token);
                     return res.json({ user, token });
                 }
             });
@@ -55,7 +66,7 @@ module.exports = function (app, models, passport) {
                         res.send(err); 
                     }
 
-                    const token = jwt.sign(user.dataValues, 'your_jwt_secret');
+                    const token = jwt.sign(createJWTFromUser(user), 'your_jwt_secret');
 
                     if (!user.isEmailVerified) {
                         emailer.sendEmailVerificationEmail(user, function (err) {
