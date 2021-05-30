@@ -14,6 +14,8 @@ module.exports = function (router, models) {
 
     const stats = require('../stats.js')(models);
 
+    const Op = models.Sequelize.Op;
+
     const authoritiesControllerFile = require('../../controllers/authorities.js');
     const authoritiesController = authoritiesControllerFile(models);
 
@@ -378,6 +380,25 @@ module.exports = function (router, models) {
                 }
             });
             return res.json(oilChangePricing);
+        } catch (e) {
+            res.status(400).send('unable to fetch oil change pricing');
+        }
+    }));
+
+
+    router.get('/mechanics/pricing', bodyParser.json(), asyncMiddleware(async function (req, res) {
+        try {
+            const mechanicIds = request.query.mechanicIds;
+            const oilChangePricing = await models.OilChangePricing.findAll({
+                where: {
+                    mechanicID: {
+                        [Op.in]: mechanicIds
+                      }
+                }, include: {
+                    model: models.Mechanic, attributes: ['id']
+                }
+            });
+            return res.send(oilChangePricing);
         } catch (e) {
             res.status(400).send('unable to fetch oil change pricing');
         }
