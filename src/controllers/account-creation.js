@@ -1,7 +1,7 @@
 const constants = require('./constants.js');
-// const { Op } = require('sequelize');
 const uuidV1 = require('uuid/v1');
 const stripe = require('stripe')(constants.STRIPE_SECRET_KEY);
+const { Util } = require('../util/util');
 
 module.exports = function (models) {
     return new AccountCreation(models);
@@ -132,12 +132,18 @@ function stripeCreateDict(ip, email, firstName, lastName) {
             ip: ip
         },
         business_type: 'individual',
-        requested_capabilities: ['platform_payments'],
+        requested_capabilities: ['platform_payments'], // This appears to be removed in new api and replaced with `capabilities`
+        capabilities: {
+            transfers: { // renaming of 'platform_payments' for new api version
+                requested: true
+            }
+        },
         individual: {
             email: email,
             first_name: firstName,
             last_name: lastName
         },
+        email: email,
         business_profile: {
             product_description: 'This connect user is a mechanic who sells Oil changes through Car Swaddle'
         }

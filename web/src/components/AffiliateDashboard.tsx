@@ -1,4 +1,5 @@
 import { Container, Row, Col } from 'react-bootstrap';
+// import { getCurrentUserReferrer, getSummary, getTransactions, getPayStructure } from "../services/ReferrerService"
 
 export default function AffiliateDashboard() {
 
