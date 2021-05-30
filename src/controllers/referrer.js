@@ -74,14 +74,19 @@ module.exports = class ReferrerController {
     }
 
     async createReferrerForUserWithExistingStripeAccount(userID, stripeAccountID) {
+        if (!userID || !stripeAccountID) {
+            throw "Missing user id or stripe account id"
+        }
+
         const referrerID = Util.generateRandomHex(4);
-        const referrer = await this.models.Referrer.findOrCreate({
+        const [referrer, created] = await Referrer.findOrCreate({
             where: { userID: userID },
             defaults: { id: referrerID, externalID: `${referrerID}`, sourceType: "USER", userID: userID }
         });
 
         referrer.stripeExpressAccountID = stripeAccountID;
-        return await referrer.save();
+        await referrer.save();
+        return referrer;
     }
 
     async updateReferrer(referrer) {

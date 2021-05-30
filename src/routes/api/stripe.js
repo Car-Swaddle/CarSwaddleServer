@@ -5,9 +5,12 @@ const bodyParser = require('body-parser');
 const fileUpload = require('express-fileupload');
 const fileStore = require('../../data/file-store.js');
 const uuidV1 = require('uuid/v1');
+const axios = require('axios');
+const queryString = require('querystring');
+const ReferrerController = require('../../controllers/referrer');
 
 module.exports = function (router, models) {
-
+    const referrerController = new ReferrerController();
     
     router.get('/stripe/account', bodyParser.json(), async (req, res) => {
         const mechanic = await req.user.getMechanic();
@@ -17,6 +20,38 @@ module.exports = function (router, models) {
             }
             return res.json(account);
         });
+    });
+
+    router.get('/stripe/oauth-confirm', express.json(), async function (req, res) {
+        const isReferrer = req.query.isReferrer ?? true;
+        if (!req.query.code) {
+            res.sendStatus(400);
+            return;
+        }
+
+        if (isReferrer) {
+            // Post confirm with code to stripe
+            const response = await axios.post("https://connect.stripe.com/oauth/token",
+                queryString.stringify({
+                    grant_type: 'authorization_code',
+                    client_id: constants.STRIPE_CLIENT_ID,
+                    client_secret: constants.STRIPE_SECRET_KEY,
+                    code: req.query.code
+                }),
+                { headers: {'Content-Type': 'application/x-www-form-urlencoded'} }
+            );
+
+            if (!response || response.error || !response.data) {
+                throw "Missing data in stripe response";
+            }
+            const stripeAccountID = response.data.stripe_user_id;
+            
+            const referrer = await referrerController.createReferrerForUserWithExistingStripeAccount(req.user.id, stripeAccountID);
+            res.json(referrer);
+        } else {
+            // Unhandled, might use for mechanic in the future
+            res.sendStatus(400);
+        }
     });
 
     router.get('/stripe/externalAccount', bodyParser.json(), async (req, res) => {
