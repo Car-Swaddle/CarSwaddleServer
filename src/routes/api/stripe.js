@@ -34,7 +34,7 @@ module.exports = function (router, models) {
             const response = await axios.post("https://connect.stripe.com/oauth/token",
                 queryString.stringify({
                     grant_type: 'authorization_code',
-                    client_id: constants.STRIPE_CLIENT_ID,
+                    client_id: constants.STRIPE_CONNECT_CLIENT_ID,
                     client_secret: constants.STRIPE_SECRET_KEY,
                     code: req.query.code
                 }),
