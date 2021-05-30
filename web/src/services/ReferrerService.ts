@@ -1,13 +1,14 @@
-import { handleResponse } from './HandleResponse'
+import { handleResponse } from './handleResponse'
 
 export const ReferrerService = {
     getCurrentUserReferrer,
     getSummary,
     getTransactions,
     getPayStructure,
+    finishStripeOauthFlow,
 };
 
-function getCurrentUserReferrer() {
+async function getCurrentUserReferrer() {
     return fetch(`/referrers/current-user`)
         .then(handleResponse)
         .then(data => {
@@ -15,7 +16,7 @@ function getCurrentUserReferrer() {
         });
 }
 
-function getSummary(referrerID: string) {
+async function getSummary(referrerID: string) {
     return fetch(`/referrers/${referrerID}/summary`)
         .then(handleResponse)
         .then(data => {
@@ -23,7 +24,7 @@ function getSummary(referrerID: string) {
         });
 }
 
-function getTransactions(referrerID: string) {
+async function getTransactions(referrerID: string) {
     return fetch(`/referrers/${referrerID}/transactions`)
         .then(handleResponse)
         .then(data => {
@@ -31,8 +32,16 @@ function getTransactions(referrerID: string) {
         });
 }
 
-function getPayStructure(payStructureID: string) {
+async function getPayStructure(payStructureID: string) {
     return fetch(`/pay-structures/${payStructureID}`)
+        .then(handleResponse)
+        .then(data => {
+            return data;
+        });
+}
+
+async function finishStripeOauthFlow(code: string) {
+    return fetch(`/api/stripe/oauth-confirm?isReferrer=true&code=${code}`)
         .then(handleResponse)
         .then(data => {
             return data;

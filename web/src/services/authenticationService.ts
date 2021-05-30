@@ -1,10 +1,18 @@
-import { handleResponse } from './HandleResponse';
+import { handleResponse } from './handleResponse';
+import { UserContext } from '../services/user-context';
+import { User, Referrer } from "../models"
 
 export const AuthenticationService = {
     login,
     logout,
     isAuthenticated,
 };
+
+type LoginResponse = {
+    token: string,
+    user: User,
+    referrer: Referrer
+}
 
 function login(email: string, password: string) {
     const requestOptions = {
@@ -18,10 +26,11 @@ function login(email: string, password: string) {
         }),
     };
 
-    return fetch(`/login?isReferrer=true`, requestOptions)
+    return fetch(`/login`, requestOptions)
         .then(handleResponse)
-        .then(data => {
-             // TODO - update state so we move to new page
+        .then((data: LoginResponse) => {
+            UserContext.setCurrentUser(data.user);
+            UserContext.setCurrentReferrer(data.referrer);
             return data.token;
         });
 }

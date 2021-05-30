@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { AuthenticationService } from '../services/AuthenticationService';
+import { AuthenticationService } from '../services/authenticationService';
 import { Container, Row, Col, Form, Button } from 'react-bootstrap';
 
 export type LoginPageProps = {
