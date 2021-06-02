@@ -39,8 +39,9 @@ export default function StripeLanding({finishedAuth}: StripeLandingProps) {
         const uri = 'https://connect.stripe.com/express/oauth/authorize?' + querystring.stringify(parameters);
         setAuthorizeURI(uri);
     }
-    
+
     React.useEffect(() => {
+        generate();
 
         if (window.location.search && !requestedCode) {
             // Code returned by stripe
