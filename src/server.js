@@ -28,7 +28,7 @@ app.use(express.static(__dirname + '/public'));
 
 // Fallback to serving web app for all other unknown paths
 app.get('/*', (_, res) => {
-    res.sendFile(__dirname + '/index.html');
+    res.sendFile(__dirname + '/public/index.html');
 })
 
 var port = process.env.PORT;
