@@ -81,7 +81,7 @@ module.exports = class ReferrerController {
         const referrerID = Util.generateRandomHex(4);
         const [referrer, created] = await Referrer.findOrCreate({
             where: { userID: userID },
-            defaults: { id: referrerID, externalID: `${referrerID}`, sourceType: "USER", userID: userID }
+            defaults: { id: referrerID, sourceType: "USER",  externalID: userID, userID: userID }
         });
 
         referrer.stripeExpressAccountID = stripeAccountID;

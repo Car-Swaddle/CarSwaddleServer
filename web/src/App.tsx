@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter, Route, Redirect } from 'react-router-dom';
+import { Container, Row, Col } from 'react-bootstrap';
 
 import { AuthenticationService } from './services/authenticationService';
 import LoginPage from './components/LoginPage';
@@ -18,6 +19,16 @@ export default function App() {
     }
 
     return (
+    <Container>
+        <Row>
+            <Col>
+                <div className="mt-4 mb-3 text-center"><img src="./cs-logo.png" style={{maxWidth: "300px"}}/></div>
+            </Col>
+        </Row>
+        <Row>
+            <Col className="mb-3 text-center"><h1><b>Affiliate</b></h1></Col>
+        </Row>
+        <Row>
         <BrowserRouter>
             {!authenticated
                 ? <>
@@ -43,5 +54,7 @@ export default function App() {
                 )
             }
         </BrowserRouter>
+        </Row>
+    </Container>
     );
 }

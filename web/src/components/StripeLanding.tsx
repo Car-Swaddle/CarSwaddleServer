@@ -63,10 +63,19 @@ export default function StripeLanding({finishedAuth}: StripeLandingProps) {
     return (
         <Container>
             <Row>
-                <Col><h3 className="text-center">Landing</h3></Col>
+                <Col>By clicking the link below, you’ll be directed to Stripe. We use Stripe to process all payments you’ll receive from our referral program.</Col>
             </Row>
             <Row>
-                <Col><a href={authorizeURI}>Continue setup with Stripe</a></Col>
+                <Col>
+                (this.requestedCode ?
+                    <div className="spinner-border" role="status">
+                        <span className="sr-only">Loading...</span>
+                    </div>
+                : <a href={authorizeURI} className="stripe-connect-slate">Connect with</a>)
+                </Col>
+            </Row>
+            <Row>
+                <Col>Once you’ve connected your Stripe account, you’ll be redirected to your Car Swaddle affiliate dashboard.</Col>
             </Row>
         </Container>
     )
