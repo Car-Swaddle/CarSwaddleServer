@@ -26,7 +26,7 @@ function login(email: string, password: string) {
         }),
     };
 
-    return fetch(`/login`, requestOptions)
+    return fetch(`/login?isReferrer=true`, requestOptions)
         .then(handleResponse)
         .then((data: LoginResponse) => {
             UserContext.setCurrentUser(data.user);

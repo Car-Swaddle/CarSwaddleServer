@@ -3,12 +3,12 @@
   "name": "Car Swaddle Affiliate",
   "icons": [
     {
-      "src": "cs-favicon-sm.png",
+      "src": "img/cs-favicon-sm.png",
       "sizes": "64x64 32x32 24x24 16x16",
       "type": "image/png"
     },
     {
-      "src": "cs-favicon.png",
+      "src": "img/cs-favicon.png",
       "sizes": "192x192",
       "type": "image/png"
     }

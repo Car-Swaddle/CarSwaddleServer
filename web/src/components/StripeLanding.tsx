@@ -39,43 +39,56 @@ export default function StripeLanding({finishedAuth}: StripeLandingProps) {
         const uri = 'https://connect.stripe.com/express/oauth/authorize?' + querystring.stringify(parameters);
         setAuthorizeURI(uri);
     }
-    if (!authorizeURI) {
-        generate();
-    }
-    if (window.location.search && !requestedCode) {
-        // Code returned by stripe
-        const searchParams = new URLSearchParams(window.location.search);
-        const code = searchParams.get('code') ?? "";
-        if (code) {
-            setRequestedCode(true);
+    
+    React.useEffect(() => {
 
-            ReferrerService.finishStripeOauthFlow(code).then((referrer) => {
-                UserContext.setCurrentReferrer(referrer);
-                finishedAuth();
-            }).catch(() => {
-                console.error("Failed to finish stripe flow");
-            })
-        } else {
-            console.warn("No code found");
+        if (window.location.search && !requestedCode) {
+            // Code returned by stripe
+            const searchParams = new URLSearchParams(window.location.search);
+            const code = searchParams.get('code') ?? "";
+            if (code) {
+                setRequestedCode(true);
+    
+                ReferrerService.finishStripeOauthFlow(code).then((referrer) => {
+                    if (!referrer) {
+                        console.error("Failed to finish stripe flow")
+                        return;
+                    }
+                    // Artificial slowdown to look like we're processing
+                    setTimeout(() => {
+                        UserContext.setCurrentReferrer(referrer);
+                        finishedAuth();
+                    }, 1500)
+                }).catch(() => {
+                    console.error("Failed to finish stripe flow");
+                })
+            } else {
+                console.warn("No code found");
+            }
         }
-    }
+    })
+    
 
     return (
         <Container>
             <Row>
-                <Col>By clicking the link below, you’ll be directed to Stripe. We use Stripe to process all payments you’ll receive from our referral program.</Col>
+                <Col sm={{span: 8, offset: 2}} lg={{span: 6, offset: 3}}>By clicking the link below, you’ll be directed to Stripe. We use Stripe to process all payments you’ll receive from our referral program.</Col>
             </Row>
             <Row>
                 <Col>
-                (this.requestedCode ?
-                    <div className="spinner-border" role="status">
-                        <span className="sr-only">Loading...</span>
+                    <div className="my-4 text-center">
+                    {(requestedCode ?
+                        <div className="spinner-border" role="status">
+                            <span className="sr-only">Loading...</span>
+                        </div>
+                    : <a href={authorizeURI}>
+                        <div className="stripe-connect" style={{width: "100%"}}/>
+                        </a>)}
                     </div>
-                : <a href={authorizeURI} className="stripe-connect-slate">Connect with</a>)
                 </Col>
             </Row>
             <Row>
-                <Col>Once you’ve connected your Stripe account, you’ll be redirected to your Car Swaddle affiliate dashboard.</Col>
+                <Col sm={{span: 8, offset: 2}} lg={{span: 6, offset: 3}}>Once you’ve connected your Stripe account, you’ll be redirected to your Car Swaddle affiliate dashboard.</Col>
             </Row>
         </Container>
     )

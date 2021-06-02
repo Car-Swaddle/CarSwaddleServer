@@ -15,14 +15,18 @@ export default function App() {
 
     function finishedAuth() {
         setAuthenticated(true);
-        setReferrer(UserContext.getCurrentReferrer())
+        setReferrer(UserContext.getCurrentReferrer());
     }
+
+    React.useEffect(() => {
+        setReferrer(UserContext.getCurrentReferrer());
+    })
 
     return (
     <Container>
         <Row>
             <Col>
-                <div className="mt-4 mb-3 text-center"><img src="./cs-logo.png" style={{maxWidth: "300px"}}/></div>
+                <div className="mt-4 mb-3 text-center"><img src={`/img/cs-logo.png`} style={{maxWidth: "300px"}}/></div>
             </Col>
         </Row>
         <Row>
