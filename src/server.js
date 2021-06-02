@@ -35,5 +35,10 @@ console.log('working on ' + port);
 const passport = require('./passport')(models);
 
 require('./routes')(app, models, passport);
-// Should serve from /build/public
+
+// Serve all static assets (.well-known, web app assets)
 app.use(express.static(__dirname + '/public'));
+// Fallback to serving web app for all other unknown paths
+app.get('/*', (_, res) => {
+    res.sendFile(__dirname + '/index.html');
+})
