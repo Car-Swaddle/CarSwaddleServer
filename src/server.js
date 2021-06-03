@@ -15,6 +15,16 @@ stripe.setAppInfo({
 const app = express();
 app.use(pino);
 app.use(cookieParser())
+if(process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'staging') {
+    // Redirect all non-http heroku traffic to https
+    app.use((req, res, next) => {
+        if (req.header('x-forwarded-proto') !== 'https') {
+            res.redirect(301, `https://${req.header('host')}${req.url}`)
+        } else {
+            next()
+        }
+    })
+  }
 
 express.static.mime.define({'application/pkcs7-mime': ['apple-app-site-association']});
 express.static.mime.define({'application/pkcs7-mime': ['.well-known/apple-app-site-association']});
