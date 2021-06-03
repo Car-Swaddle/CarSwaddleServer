@@ -29,13 +29,6 @@ export default function LoginPage({finishedAuth}: LoginPageProps) {
 
     return (
         <Container>
-            <br/>
-            <Row>
-                <Col sm={{span: 6, offset: 3}} lg={{span: 4, offset: 4}}>
-                    <h3 className="text-center">Car Swaddle Affiliate</h3>
-                </Col>
-            </Row>
-            <br/>
             <Row>
                 <Col sm={{span: 6, offset: 3}} lg={{span: 4, offset: 4}}>
                 <Form onSubmit={handleSubmit}>

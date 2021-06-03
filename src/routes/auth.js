@@ -25,7 +25,7 @@ module.exports = function (app, models, passport) {
                     user: user
                 });
             }
-            req.login(user, { session: false }, (err) => {
+            req.login(user, { session: false }, async (err) => {
                 if (err) {
                     return res.send(err);
                 }
@@ -38,7 +38,7 @@ module.exports = function (app, models, passport) {
                         return res.json({ user, mechanic, token });
                     });
                 } else if (req.query.isReferrer == "true") {
-                    const referrer = referrerController.getReferrerForUserID(user.id);
+                    const referrer = await referrerController.getReferrerForUserID(user.id);
                     return res.json({ user, referrer, token });
                 } else {
                     return res.json({ user, token });

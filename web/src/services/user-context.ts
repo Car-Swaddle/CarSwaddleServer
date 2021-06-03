@@ -9,11 +9,11 @@ export const UserContext = {
 
 const storage = window.localStorage;
 
-function getCurrentUser(): (User | undefined) {
+function getCurrentUser(): (User | null) {
     return JSON.parse(storage.getItem("user") ?? "{}");
 }
 
-function getCurrentReferrer(): (Referrer | undefined) {
+function getCurrentReferrer(): (Referrer | null) {
     return JSON.parse(storage.getItem("referrer") ?? "{}");
 }
 
