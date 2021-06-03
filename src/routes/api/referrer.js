@@ -96,7 +96,7 @@ module.exports = (router) => {
         referrerController.updateReferrer(req.body).then((created) => {
             res.json(created);
         }).catch((error) => {
-            res.status(400).json({error: "Unable to update referrer"});
+            res.status(400).json({error});
             req.log.warn(error);
         })
     });

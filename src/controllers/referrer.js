@@ -7,6 +7,8 @@ const { QueryTypes } = require('sequelize');
 
 module.exports = class ReferrerController {
 
+    validVanityIDRegex = /^[!#$&-;=?-\[\]_a-z~]+$/;
+
     async getReferrer(referrerID) {
         return await Referrer.findByPk(referrerID);
     }
@@ -70,6 +72,12 @@ module.exports = class ReferrerController {
     async createReferrer(referrer) {
         // Generate short id designed to be shared
         referrer.id = Util.generateRandomHex(4);
+        if (!referrer.vanityID) {
+            referrer.vanityID = referrer.id;
+        }
+        if (!validVanityIDRegex.match(referrer.vanityID)) {
+            throw "Invalid vanity ID" 
+        }
         return await Referrer.create(referrer);
     }
 
@@ -81,7 +89,7 @@ module.exports = class ReferrerController {
         const referrerID = Util.generateRandomHex(4);
         const [referrer, created] = await Referrer.findOrCreate({
             where: { userID: userID },
-            defaults: { id: referrerID, sourceType: "USER",  externalID: userID, userID: userID }
+            defaults: { id: referrerID, vanityID: referrerID, sourceType: "USER", externalID: userID, userID: userID }
         });
 
         referrer.stripeExpressAccountID = stripeAccountID;
@@ -90,6 +98,9 @@ module.exports = class ReferrerController {
     }
 
     async updateReferrer(referrer) {
+        if (!validVanityIDRegex.match(referrer.vanityID)) {
+            throw "Invalid vanity ID" 
+        }
         return await Referrer.update(referrer, {
             where: {
                 id: referrer.id

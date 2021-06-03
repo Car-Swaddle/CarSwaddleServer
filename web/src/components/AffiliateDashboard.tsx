@@ -6,17 +6,30 @@ import React from 'react';
 export default function AffiliateDashboard() {
 
     const [referrer, setReferrer] = React.useState<Referrer | null>(null);
+    const [vanityLink, setVanityLink] = React.useState<string>("");
 
-    if (!referrer) {
+    React.useEffect(() => {
         setReferrer(UserContext.getCurrentReferrer());
-    }
+
+        if (referrer && referrer.vanityID) {
+            setVanityLink(`go.carswaddle.com/${referrer.vanityID}`)
+        }
+    })
 
     return (
         <Container>
-            <Row className="my-3">
+            <Row>
+                <Col className="my-3" sm={{span: 8, offset: 2}} lg={{span: 6, offset: 3}}>
+                Use the personal link below to invite others to learn more about Car Swaddle and download the app.
+                </Col>
+            </Row>
+            <Row className="my-1">
                 <Col>
-                <h4 className="text-center">Your affiliate ID is <span className="badge badge-info">{referrer?.id ?? "unknown, contact support@carswaddle.com"}</span>.
-                </h4>
+                {vanityLink ?
+                    <h4 className="text-center">Your affiliate link is <a href={vanityLink}>{vanityLink}</a></h4>
+                    :
+                    <h4 className="text-center">Unable to generate affiliate link, please contact <a href="mailto:support@carswaddle.com">support@carswaddle.com</a>.</h4>
+                }
                 </Col>
             </Row>
         </Container>
