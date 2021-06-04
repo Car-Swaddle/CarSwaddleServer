@@ -15,12 +15,11 @@ export default function App() {
 
     function finishedAuth() {
         setAuthenticated(true);
-        setReferrer(UserContext.getCurrentReferrer());
     }
 
     React.useEffect(() => {
         setReferrer(UserContext.getCurrentReferrer());
-    })
+    }, [authenticated])
 
     return (
     <Container>

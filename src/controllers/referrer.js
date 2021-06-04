@@ -2,8 +2,8 @@ const { Util } = require('../util/util');
 const uuidV1 = require('uuid/v1');
 const models = require('../models');
 const { Referrer, PayStructure, User, sequelize } = models;
-const stripeCharges = require('../controllers/stripe-charges.js')(models);
 const { QueryTypes } = require('sequelize');
+const axios = require('axios');
 
 module.exports = class ReferrerController {
 
@@ -97,7 +97,10 @@ module.exports = class ReferrerController {
         referrer.stripeExpressAccountID = stripeAccountID;
         await referrer.save();
 
-        await this.createBranchDeepLink(referrer);
+        if (this.isProduction()) {
+            // Only create in production to avoid name collisions and inability to delete in test
+            await this.createBranchDeepLink(referrer);
+        }
 
         return referrer;
     }
@@ -114,11 +117,13 @@ module.exports = class ReferrerController {
             }
         });
 
-        // Update after persist attempt to ensure we check for duplicates
-        // Note that we can't delete links in their test environment
-        if (referrer.vanityID != existing.vanityID) {
-            await this.deleteBranchDeepLink(existing.vanityID);
-            await this.createBranchDeepLink(updated);
+        if (this.isProduction()) {
+            // Update after persist attempt to ensure we check for duplicates
+            // Only create in production to avoid name collisions and inability to delete in test
+            if (referrer.vanityID != existing.vanityID) {
+                await this.deleteBranchDeepLink(existing.vanityID);
+                await this.createBranchDeepLink(updated);
+            }
         }
 
         return updated;
@@ -155,9 +160,12 @@ module.exports = class ReferrerController {
         return payStructure ? payStructure.destroy() : Promise.reject();
     }
 
+    isProduction() {
+        return process.env.NODE_ENV == "production";
+    }
+
     async createBranchDeepLink(referrer) {
-        await axios.post("https://api2.branch.io/v1/url",
-            {
+        return axios.post("https://api2.branch.io/v1/url", {
                 "branch_key": process.env.BRANCH_API_KEY,
                 "alias": referrer.vanityID,
                 "channel": "affiliate",
@@ -165,22 +173,23 @@ module.exports = class ReferrerController {
                 "data": {
                     referrerId: referrer.id
                 }
-            },
-            { headers: {'Content-Type': 'application/json'} }
+            }, {
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            }
         );
     }
 
     async deleteBranchDeepLink(vanityID) {
-        return axios.delete(`https://api2.branch.io/v1/url?url=https://go.carswaddle.com/${vanityID}`,
-            {
-                params: {
-                    app_id: process.env.BRANCH_APP_ID
-                },
-                headers: {
-                    'Access-Token': process.env.BRANCH_API_KEY
-                }
+        return axios.delete(`https://api2.branch.io/v1/url?url=https://go.carswaddle.com/${vanityID}`,{
+            params: {
+                app_id: process.env.BRANCH_APP_ID
+            },
+            headers: {
+                'Access-Token': process.env.BRANCH_API_KEY
             }
-        );
+        });
     }
 
 }

@@ -26,9 +26,9 @@ export default function AffiliateDashboard() {
             <Row className="my-1">
                 <Col>
                 {vanityLink ?
-                    <h4 className="text-center">Your affiliate link is <a href={vanityLink}>{vanityLink}</a></h4>
+                    <h4 className="text-center">Your affiliate link is <a href={`https://${vanityLink}`}>{vanityLink}</a></h4>
                     :
-                    <h4 className="text-center">Unable to generate affiliate link, please contact <a href="mailto:support@carswaddle.com">support@carswaddle.com</a>.</h4>
+                    <h4 className="text-center">Unable to generate your affiliate link, please contact <a href="mailto:support@carswaddle.com">support@carswaddle.com</a>.</h4>
                 }
                 </Col>
             </Row>
