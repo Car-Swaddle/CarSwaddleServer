@@ -1,4 +1,3 @@
-const express = require('express');
 const uuidV1 = require('uuid/v1');
 const constants = require('../../controllers/constants');
 const stripe = require('stripe')(constants.STRIPE_SECRET_KEY);
@@ -27,6 +26,11 @@ module.exports = function (router, models) {
             return res.status(422).send('invalid parameters');
         }
         const mechanicID = req.query.mechanic;
+        const mechanic = await models.Mechanic.findByPk(mechanicID);
+        if (!mechanic) {
+            return res.sendStatus(404);
+        }
+
         const averageRating = await stats.averageReceivedRating(mechanicID);
         const numberOfRatings = await stats.numberOfRatingsReceived(mechanicID);
         const autoServicesProvided = await stats.numberOfAutoServicesProvided(mechanicID);
@@ -34,10 +38,6 @@ module.exports = function (router, models) {
         const avg = averageRating[0].rating;
         const count = parseInt(numberOfRatings[0].count);
         const services = parseInt(autoServicesProvided[0].count);
-
-        if (avg == null || count == null || services == null) {
-            return res.status(404).send();
-        }
 
         var json = {}
         json[mechanicID] = {
