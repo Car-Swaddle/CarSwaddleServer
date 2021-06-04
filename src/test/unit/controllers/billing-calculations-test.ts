@@ -18,12 +18,10 @@ describe("Billing Calculations", function() {
     const taxMetadata = {
         rate: 0.0715,
     };
-    const coupon = {
-        discountBookingFee: false,
-    }
+    sinon.stub(OilChangePricing, "findOne").returns(fakePricing);
 
     it("should return correct billing values", async function() {
-        sinon.stub(OilChangePricing, "findOne").returns(fakePricing);
+        const coupon = {discountBookingFee: false}
         const billingCalculations = BillingCalculations();
         const prices = await billingCalculations.calculatePrices(fakeMechanic, null, "SYNTHETIC", null, coupon, taxMetadata);
 
@@ -33,5 +31,21 @@ describe("Billing Calculations", function() {
         // Can be a rounding error here depending on input numbers
         assert.closeTo(prices.processingFee, Math.round((prices.total - prices.processingFee) * 0.029) + 30, 1);
         assert.equal(prices.total, prices.oilChange + prices.bookingFee + prices.taxes + prices.processingFee);
+    });
+
+    it("should return correct oil change value no booking fee", async function() {
+        const coupon = {discountBookingFee: true};
+        const billingCalculations = BillingCalculations();
+        const prices = await billingCalculations.calculatePrices(fakeMechanic, null, "SYNTHETIC", null, coupon, taxMetadata);
+
+        assert.equal(prices.oilChange, 6600);
+    });
+
+    it("should return correct oil change value with booking fee 10% coupon", async function() {
+        const coupon = {discountBookingFee: false, percentOff: 10};
+        const billingCalculations = BillingCalculations();
+        const prices = await billingCalculations.calculatePrices(fakeMechanic, null, "SYNTHETIC", null, coupon, taxMetadata);
+
+        assert.equal(prices.oilChange, 6600);
     });
 })
