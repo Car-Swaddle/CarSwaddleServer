@@ -78,7 +78,9 @@ module.exports = class ReferrerController {
         if (!validVanityIDRegex.match(referrer.vanityID)) {
             throw "Invalid vanity ID" 
         }
-        return await Referrer.create(referrer);
+        const created = await Referrer.create(referrer);
+        await this.createBranchDeepLink(created);
+        return created;
     }
 
     async createReferrerForUserWithExistingStripeAccount(userID, stripeAccountID) {
@@ -94,18 +96,32 @@ module.exports = class ReferrerController {
 
         referrer.stripeExpressAccountID = stripeAccountID;
         await referrer.save();
+
+        await this.createBranchDeepLink(referrer);
+
         return referrer;
     }
 
     async updateReferrer(referrer) {
-        if (!validVanityIDRegex.match(referrer.vanityID)) {
+        if (!referrer.vanityID || !validVanityIDRegex.match(referrer.vanityID)) {
             throw "Invalid vanity ID" 
         }
-        return await Referrer.update(referrer, {
+
+        const existing = await Referrer.findByPk(referrer.id);
+        const updated = await Referrer.update(referrer, {
             where: {
                 id: referrer.id
             }
         });
+
+        // Update after persist attempt to ensure we check for duplicates
+        // Note that we can't delete links in their test environment
+        if (referrer.vanityID != existing.vanityID) {
+            await this.deleteBranchDeepLink(existing.vanityID);
+            await this.createBranchDeepLink(updated);
+        }
+
+        return updated;
     }
 
     async deleteReferrer(referrerID) {
@@ -137,6 +153,34 @@ module.exports = class ReferrerController {
     async deletePayStructure(payStructureID) {
         const payStructure = await this.getPayStructure(payStructureID);
         return payStructure ? payStructure.destroy() : Promise.reject();
+    }
+
+    async createBranchDeepLink(referrer) {
+        await axios.post("https://api2.branch.io/v1/url",
+            {
+                "branch_key": process.env.BRANCH_API_KEY,
+                "alias": referrer.vanityID,
+                "channel": "affiliate",
+                "tags": ["API", "Affiliate"],
+                "data": {
+                    referrerId: referrer.id
+                }
+            },
+            { headers: {'Content-Type': 'application/json'} }
+        );
+    }
+
+    async deleteBranchDeepLink(vanityID) {
+        return axios.delete(`https://api2.branch.io/v1/url?url=https://go.carswaddle.com/${vanityID}`,
+            {
+                params: {
+                    app_id: process.env.BRANCH_APP_ID
+                },
+                headers: {
+                    'Access-Token': process.env.BRANCH_API_KEY
+                }
+            }
+        );
     }
 
 }
