@@ -5,16 +5,14 @@ import React from 'react';
 
 export default function AffiliateDashboard() {
 
-    const [referrer, setReferrer] = React.useState<Referrer | null>(null);
+    const [referrer, setReferrer] = React.useState<Referrer | null>(UserContext.getCurrentReferrer());
     const [vanityLink, setVanityLink] = React.useState<string>("");
 
     React.useEffect(() => {
-        setReferrer(UserContext.getCurrentReferrer());
-
         if (referrer && referrer.vanityID) {
             setVanityLink(`go.carswaddle.com/${referrer.vanityID}`)
         }
-    })
+    }, [referrer])
 
     return (
         <Container>

@@ -55,11 +55,8 @@ export default function StripeLanding({finishedAuth}: StripeLandingProps) {
                         console.error("Failed to finish stripe flow")
                         return;
                     }
-                    // Artificial slowdown to look like we're processing
-                    setTimeout(() => {
-                        UserContext.setCurrentReferrer(referrer);
-                        finishedAuth();
-                    }, 1500)
+                    UserContext.setCurrentReferrer(referrer);
+                    finishedAuth();
                 }).catch(() => {
                     console.error("Failed to finish stripe flow");
                 })

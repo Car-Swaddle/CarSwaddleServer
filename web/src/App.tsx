@@ -11,15 +11,12 @@ import { Referrer } from "./models"
 
 export default function App() {
     const [authenticated, setAuthenticated] = React.useState(AuthenticationService.isAuthenticated());
-    const [referrer, setReferrer] = React.useState<Referrer | null>()
+    const [referrer, setReferrer] = React.useState<Referrer | null>(UserContext.getCurrentReferrer())
 
     function finishedAuth() {
         setAuthenticated(true);
-    }
-
-    React.useEffect(() => {
         setReferrer(UserContext.getCurrentReferrer());
-    }, [authenticated])
+    }
 
     return (
     <Container>

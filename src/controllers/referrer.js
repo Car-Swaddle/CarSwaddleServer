@@ -165,12 +165,21 @@ module.exports = class ReferrerController {
     }
 
     async createBranchDeepLink(referrer) {
+        var displayName = `${referrer.sourceType}:${referrer.externalID}`
+        if (referrer.userID) {
+            const user = await User.findByPk(referrer.userID);
+            if (user && user.firstName && user.lastName) {
+                displayName = `${user.firstName} ${user.lastName}`;
+            }
+        }
         return axios.post("https://api2.branch.io/v1/url", {
                 "branch_key": process.env.BRANCH_API_KEY,
                 "alias": referrer.vanityID,
                 "channel": "affiliate",
                 "tags": ["API", "Affiliate"],
+                "type": 2, // This and $marketing_title below must be set or they won't show in the dashboard: https://help.branch.io/faq/docs/links-generated-via-api-are-not-showing-in-the-dashboard
                 "data": {
+                    "$marketing_title": `Ref: ${displayName}`,
                     referrerId: referrer.id
                 }
             }, {
