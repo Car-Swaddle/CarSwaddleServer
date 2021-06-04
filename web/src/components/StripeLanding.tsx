@@ -21,8 +21,7 @@ export default function StripeLanding({finishedAuth}: StripeLandingProps) {
         }
 
         let parameters = {
-            // TODO - public key based on env
-            client_id: "ca_Ev4P1QZsqdxi1oJzS9SrXyooFCGiI4mC"
+            client_id: process.env.PUBLIC_URL == "https://app.carswaddle.com" ? "ca_Ev4P3GYnV9zLuKcJAQGSbIc15c614wzV" : "ca_Ev4P1QZsqdxi1oJzS9SrXyooFCGiI4mC"
         };
         // Optionally, the Express onboarding flow accepts `first_name`, `last_name`, `email`,
         // and `phone` in the query parameters: those form fields will be prefilled

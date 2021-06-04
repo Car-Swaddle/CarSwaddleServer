@@ -69,7 +69,7 @@
     "supertest": "^4.0.2"
   },
   "scripts": {
-    "build": "env && tsc && (cd ./web && yarn run build)",
+    "build": "tsc && (cd ./web && yarn run build)",
     "deps": "docker-compose -f docker-compose.deps.yml up",
     "test": "mocha -r ts-node/register --extension js,ts --recursive src/test/unit",
     "test:debug": "mocha --inspect-brk -r ts-node/register --extension js,ts --recursive src/test/unit",
