@@ -97,10 +97,7 @@ module.exports = class ReferrerController {
         referrer.stripeExpressAccountID = stripeAccountID;
         await referrer.save();
 
-        if (this.isProduction()) {
-            // Only create in production to avoid name collisions and inability to delete in test
-            await this.createBranchDeepLink(referrer);
-        }
+        await this.createBranchDeepLink(referrer);
 
         return referrer;
     }
@@ -117,13 +114,10 @@ module.exports = class ReferrerController {
             }
         });
 
-        if (this.isProduction()) {
-            // Update after persist attempt to ensure we check for duplicates
-            // Only create in production to avoid name collisions and inability to delete in test
-            if (referrer.vanityID != existing.vanityID) {
-                await this.deleteBranchDeepLink(existing.vanityID);
-                await this.createBranchDeepLink(updated);
-            }
+        // Update after persist attempt to ensure we check for duplicates
+        if (referrer.vanityID != existing.vanityID) {
+            await this.deleteBranchDeepLink(existing.vanityID);
+            await this.createBranchDeepLink(updated);
         }
 
         return updated;
@@ -160,8 +154,8 @@ module.exports = class ReferrerController {
         return payStructure ? payStructure.destroy() : Promise.reject();
     }
 
-    isProduction() {
-        return process.env.NODE_ENV == "production";
+    getBranchLinkBase() {
+        return process.env.NODE_ENV === "production" ? "car.swaddle.com/" : "carswaddle.test-app.link/"
     }
 
     async createBranchDeepLink(referrer) {
@@ -174,8 +168,10 @@ module.exports = class ReferrerController {
         }
         return axios.post("https://api2.branch.io/v1/url", {
                 "branch_key": process.env.BRANCH_API_KEY,
-                "alias": referrer.vanityID,
-                "channel": "affiliate",
+                "alias": this.getBranchLinkBase() + referrer.vanityID,
+                "feature": "Affiliate",
+                "channel": "Social Media",
+                "campaign": referrer.id,
                 "tags": ["API", "Affiliate"],
                 "type": 2, // This and $marketing_title below must be set or they won't show in the dashboard: https://help.branch.io/faq/docs/links-generated-via-api-are-not-showing-in-the-dashboard
                 "data": {
@@ -191,7 +187,7 @@ module.exports = class ReferrerController {
     }
 
     async deleteBranchDeepLink(vanityID) {
-        return axios.delete(`https://api2.branch.io/v1/url?url=https://go.carswaddle.com/${vanityID}`,{
+        return axios.delete(`https://api2.branch.io/v1/url?url=https://${this.getBranchLinkBase()}${vanityID}`,{
             params: {
                 app_id: process.env.BRANCH_APP_ID
             },

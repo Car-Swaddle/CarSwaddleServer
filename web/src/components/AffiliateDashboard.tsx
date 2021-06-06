@@ -10,7 +10,8 @@ export default function AffiliateDashboard() {
 
     React.useEffect(() => {
         if (referrer && referrer.vanityID) {
-            setVanityLink(`go.carswaddle.com/${referrer.vanityID}`)
+            const linkBase = process.env.REACT_APP_ENV === "production" ? "go.carswaddle.com/" : "carswaddle.test-app.link/";
+            setVanityLink(`${linkBase}${referrer.vanityID}`)
         }
     }, [referrer])
 
