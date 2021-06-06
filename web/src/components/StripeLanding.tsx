@@ -19,21 +19,19 @@ export default function StripeLanding({finishedAuth}: StripeLandingProps) {
         if (!user) {
             return;
         }
-
         let parameters = {
-            client_id: process.env.PUBLIC_URL == "https://app.carswaddle.com" ? "ca_Ev4P3GYnV9zLuKcJAQGSbIc15c614wzV" : "ca_Ev4P1QZsqdxi1oJzS9SrXyooFCGiI4mC"
-        };
-        // Optionally, the Express onboarding flow accepts `first_name`, `last_name`, `email`,
-        // and `phone` in the query parameters: those form fields will be prefilled
-        parameters = Object.assign(parameters, {
+            client_id: process.env.REACT_APP_ENV === "production" ? "ca_Ev4P3GYnV9zLuKcJAQGSbIc15c614wzV" : "ca_Ev4P1QZsqdxi1oJzS9SrXyooFCGiI4mC",
             redirect_uri: `${window.location.origin}/affiliate/stripe`,
+
+            // Passing these parameters prefills them in the stripe oauth flow
             'stripe_user[business_type]': 'individual',
             'stripe_user[first_name]': user.firstName || undefined,
             'stripe_user[last_name]': user.lastName || undefined,
             'stripe_user[phone_number]': user.phoneNumber || undefined,
             'stripe_user[email]': user.email || undefined,
             'stripe_user[country]': "US",
-        });
+            'stripe_user[product_description]': "Car Swaddle Affiliate generating leads for the platform."
+        };
 
         const uri = 'https://connect.stripe.com/express/oauth/authorize?' + querystring.stringify(parameters);
         setAuthorizeURI(uri);
@@ -54,11 +52,8 @@ export default function StripeLanding({finishedAuth}: StripeLandingProps) {
                         console.error("Failed to finish stripe flow")
                         return;
                     }
-                    // Artificial slowdown to look like we're processing
-                    setTimeout(() => {
-                        UserContext.setCurrentReferrer(referrer);
-                        finishedAuth();
-                    }, 1500)
+                    UserContext.setCurrentReferrer(referrer);
+                    finishedAuth();
                 }).catch(() => {
                     console.error("Failed to finish stripe flow");
                 })

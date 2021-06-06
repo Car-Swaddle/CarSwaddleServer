@@ -1,9 +1,10 @@
 
 export type Referrer = {
     id: string,
-    stripeExpressAccountID: string,
-    activeCouponID: string,
-    activePayStructureID: string,
+    stripeExpressAccountID: string | null,
+    activeCouponID: string | null,
+    activePayStructureID: string | null,
+    vanityID: string | null,
 };
 
 export type User = {

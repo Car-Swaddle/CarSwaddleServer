@@ -2,10 +2,12 @@ const { Util } = require('../util/util');
 const uuidV1 = require('uuid/v1');
 const models = require('../models');
 const { Referrer, PayStructure, User, sequelize } = models;
-const stripeCharges = require('../controllers/stripe-charges.js')(models);
 const { QueryTypes } = require('sequelize');
+const axios = require('axios');
 
 module.exports = class ReferrerController {
+
+    validVanityIDRegex = /^[!#$&-;=?-\[\]_a-z~]+$/;
 
     async getReferrer(referrerID) {
         return await Referrer.findByPk(referrerID);
@@ -70,7 +72,15 @@ module.exports = class ReferrerController {
     async createReferrer(referrer) {
         // Generate short id designed to be shared
         referrer.id = Util.generateRandomHex(4);
-        return await Referrer.create(referrer);
+        if (!referrer.vanityID) {
+            referrer.vanityID = referrer.id;
+        }
+        if (!validVanityIDRegex.match(referrer.vanityID)) {
+            throw "Invalid vanity ID" 
+        }
+        const created = await Referrer.create(referrer);
+        await this.createBranchDeepLink(created);
+        return created;
     }
 
     async createReferrerForUserWithExistingStripeAccount(userID, stripeAccountID) {
@@ -81,20 +91,36 @@ module.exports = class ReferrerController {
         const referrerID = Util.generateRandomHex(4);
         const [referrer, created] = await Referrer.findOrCreate({
             where: { userID: userID },
-            defaults: { id: referrerID, sourceType: "USER",  externalID: userID, userID: userID }
+            defaults: { id: referrerID, vanityID: referrerID, sourceType: "USER", externalID: userID, userID: userID }
         });
 
         referrer.stripeExpressAccountID = stripeAccountID;
         await referrer.save();
+
+        await this.createBranchDeepLink(referrer);
+
         return referrer;
     }
 
     async updateReferrer(referrer) {
-        return await Referrer.update(referrer, {
+        if (!referrer.vanityID || !validVanityIDRegex.match(referrer.vanityID)) {
+            throw "Invalid vanity ID" 
+        }
+
+        const existing = await Referrer.findByPk(referrer.id);
+        const updated = await Referrer.update(referrer, {
             where: {
                 id: referrer.id
             }
         });
+
+        // Update after persist attempt to ensure we check for duplicates
+        if (referrer.vanityID != existing.vanityID) {
+            await this.deleteBranchDeepLink(existing.vanityID);
+            await this.createBranchDeepLink(updated);
+        }
+
+        return updated;
     }
 
     async deleteReferrer(referrerID) {
@@ -126,6 +152,49 @@ module.exports = class ReferrerController {
     async deletePayStructure(payStructureID) {
         const payStructure = await this.getPayStructure(payStructureID);
         return payStructure ? payStructure.destroy() : Promise.reject();
+    }
+
+    getBranchLinkBase() {
+        return process.env.NODE_ENV === "production" ? "car.swaddle.com/" : "carswaddle.test-app.link/"
+    }
+
+    async createBranchDeepLink(referrer) {
+        var displayName = `${referrer.sourceType}:${referrer.externalID}`
+        if (referrer.userID) {
+            const user = await User.findByPk(referrer.userID);
+            if (user && user.firstName && user.lastName) {
+                displayName = `${user.firstName} ${user.lastName}`;
+            }
+        }
+        return axios.post("https://api2.branch.io/v1/url", {
+                "branch_key": process.env.BRANCH_API_KEY,
+                "alias": this.getBranchLinkBase() + referrer.vanityID,
+                "feature": "Affiliate",
+                "channel": "Social Media",
+                "campaign": referrer.id,
+                "tags": ["API", "Affiliate"],
+                "type": 2, // This and $marketing_title below must be set or they won't show in the dashboard: https://help.branch.io/faq/docs/links-generated-via-api-are-not-showing-in-the-dashboard
+                "data": {
+                    "$marketing_title": `Ref: ${displayName}`,
+                    referrerId: referrer.id
+                }
+            }, {
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            }
+        );
+    }
+
+    async deleteBranchDeepLink(vanityID) {
+        return axios.delete(`https://api2.branch.io/v1/url?url=https://${this.getBranchLinkBase()}${vanityID}`,{
+            params: {
+                app_id: process.env.BRANCH_APP_ID
+            },
+            headers: {
+                'Access-Token': process.env.BRANCH_API_KEY
+            }
+        });
     }
 
 }
