@@ -95,6 +95,7 @@ module.exports = class ReferrerController {
         });
 
         referrer.stripeExpressAccountID = stripeAccountID;
+        referrer.activePayStructureID = "55a8c070-b600-11eb-b57e-e75f276fa071";
         await referrer.save();
 
         await this.createBranchDeepLink(referrer);
