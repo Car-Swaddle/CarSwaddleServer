@@ -393,7 +393,7 @@ module.exports = function (router, models) {
         const prices = await billingCalculations.calculatePrices(mechanic, location, oilType, vehicleID, finalCoupon ? finalCoupon.id : null, taxMetadata);
 
         autoServiceScheduler.scheduleAutoService(req.user, status, scheduledDate, vehicleID, mechanicID, sourceID,
-            prices, oilType, serviceEntities, address, locationID, taxRate,
+            prices, oilType, serviceEntities, address, locationID, taxMetadata.rate,
             finalCoupon ? finalCoupon.id : null, payStructure ? payStructure.id : null, referrerID, usePaymentIntent, notes, function (err, autoService) {
             if (!err) {
                 return res.json(autoService);
