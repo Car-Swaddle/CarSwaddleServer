@@ -285,7 +285,7 @@ module.exports = function (router, models) {
             couponID,
         } = req.body;
 
-        const usePaymentIntent = req.query.usePaymentIntent || false;
+        const usePaymentIntent = req.query.usePaymentIntent || req.user.activeReferrerID || false;
 
         const oilChangeService = serviceEntities.find(x => x.entityType === 'OIL_CHANGE');
         const oilType = oilChangeService && oilChangeService.specificService.oilType;
