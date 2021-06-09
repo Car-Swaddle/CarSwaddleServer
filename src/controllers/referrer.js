@@ -162,7 +162,7 @@ module.exports = class ReferrerController {
     }
 
     getBranchLinkBase() {
-        return process.env.NODE_ENV === "production" ? "car.swaddle.com/" : "carswaddle.test-app.link/"
+        return process.env.NODE_ENV === "production" ? "go.carswaddle.com/" : "carswaddle.test-app.link/"
     }
 
     async createBranchDeepLink(referrer) {
