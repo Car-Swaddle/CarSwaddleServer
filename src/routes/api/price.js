@@ -50,6 +50,7 @@ module.exports = function (router, models) {
         }
 
         const taxMetadata = await taxes.taxMetadataForLocation(location);
+        const prices = await billingCalculations.calculatePrices(mechanic, location, oilType, vehicleID, finalCoupon, taxMetadata);
         const meta = { oilType, mechanicID, locationID: location.id };
 
         await stripeChargesFile.updateDraft(stripeCustomerID, prices, meta, taxMetadata.rate);
