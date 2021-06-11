@@ -1,5 +1,4 @@
 import { Container, Row, Col } from 'react-bootstrap';
-// import { getCurrentUserReferrer, getSummary, getTransactions, getPayStructure } from "../services/ReferrerService"
 import React from 'react';
 import querystring from 'querystring';
 import { UserContext } from '../services/user-context';

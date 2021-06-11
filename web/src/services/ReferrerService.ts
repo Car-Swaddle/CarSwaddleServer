@@ -6,6 +6,7 @@ export const ReferrerService = {
     getTransactions,
     getPayStructure,
     finishStripeOauthFlow,
+    generateExpressLoginLink
 };
 
 async function getCurrentUserReferrer() {
@@ -42,6 +43,14 @@ async function getPayStructure(payStructureID: string) {
 
 async function finishStripeOauthFlow(code: string) {
     return fetch(`/api/stripe/oauth-confirm?isReferrer=true&code=${code}`)
+        .then(handleResponse)
+        .then(data => {
+            return data;
+        });
+}
+
+async function generateExpressLoginLink(account: string): Promise<any> {
+    return fetch(`/api/stripe/express-login-link?redirect=/affiliate/dashboard&account=${account}`)
         .then(handleResponse)
         .then(data => {
             return data;
