@@ -2,9 +2,8 @@ const constants = require('./constants.js');
 const uuidV1 = require('uuid/v1');
 const stripe = require('stripe')(constants.STRIPE_SECRET_KEY);
 const Email = require('../notifications/email');
-const { Op } = require("sequelize");
 
-const ALL_PRICE_TYPES = ['discount', 'oilChange', 'distance', 'bookingFee', 'processingFee', 'bookingFeeDiscount'];
+const ALL_PRICE_TYPES = ['discount', 'oilChange', 'distance', 'bookingFee', 'processingFee', 'bookingFeeDiscount', 'taxes'];
 
 const stripeConnectProcessPercentage = 0.0025;
 const stripeConnectAccountDebitPercentage = 0.015;
@@ -268,7 +267,6 @@ StripeCharges.prototype.updateDraft = async function(customer, prices, metadata,
 
     const invoiceUpdates = {
         customer: draftInvoice ? undefined : customer,
-        default_tax_rates: taxRate ? [taxRate.id] : [],
         description: "Oil Change from Car Swaddle",
         statement_descriptor: "Car Swaddle Oil Change",
         metadata,
@@ -277,9 +275,6 @@ StripeCharges.prototype.updateDraft = async function(customer, prices, metadata,
     const finalInvoice = draftInvoice
         ? await stripe.invoices.update(draftInvoice.id, invoiceUpdates)
         : await stripe.invoices.create(invoiceUpdates);
-
-    prices.taxes = finalInvoice.tax || 0;
-    prices.total = finalInvoice.total;
 
     return finalInvoice;
 };
