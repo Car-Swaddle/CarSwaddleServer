@@ -30,7 +30,7 @@ export default function StripeLanding({finishedAuth}: StripeLandingProps) {
             'stripe_user[phone_number]': user.phoneNumber || undefined,
             'stripe_user[email]': user.email || undefined,
             'stripe_user[country]': "US",
-            'stripe_user[product_description]': "Car Swaddle Affiliate generating leads for the platform."
+            'stripe_user[product_description]': "Car Swaddle referral program. Individuals may receive compensation for customers that download the Car Swaddle app and purchase an oil change. Terms and conditions related to both the eligibility to receive and amount of compensation are governed by the agreement that individual enters into with Car Swaddle."
         };
 
         const uri = 'https://connect.stripe.com/express/oauth/authorize?' + querystring.stringify(parameters);
