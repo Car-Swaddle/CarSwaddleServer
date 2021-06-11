@@ -76,9 +76,13 @@ StripeCharges.prototype.monthlyDebitFee = function (mechanicPayment) {
 
 StripeCharges.prototype.executeMechanicTransfer = async function(paymentIntentID) {
     const transactionMetadata = await this.models.TransactionMetadata.fetchWithPaymentIntentID(paymentIntentID);
-    const autoServiceID = transactionMetadata.autoServiceID;
+    if (!transactionMetadata) {
+        console.warn(`No mechanic with payment intent id: ${paymentIntentID}`)
+        return;
+    }
 
-    if (!transactionMetadata || !transactionMetadata.mechanicTransferAmount || transactionMetadata.mechanicTransferAmount == 0) {
+    const autoServiceID = transactionMetadata.autoServiceID;
+    if (transactionMetadata.mechanicTransferAmount || transactionMetadata.mechanicTransferAmount == 0) {
         console.warn(`No mechanic amounts to transfer: ${transactionMetadata?.id ?? "missing"}`)
         return;
     }
