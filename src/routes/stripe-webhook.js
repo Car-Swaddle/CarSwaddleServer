@@ -139,7 +139,7 @@ module.exports = function (app, models) {
         } else if(event.type == eventTypes.TRANSFER_REVERSED) {
             // const { amount_reversed, destination } = event.data.object;
         } else if (event.type == eventTypes.CHARGE_SUCCEEDED) {
-            const paymentIntentId = event.data.object.id;
+            const paymentIntentId = event.data.object.payment_intent;
             console.info(`Got payment intent confirm event ${paymentIntentId}`);
             await stripeCharges.executeMechanicTransfer(paymentIntentId);
             return res.json({ received: true })
