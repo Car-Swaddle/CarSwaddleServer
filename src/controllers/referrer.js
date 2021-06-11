@@ -161,10 +161,6 @@ module.exports = class ReferrerController {
         return payStructure ? payStructure.destroy() : Promise.reject();
     }
 
-    getBranchLinkBase() {
-        return process.env.NODE_ENV === "production" ? "go.carswaddle.com/" : "carswaddle.test-app.link/"
-    }
-
     async createBranchDeepLink(referrer) {
         var displayName = `${referrer.sourceType}:${referrer.externalID}`
         if (referrer.userID) {
@@ -175,7 +171,7 @@ module.exports = class ReferrerController {
         }
         return axios.post("https://api2.branch.io/v1/url", {
                 "branch_key": process.env.BRANCH_API_KEY,
-                "alias": this.getBranchLinkBase() + referrer.vanityID,
+                "alias": referrer.vanityID,
                 "feature": "Affiliate",
                 "channel": "Social Media",
                 "campaign": referrer.id,
@@ -191,6 +187,10 @@ module.exports = class ReferrerController {
                 }
             }
         );
+    }
+
+    getBranchLinkBase() {
+        return process.env.NODE_ENV === "production" ? "go.carswaddle.com/" : "carswaddle.test-app.link/"
     }
 
     async deleteBranchDeepLink(vanityID) {
