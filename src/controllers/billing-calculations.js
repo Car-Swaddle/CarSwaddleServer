@@ -72,6 +72,15 @@ BillingCalculations.prototype.calculatePrices = async function(mechanic, locatio
         mechanicCostPrice = Math.round((subtotalPrice + discountPrice) * .7)
     }
 
+    console.log(JSON.stringify({
+        mechanic: mechanic,
+        location: location,
+        oilType: oilType,
+        vehicleID: vehicleID,
+        coupon: coupon,
+        taxMetadata: taxMetadata
+    }));
+
     const total = discountPrice + oilChangePrice + distancePrice + bookingFeePrice + bookingFeeDiscountPrice + processingFeePrice + salesTax;
     return {
         oilChange: oilChangePrice,
@@ -115,6 +124,17 @@ function calculateProcessingFeeTaxes(oilChange, distance, discountPrice, booking
     const finalTaxes = calculateTax(finalTaxable);
 
     const finalProcessingFee = subtotalStripeFee + estimatedTaxStripeFee + stripeProcessTransactionFee;
+
+    console.log(JSON.stringify({
+        subtotal: subtotal,
+        subtotalStripeFee: subtotalStripeFee,
+        initialTaxable: initialTaxable,
+        initialTaxes: initialTaxes,
+        estimatedTaxStripeFee: estimatedTaxStripeFee,
+        finalTaxable: finalTaxable,
+        finalTaxes: finalTaxes,
+        finalProcessingFee: finalProcessingFee
+    }));
 
     return { processingFeePrice: finalProcessingFee, salesTax: finalTaxes }
 }
