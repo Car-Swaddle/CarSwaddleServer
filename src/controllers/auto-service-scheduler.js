@@ -109,7 +109,8 @@ AutoServiceScheduler.prototype.scheduleAutoService = async function (user, statu
                     user_id: user.id,
                     mechanic_id: mechanicID,
                     vehicle_id: vehicleID,
-                    scheduled_date: scheduledDate
+                    scheduled_date: scheduledDate,
+                    referrer_id: referrerID
                 }
             });
             paymentIntentID = paymentIntent.id;

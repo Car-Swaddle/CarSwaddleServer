@@ -8,6 +8,7 @@ const uuidV1 = require('uuid/v1');
 const axios = require('axios');
 const queryString = require('querystring');
 const ReferrerController = require('../../controllers/referrer');
+const { nodeModuleNameResolver } = require('typescript');
 
 module.exports = function (router, models) {
     const referrerController = new ReferrerController();
@@ -53,6 +54,22 @@ module.exports = function (router, models) {
             res.sendStatus(400);
         }
     });
+
+    router.get('/stripe/express-login-link', express.json(), async function (req, res) {
+        const redirectPath = req.query.redirect;
+        const stripeAccount = req.query.account;
+
+        if (!redirectPath || !stripeAccount) {
+            res.status(400).send("Missing redirect link or stripe account");
+            return;
+        }
+
+        const loginLink = await stripe.accounts.createLoginLink(stripeAccount, {
+            redirect_url: process.env.PUBLIC_URL + redirectPath
+        })
+
+        res.json({link: loginLink.url});
+    })
 
     router.get('/stripe/externalAccount', bodyParser.json(), async (req, res) => {
         const mechanic = await req.user.getMechanic();

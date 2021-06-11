@@ -7,7 +7,8 @@
       "LOCAL_S3": "true",
       "STRIPE_LIVE": "NO",
       "NO_EMAIL": "true",
-      "ENV": "dev"
+      "ENV": "dev",
+      "PUBLIC_URL": "http://localhost:3001"
     },
     "inspect": "true"
   }

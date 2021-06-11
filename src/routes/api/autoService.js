@@ -321,6 +321,7 @@ module.exports = function (router, models) {
         var referrerID = null;
 
         if (usePaymentIntent && req.user.activeReferrerID) {
+            req.log.info("Using payment intent and found active referrer, validating")
             const referrer = await models.Referrer.findByPk(req.user.activeReferrerID, {
                 include: [
                     {model: models.Coupon},
@@ -335,7 +336,7 @@ module.exports = function (router, models) {
             }
 
             const referrerCoupon = (await referrer.getCoupons()).find(c => c.id == referrer.activeCouponID);
-            const referrerPayStructure = (await referrer.getPayStructures()).find(ps => ps.id == referrer.activePayStructureID);
+            const referrerPayStructure = referrer.activePayStructureID ? (await models.PayStructure.findByPk(referrer.activePayStructureID)) : null;
             if (referrerCoupon && !finalCoupon) {
                 finalCoupon = referrerCoupon;
             }
@@ -378,11 +379,12 @@ module.exports = function (router, models) {
                 }
 
                 if (currentUserReferralCount == 0) {
-                    // Send email, this is a new completed referral
+                    // TODO - send email, this is a new completed referral
                 }
             }
 
             if (removeActiveReferrer === true) {
+                req.log.info(`Invalid active referrer, removing for user ${req.user.id} (was ${req.user.activeReferrerID})`)
                 payStructure = null;
                 req.user.activeReferrerID = null;
                 await req.user.save({ fields: ['activeReferrerID'] });
