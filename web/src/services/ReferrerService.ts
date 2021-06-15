@@ -49,8 +49,8 @@ async function finishStripeOauthFlow(code: string) {
         });
 }
 
-async function generateExpressLoginLink(account: string): Promise<any> {
-    return fetch(`/api/stripe/express-login-link?redirect=/affiliate/dashboard&account=${account}`)
+async function generateExpressLoginLink(referrerID: string): Promise<any> {
+    return fetch(`/api/stripe/express-login-link?redirect=/affiliate/dashboard&referrerID=${referrerID}`)
         .then(handleResponse)
         .then(data => {
             return data;

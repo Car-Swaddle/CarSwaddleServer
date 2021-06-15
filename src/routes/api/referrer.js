@@ -19,7 +19,7 @@ module.exports = (router) => {
             res.sendStatus(404);
             throw 'Referrer not found';
         }
-        if (referrer.userId !== req.user.id) {
+        if (referrer.userID !== req.user.id) {
             res.sendStatus(403);
             throw 'No access to referrer';
         }

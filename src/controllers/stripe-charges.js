@@ -134,7 +134,7 @@ StripeCharges.prototype.createReferrerTransferIfNecessary = async function(autoS
     }
 
     async function updateMetadataStripeTransferID(transferID) {
-        await TransactionMetadata.update(
+        await this.models.TransactionMetadata.update(
             { stripeReferrerTransferID: transferID },
             { where: { id: transactionMetadata.id } }
         );

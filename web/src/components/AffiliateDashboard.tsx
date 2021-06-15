@@ -17,7 +17,7 @@ export default function AffiliateDashboard() {
             setVanityLink(`${linkBase}${referrer.vanityID}`)
             if (!stripeDashboardLink && !requestingDashboard) {
                 const requestLink = async () => {
-                    const link = await ReferrerService.generateExpressLoginLink(referrer.stripeExpressAccountID ?? "");
+                    const link = await ReferrerService.generateExpressLoginLink(referrer.id ?? "");
                     if (link && link.link) {
                         setStripeDashboardLink(link.link);
                     }

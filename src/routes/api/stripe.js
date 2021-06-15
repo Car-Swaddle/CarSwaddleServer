@@ -8,10 +8,27 @@ const uuidV1 = require('uuid/v1');
 const axios = require('axios');
 const queryString = require('querystring');
 const ReferrerController = require('../../controllers/referrer');
-const { nodeModuleNameResolver } = require('typescript');
 
 module.exports = function (router, models) {
     const referrerController = new ReferrerController();
+    const authoritiesController = require('../../controllers/authorities')(models);
+
+    // TODO - move this down to controller level, duplicate of referrer api
+    async function checkIsCurrentReferrerOrAdmin(referrerId, req, res) {
+        if (await authoritiesController.hasAuthority(req, res, readAuthority)) {
+            return;
+        }
+        
+        const referrer = await models.Referrer.findByPk(referrerId);
+        if (!referrer) {
+            res.sendStatus(404);
+            throw 'Referrer not found';
+        }
+        if (referrer.userID !== req.user.id) {
+            res.sendStatus(403);
+            throw 'No access to referrer';
+        }
+    }
     
     router.get('/stripe/account', bodyParser.json(), async (req, res) => {
         const mechanic = await req.user.getMechanic();
@@ -57,14 +74,18 @@ module.exports = function (router, models) {
 
     router.get('/stripe/express-login-link', express.json(), async function (req, res) {
         const redirectPath = req.query.redirect;
-        const stripeAccount = req.query.account;
+        const referrerID = req.query.referrerID;
 
-        if (!redirectPath || !stripeAccount) {
+        checkIsCurrentReferrerOrAdmin(referrerID, req, res);
+    
+        const referrer = models.Referrer.findByPk(referrerID);
+
+        if (!redirectPath || !referrer || !referrer.stripeExpressAccountID) {
             res.status(400).send("Missing redirect link or stripe account");
             return;
         }
 
-        const loginLink = await stripe.accounts.createLoginLink(stripeAccount, {
+        const loginLink = await stripe.accounts.createLoginLink(referrer.stripeExpressAccountID, {
             redirect_url: process.env.PUBLIC_URL + redirectPath
         })
 
