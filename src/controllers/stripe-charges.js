@@ -133,14 +133,12 @@ StripeCharges.prototype.createReferrerTransferIfNecessary = async function(autoS
         throw `No referrer stripe account, can't transfer for ${referrerID}`;
     }
 
-    async function updateMetadataStripeTransferID(transferID) {
-        await this.models.TransactionMetadata.update(
-            { stripeReferrerTransferID: transferID },
-            { where: { id: transactionMetadata.id } }
-        );
+    async function updateMetadataStripeTransferID(transactionMetadata, transferID) {
+        transactionMetadata.stripeReferrerTransferID = transferID;
+        await transactionMetadata.save({ fields: ['stripeReferrerTransferID'] });
     }
 
-    await updateMetadataStripeTransferID("IN_PROGRESS");
+    await updateMetadataStripeTransferID(transactionMetadata, "IN_PROGRESS");
 
     const transfer = await stripe.transfers.create({
         amount: transactionMetadata.referrerTransferAmount,
@@ -154,12 +152,12 @@ StripeCharges.prototype.createReferrerTransferIfNecessary = async function(autoS
     });
 
     if (!transfer || !transfer.id) {
-        await updateMetadataStripeTransferID(null);
+        await updateMetadataStripeTransferID(transactionMetadata, null);
         throw "Failed to create transfer";
     }
 
     try {
-        await updateMetadataStripeTransferID(transfer.id);
+        await updateMetadataStripeTransferID(transactionMetadata, transfer.id);
     } catch (e) {
         await stripe.transfers.createReversal(
             transfer.id,
