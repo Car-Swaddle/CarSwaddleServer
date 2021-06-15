@@ -146,11 +146,11 @@ class PushService {
                     let notification = this.createAPNSNotification(body, payload, badge, title);
                     notification.topic = carSwaddleBundleID;
                     this.carSwaddleProviderProduction.send(notification, token.token).then(result => {
-                        console.log(JSON.stringify(result, null, 4));
+                        console.log(JSON.stringify(result));
                         console.log("production");
                     });
                     this.carSwaddleProviderDebug.send(notification, token.token).then(result => {
-                        console.log(JSON.stringify(result, null, 4));
+                        console.log(JSON.stringify(result));
                         console.log("debug");
                     });
                 } else if (token.pushType == FCM_PUSH_TYPE) {
