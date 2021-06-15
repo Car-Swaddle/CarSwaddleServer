@@ -78,7 +78,7 @@ module.exports = function (router, models) {
 
         checkIsCurrentReferrerOrAdmin(referrerID, req, res);
     
-        const referrer = models.Referrer.findByPk(referrerID);
+        const referrer = await models.Referrer.findByPk(referrerID);
 
         if (!redirectPath || !referrer || !referrer.stripeExpressAccountID) {
             res.status(400).send("Missing redirect link or stripe account");
