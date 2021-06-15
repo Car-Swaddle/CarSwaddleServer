@@ -82,7 +82,7 @@ StripeCharges.prototype.executeMechanicTransfer = async function(paymentIntentID
     }
 
     const autoServiceID = transactionMetadata.autoServiceID;
-    if (transactionMetadata.mechanicTransferAmount || transactionMetadata.mechanicTransferAmount == 0) {
+    if (!transactionMetadata.mechanicTransferAmount || transactionMetadata.mechanicTransferAmount == 0) {
         console.warn(`No mechanic amounts to transfer: ${transactionMetadata?.id ?? "missing"}`)
         return;
     }
@@ -91,7 +91,7 @@ StripeCharges.prototype.executeMechanicTransfer = async function(paymentIntentID
         console.warn(`Mechanic transaction id already found: ${transactionMetadata.stripeMechanicTransferID}`)
         return;
     }
-        
+    
     const mechanic = await transactionMetadata.getMechanic();
     if (!mechanic || !mechanic.stripeAccountID) {
         console.warn(`Mechanic missing or no stripe account id ${transactionMetadata.mechanicID}`)
