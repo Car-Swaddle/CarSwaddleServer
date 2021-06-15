@@ -133,8 +133,9 @@ module.exports = function (app, models) {
 
             if (amount) {
                 const mechanic = await findMechanicWithStripeID(destination);
-
-                await stripeCharges.performDebit(mechanic, amount);
+                if (mechanic) {
+                    await stripeCharges.performDebit(mechanic, amount);
+                }
             }
         } else if(event.type == eventTypes.TRANSFER_REVERSED) {
             // const { amount_reversed, destination } = event.data.object;
