@@ -15,7 +15,7 @@ module.exports = function (router, models) {
 
     // TODO - move this down to controller level, duplicate of referrer api
     async function checkIsCurrentReferrerOrAdmin(referrerId, req, res) {
-        if (await authoritiesController.hasAuthority(req, res, readAuthority)) {
+        if (await authoritiesController.hasAuthority(req, res, models.Authority.NAME.readReferrers)) {
             return;
         }
         
