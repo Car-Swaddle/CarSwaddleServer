@@ -26,6 +26,7 @@ describe("Billing Calculations", function() {
         const prices = await billingCalculations.calculatePrices(fakeMechanic, null, "SYNTHETIC", null, coupon, taxMetadata);
 
         assert.equal(prices.oilChange, 6600);
+        assert.equal(prices.subtotal, 6600);
         assert.equal(prices.bookingFee, 660);
         assert.equal(prices.bookingFeeDiscount, null);
         assert.equal(prices.taxes, Math.round((prices.total - prices.taxes) * taxMetadata.rate));
@@ -40,6 +41,7 @@ describe("Billing Calculations", function() {
         const prices = await billingCalculations.calculatePrices(fakeMechanic, null, "SYNTHETIC", null, coupon, taxMetadata);
 
         assert.equal(prices.oilChange, 6600);
+        assert.equal(prices.subtotal, 6600);
         assert.equal(prices.bookingFee, 660);
         assert.equal(prices.bookingFeeDiscount, -660);
         assert.equal(prices.total, 7325);
@@ -51,6 +53,7 @@ describe("Billing Calculations", function() {
         const prices = await billingCalculations.calculatePrices(fakeMechanic, null, "SYNTHETIC", null, coupon, taxMetadata);
 
         assert.equal(prices.oilChange, 6600);
+        assert.equal(prices.subtotal, 6600);
         assert.equal(prices.discount, -660);
         assert.equal(prices.bookingFee, 594);
         assert.equal(prices.bookingFeeDiscount, null);
@@ -63,6 +66,7 @@ describe("Billing Calculations", function() {
         const prices = await billingCalculations.calculatePrices(fakeMechanic, null, "SYNTHETIC", null, coupon, taxMetadata);
 
         assert.equal(prices.oilChange, 6600);
+        assert.equal(prices.subtotal, 6600);
         assert.equal(prices.discount, -6600);
         assert.equal(prices.bookingFee, 0);
         assert.equal(prices.bookingFeeDiscount, null);
@@ -75,6 +79,7 @@ describe("Billing Calculations", function() {
         const prices = await billingCalculations.calculatePrices(fakeMechanic, null, "SYNTHETIC", null, coupon, taxMetadata);
 
         assert.equal(prices.oilChange, 6600);
+        assert.equal(prices.subtotal, 6600);
         assert.equal(prices.discount, -6600);
         assert.equal(prices.bookingFee, 0);
         assert.equal(prices.bookingFeeDiscount, null);
@@ -86,6 +91,7 @@ describe("Billing Calculations", function() {
         const prices = await billingCalculations.calculatePrices(fakeMechanic, null, "SYNTHETIC", null, null, taxMetadata);
 
         assert.equal(prices.oilChange, 6600);
+        assert.equal(prices.subtotal, 6600);
         assert.equal(prices.discount, null);
         assert.equal(prices.bookingFee, 660);
         assert.equal(prices.bookingFeeDiscount, null);
