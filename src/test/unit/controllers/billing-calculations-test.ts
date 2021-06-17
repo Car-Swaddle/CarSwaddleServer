@@ -80,4 +80,16 @@ describe("Billing Calculations", function() {
         assert.equal(prices.bookingFeeDiscount, null);
         assert.equal(prices.total, 0)
     });
+
+    it("should return correct oil change value with no coupon", async function() {
+        const billingCalculations = BillingCalculations();
+        const prices = await billingCalculations.calculatePrices(fakeMechanic, null, "SYNTHETIC", null, null, taxMetadata);
+
+        assert.equal(prices.oilChange, 6600);
+        assert.equal(prices.discount, null);
+        assert.equal(prices.bookingFee, 660);
+        assert.equal(prices.bookingFeeDiscount, null);
+        assert.equal(prices.taxes, Math.round((prices.total - prices.taxes) * taxMetadata.rate));
+        assert.equal(prices.total, 8054)
+    });
 })

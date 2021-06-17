@@ -60,12 +60,12 @@ BillingCalculations.prototype.calculatePrices = async function(mechanic, locatio
 
     const mechanicBasePrice = oilChangePrice + distancePrice;
     const discountPrice = coupon ? this.calculateCouponDiscount(coupon, mechanicBasePrice) : null;
-    const subtotalPreBookingFee = mechanicBasePrice + discountPrice;
+    const subtotalPreBookingFee = mechanicBasePrice + (discountPrice || 0);
 
     const bookingFeePrice = Math.round(constants.BOOKING_FEE_PERCENTAGE * subtotalPreBookingFee);
     const bookingFeeDiscountPrice = coupon && coupon.discountBookingFee && bookingFeePrice ? -bookingFeePrice : null;
     
-    const subtotalPrice = subtotalPreBookingFee + bookingFeePrice + bookingFeeDiscountPrice;
+    const subtotalPrice = subtotalPreBookingFee + bookingFeePrice + (bookingFeeDiscountPrice || 0);
     const { processingFeePrice, salesTax } = calculateProcessingFeeTaxes(subtotalPrice, taxMetadata.rate);
     var mechanicCostPrice = Math.round(mechanicBasePrice * .7);
     var transferAmountPrice = mechanicBasePrice;
