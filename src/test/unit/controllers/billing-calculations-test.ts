@@ -27,6 +27,7 @@ describe("Billing Calculations", function() {
 
         assert.equal(prices.oilChange, 6600);
         assert.equal(prices.bookingFee, 660);
+        assert.equal(prices.bookingFeeDiscount, null);
         assert.equal(prices.taxes, Math.round((prices.total - prices.taxes) * taxMetadata.rate));
         // Can be a rounding error here depending on input numbers
         assert.closeTo(prices.processingFee, Math.round((prices.total - prices.processingFee) * 0.029) + 30, 1);
@@ -50,8 +51,9 @@ describe("Billing Calculations", function() {
         const prices = await billingCalculations.calculatePrices(fakeMechanic, null, "SYNTHETIC", null, coupon, taxMetadata);
 
         assert.equal(prices.oilChange, 6600);
-        assert.equal(prices.bookingFee, 660);
-        assert.equal(prices.discount, -726);
+        assert.equal(prices.discount, -660);
+        assert.equal(prices.bookingFee, 594);
+        assert.equal(prices.bookingFeeDiscount, null);
         assert.equal(prices.total, 7252);
     });
 
@@ -61,20 +63,21 @@ describe("Billing Calculations", function() {
         const prices = await billingCalculations.calculatePrices(fakeMechanic, null, "SYNTHETIC", null, coupon, taxMetadata);
 
         assert.equal(prices.oilChange, 6600);
-        assert.equal(prices.bookingFee, 660);
-        assert.equal(prices.discount, -7260);
+        assert.equal(prices.discount, -6600);
+        assert.equal(prices.bookingFee, 0);
+        assert.equal(prices.bookingFeeDiscount, null);
         assert.equal(prices.total, 0);
     });
 
-    it("should return correct oil change value with $90 off coupon", async function() {
+    it("should return correct oil change value with $90 off coupon + booking fee", async function() {
         const coupon = {discountBookingFee: true, amountOff: 9000};
         const billingCalculations = BillingCalculations();
         const prices = await billingCalculations.calculatePrices(fakeMechanic, null, "SYNTHETIC", null, coupon, taxMetadata);
 
         assert.equal(prices.oilChange, 6600);
-        assert.equal(prices.bookingFee, 660);
-        assert.equal(prices.bookingFeeDiscount, -660);
         assert.equal(prices.discount, -6600);
+        assert.equal(prices.bookingFee, 0);
+        assert.equal(prices.bookingFeeDiscount, null);
         assert.equal(prices.total, 0)
     });
 })
