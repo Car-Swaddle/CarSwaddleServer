@@ -58,18 +58,21 @@ BillingCalculations.prototype.calculatePrices = async function(mechanic, locatio
     const vehicle = vehicleID ? this.vehicleService.getVehicle(vehicleID) : null;
     const oilChangePrice = centsForOilType(oilType, oilChangePricing, vehicle) || constants.DEFAULT_CONVENTIONAL_PRICE;
 
-    const subtotalPrice = oilChangePrice + distancePrice;
-    const discountPrice = coupon ? this.calculateCouponDiscount(coupon, subtotalPrice) : null;
-    const bookingFeePrice = Math.round(constants.BOOKING_FEE_PERCENTAGE * subtotalPrice);
-    const bookingFeeDiscountPrice = coupon && coupon.discountBookingFee ? -bookingFeePrice : null;
+    const mechanicBasePrice = oilChangePrice + distancePrice;
+    const discountPrice = coupon ? this.calculateCouponDiscount(coupon, mechanicBasePrice) : null;
+    const subtotalPreBookingFee = mechanicBasePrice + (discountPrice || 0);
 
-    const { processingFeePrice, salesTax } = calculateProcessingFeeTaxes(oilChangePrice, distancePrice, discountPrice, bookingFeePrice, bookingFeeDiscountPrice, taxMetadata.rate);
-    var mechanicCostPrice = Math.round(subtotalPrice * .7);
-    var transferAmountPrice = subtotalPrice;
+    const bookingFeePrice = Math.round(constants.BOOKING_FEE_PERCENTAGE * subtotalPreBookingFee);
+    const bookingFeeDiscountPrice = coupon && coupon.discountBookingFee && bookingFeePrice ? -bookingFeePrice : null;
+    
+    const subtotalPrice = subtotalPreBookingFee + bookingFeePrice + (bookingFeeDiscountPrice || 0);
+    const { processingFeePrice, salesTax } = calculateProcessingFeeTaxes(subtotalPrice, taxMetadata.rate);
+    var mechanicCostPrice = Math.round(mechanicBasePrice * .7);
+    var transferAmountPrice = mechanicBasePrice;
 
     if(coupon && !coupon.isCorporate) {
         transferAmountPrice += discountPrice;
-        mechanicCostPrice = Math.round((subtotalPrice + discountPrice) * .7)
+        mechanicCostPrice = Math.round((mechanicBasePrice + discountPrice) * .7)
     }
 
     console.log(JSON.stringify({
@@ -81,7 +84,7 @@ BillingCalculations.prototype.calculatePrices = async function(mechanic, locatio
         taxMetadata: taxMetadata
     }));
 
-    const total = discountPrice + oilChangePrice + distancePrice + bookingFeePrice + bookingFeeDiscountPrice + processingFeePrice + salesTax;
+    const total = subtotalPrice + processingFeePrice + salesTax;
     return {
         oilChange: oilChangePrice,
         distance: distancePrice,
@@ -97,7 +100,11 @@ BillingCalculations.prototype.calculatePrices = async function(mechanic, locatio
     };
 }
 
-function calculateProcessingFeeTaxes(oilChange, distance, discountPrice, bookingFee, bookingFeeDiscount, taxRate) {
+function calculateProcessingFeeTaxes(subtotal, taxRate) {
+    if (subtotal === 0) {
+        return { processingFeePrice: 0, salesTax: 0 };
+    }
+
     // Covers Stripe 2.9% charge rate
     const stripeProcessPercentage = 0.029;
     const stripeProcessTransactionFee = 30; // In cents, per-transaction fee
@@ -111,10 +118,10 @@ function calculateProcessingFeeTaxes(oilChange, distance, discountPrice, booking
     }
 
     // Add stripe flat fee to this subtotal so it is included in all the scaling fees/tax
-    const subtotal = (oilChange || 0) + (distance || 0) + (discountPrice || 0) + (bookingFee || 0) + (bookingFeeDiscount || 0) + stripeProcessTransactionFee;
-    const subtotalStripeFee = calculateStripeScalingFee(subtotal);
+    const subtotalWithTransactionFee = subtotal + stripeProcessTransactionFee;
+    const subtotalStripeFee = calculateStripeScalingFee(subtotalWithTransactionFee);
 
-    const initialTaxable = subtotal + subtotalStripeFee;
+    const initialTaxable = subtotalWithTransactionFee + subtotalStripeFee;
     const initialTaxes = calculateTax(initialTaxable);
     const estimatedTaxStripeFee = calculateStripeScalingFee(initialTaxes);
 
@@ -127,6 +134,7 @@ function calculateProcessingFeeTaxes(oilChange, distance, discountPrice, booking
 
     console.log(JSON.stringify({
         subtotal: subtotal,
+        subtotalWithTransactionFee: subtotalWithTransactionFee,
         subtotalStripeFee: subtotalStripeFee,
         initialTaxable: initialTaxable,
         initialTaxes: initialTaxes,

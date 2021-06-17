@@ -99,21 +99,23 @@ AutoServiceScheduler.prototype.scheduleAutoService = async function (user, statu
         });
 
         if (usePaymentIntent) {
-            const paymentIntent = await stripe.paymentIntents.create({
-                amount: prices.total,
-                currency: 'usd',
-                payment_method: sourceID,
-                customer: user.stripeCustomerID,
-                transfer_group: autoService.id,
-                metadata: {
-                    user_id: user.id,
-                    mechanic_id: mechanicID,
-                    vehicle_id: vehicleID,
-                    scheduled_date: scheduledDate,
-                    referrer_id: referrerID
-                }
-            });
-            paymentIntentID = paymentIntent.id;
+            if (prices.total > 0) {
+                const paymentIntent = await stripe.paymentIntents.create({
+                    amount: prices.total,
+                    currency: 'usd',
+                    payment_method: sourceID,
+                    customer: user.stripeCustomerID,
+                    transfer_group: autoService.id,
+                    metadata: {
+                        user_id: user.id,
+                        mechanic_id: mechanicID,
+                        vehicle_id: vehicleID,
+                        scheduled_date: scheduledDate,
+                        referrer_id: referrerID
+                    }
+                });
+                paymentIntentID = paymentIntent.id;
+            }
         } else {
             var invoice = await this.stripeCharges.updateDraft(user.stripeCustomerID, prices, {
                 transferAmount: prices.transferAmount,
@@ -124,11 +126,14 @@ AutoServiceScheduler.prototype.scheduleAutoService = async function (user, statu
             var { invoice, transfer } = await this.stripeCharges.payInvoices(invoice.id, sourceID, mechanicID, prices.transferAmount);
         }
 
-        await this.createTransactionMetadata(mechanic, autoService.location, prices.mechanicCost, autoService,
+        const transactionMetadata = await this.createTransactionMetadata(mechanic, autoService.location, prices.mechanicCost, autoService,
             paymentIntentID, couponID, referrerID, payStructureID, mechanicTransferAmount, referrerTransferAmount, transaction);
 
-        if (usePaymentIntent) {
+        if (usePaymentIntent && paymentIntentID) {
             await stripe.paymentIntents.confirm(paymentIntentID);
+        } else if (usePaymentIntent && prices.total === 0) {
+            // Pay mechanic directly - no webhook because service is free
+            this.stripeCharges.executeMechanicTransferWithMetadata(transactionMetadata);
         }
 
         await transaction.commit();
