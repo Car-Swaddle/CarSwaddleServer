@@ -39,14 +39,20 @@ describe("Billing Calculations", function() {
         const prices = await billingCalculations.calculatePrices(fakeMechanic, null, "SYNTHETIC", null, coupon, taxMetadata);
 
         assert.equal(prices.oilChange, 6600);
+        assert.equal(prices.bookingFee, 660);
+        assert.equal(prices.bookingFeeDiscount, -660);
+        assert.equal(prices.total, 7325);
     });
 
     it("should return correct oil change value with booking fee 10% coupon", async function() {
-        const coupon = {discountBookingFee: false, percentOff: 10};
+        const coupon = {discountBookingFee: false, percentOff: .1};
         const billingCalculations = BillingCalculations();
         const prices = await billingCalculations.calculatePrices(fakeMechanic, null, "SYNTHETIC", null, coupon, taxMetadata);
 
         assert.equal(prices.oilChange, 6600);
+        assert.equal(prices.bookingFee, 660);
+        assert.equal(prices.discount, -726);
+        assert.equal(prices.total, 7252);
     });
 
     it("should return correct oil change value with $90 off coupon", async function() {
@@ -55,7 +61,9 @@ describe("Billing Calculations", function() {
         const prices = await billingCalculations.calculatePrices(fakeMechanic, null, "SYNTHETIC", null, coupon, taxMetadata);
 
         assert.equal(prices.oilChange, 6600);
-        assert.equal(prices.total, 0)
+        assert.equal(prices.bookingFee, 660);
+        assert.equal(prices.discount, -7260);
+        assert.equal(prices.total, 0);
     });
 
     it("should return correct oil change value with $90 off coupon", async function() {
@@ -64,6 +72,9 @@ describe("Billing Calculations", function() {
         const prices = await billingCalculations.calculatePrices(fakeMechanic, null, "SYNTHETIC", null, coupon, taxMetadata);
 
         assert.equal(prices.oilChange, 6600);
+        assert.equal(prices.bookingFee, 660);
+        assert.equal(prices.bookingFeeDiscount, -660);
+        assert.equal(prices.discount, -6600);
         assert.equal(prices.total, 0)
     });
 })
