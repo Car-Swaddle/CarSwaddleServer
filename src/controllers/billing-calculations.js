@@ -134,6 +134,7 @@ function calculateProcessingFeeTaxes(subtotal, taxRate) {
 
     console.log(JSON.stringify({
         subtotal: subtotal,
+        subtotalWithTransactionFee: subtotalWithTransactionFee,
         subtotalStripeFee: subtotalStripeFee,
         initialTaxable: initialTaxable,
         initialTaxes: initialTaxes,
