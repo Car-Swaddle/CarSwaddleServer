@@ -80,8 +80,15 @@ StripeCharges.prototype.executeMechanicTransfer = async function(paymentIntentID
         console.warn(`No mechanic with payment intent id: ${paymentIntentID}`)
         return;
     }
+    await this.executeMechanicTransferWithMetadata(transactionMetadata);
+}
 
-    const autoServiceID = transactionMetadata.autoServiceID;
+StripeCharges.prototype.executeMechanicTransferWithMetadata = async function(transactionMetadata) {
+    if (!transactionMetadata) {
+        console.warn(`No transaction metadata to execute mechanic transfer`)
+        return;
+    }
+
     if (!transactionMetadata.mechanicTransferAmount || transactionMetadata.mechanicTransferAmount == 0) {
         console.warn(`No mechanic amounts to transfer: ${transactionMetadata?.id ?? "missing"}`)
         return;
@@ -98,6 +105,7 @@ StripeCharges.prototype.executeMechanicTransfer = async function(paymentIntentID
         return;
     }
 
+    const autoServiceID = transactionMetadata.autoServiceID;
     const transfer = await stripe.transfers.create({
         amount: transactionMetadata.mechanicTransferAmount,
         currency: 'usd',

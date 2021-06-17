@@ -48,4 +48,22 @@ describe("Billing Calculations", function() {
 
         assert.equal(prices.oilChange, 6600);
     });
+
+    it("should return correct oil change value with $90 off coupon", async function() {
+        const coupon = {discountBookingFee: false, amountOff: 9000};
+        const billingCalculations = BillingCalculations();
+        const prices = await billingCalculations.calculatePrices(fakeMechanic, null, "SYNTHETIC", null, coupon, taxMetadata);
+
+        assert.equal(prices.oilChange, 6600);
+        assert.equal(prices.total, 0)
+    });
+
+    it("should return correct oil change value with $90 off coupon", async function() {
+        const coupon = {discountBookingFee: true, amountOff: 9000};
+        const billingCalculations = BillingCalculations();
+        const prices = await billingCalculations.calculatePrices(fakeMechanic, null, "SYNTHETIC", null, coupon, taxMetadata);
+
+        assert.equal(prices.oilChange, 6600);
+        assert.equal(prices.total, 0)
+    });
 })

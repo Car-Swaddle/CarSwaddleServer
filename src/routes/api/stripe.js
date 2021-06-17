@@ -81,15 +81,14 @@ module.exports = function (router, models) {
         const referrer = await models.Referrer.findByPk(referrerID);
 
         if (!redirectPath || !referrer || !referrer.stripeExpressAccountID) {
-            res.status(400).send("Missing redirect link or stripe account");
-            return;
+            return res.status(400).send("Missing redirect link or stripe account");
         }
 
         const loginLink = await stripe.accounts.createLoginLink(referrer.stripeExpressAccountID, {
             redirect_url: process.env.PUBLIC_URL + redirectPath
         })
 
-        res.json({link: loginLink.url});
+        return res.json({link: loginLink.url});
     })
 
     router.get('/stripe/externalAccount', bodyParser.json(), async (req, res) => {
