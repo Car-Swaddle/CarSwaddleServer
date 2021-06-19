@@ -335,7 +335,7 @@ module.exports = function (router, models) {
                 removeActiveReferrer = true;
             }
 
-            const referrerCoupon = (await referrer.getCoupons()).find(c => c.id == referrer.activeCouponID);
+            const referrerCoupon = referrer.activeCouponID ? (await models.Coupon.findByPk(referrer.activeCouponID)) : null;
             const referrerPayStructure = referrer.activePayStructureID ? (await models.PayStructure.findByPk(referrer.activePayStructureID)) : null;
             if (referrerCoupon && !finalCoupon) {
                 finalCoupon = referrerCoupon;
