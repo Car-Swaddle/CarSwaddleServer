@@ -6,9 +6,10 @@ export interface ReferrerAttributes {
     externalID?: string;
     description?: string;
     stripeExpressAccountID?: string;
-    vanityID?: string,
-    activeCouponID?: string,
-    activePayStructureID?: string,
+    vanityID: string;
+    activeCouponID?: string;
+    activePayStructureID?: string;
+    userID: string;
 }
 
 export interface ReferrerModel extends Model<ReferrerAttributes>, ReferrerAttributes {}
@@ -17,7 +18,7 @@ export type ReferrerStatic = typeof Model & {
     new (values?: object, options?: BuildOptions): ReferrerModel;
 }
 
-export function ReferrerFactory (sequelize: Sequelize) {
+export function ReferrerFactory(sequelize: Sequelize) {
     return <ReferrerStatic> sequelize.define('referrer', {
         id: {
             type: DataTypes.STRING,
