@@ -1,0 +1,8 @@
+.stripe-connect {
+    background: url("/img/stripe-connect.svg") no-repeat center;
+    height: 50px;
+}
+
+.stripe-connect:hover {
+    background: url("/img/stripe-connect-hover.svg") no-repeat center;
+}

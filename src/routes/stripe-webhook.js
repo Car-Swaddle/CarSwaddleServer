@@ -85,8 +85,6 @@ module.exports = function (app, models) {
             }
         } else if (event.type == eventTypes.PAYOUT_UPDATED) {
 
-        } else if (event.type == eventTypes.CHARGE_SUCCEEDED) {
-
         } else if (event.type == eventTypes.ACCOUNT_UPDATED) {
             const verification = event.data.object.verification;
             if (!verification) {
@@ -135,15 +133,16 @@ module.exports = function (app, models) {
 
             if (amount) {
                 const mechanic = await findMechanicWithStripeID(destination);
-
-                await stripeCharges.performDebit(mechanic, amount);
+                if (mechanic) {
+                    await stripeCharges.performDebit(mechanic, amount);
+                }
             }
         } else if(event.type == eventTypes.TRANSFER_REVERSED) {
             // const { amount_reversed, destination } = event.data.object;
-        } else if (event.type == eventTypes.PAYMENT_INTENT_SUCCEEDED) {
-            const paymentIntentId = event.data.object.id;
+        } else if (event.type == eventTypes.CHARGE_SUCCEEDED) {
+            const paymentIntentId = event.data.object.payment_intent;
             console.info(`Got payment intent confirm event ${paymentIntentId}`);
-            await stripeCharges.executeTransfers(paymentIntentId);
+            await stripeCharges.executeMechanicTransfer(paymentIntentId);
             return res.json({ received: true })
         }
 

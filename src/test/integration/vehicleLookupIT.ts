@@ -11,7 +11,7 @@ describe('Vehicle lookup api', function() {
         return host_request.get('/api/vehicle/lookup/MAKE?make=Toy')
         .set("Authorization", "bearer " + jwt)
         .expect(200)
-        .then(resp => {
+        .then((resp: any) => {
             assert.include(resp.body, 'Toyota');
         })
     });
@@ -20,7 +20,7 @@ describe('Vehicle lookup api', function() {
         return host_request.get('/api/vehicle/lookup/MODEL?make=Toyota')
         .set("Authorization", "bearer " + jwt)
         .expect(200)
-        .then(resp => {
+        .then((resp: any) => {
             assert.include(resp.body, 'Corolla');
         })
     });
@@ -29,7 +29,7 @@ describe('Vehicle lookup api', function() {
         return host_request.get('/api/vehicle/lookup/MODEL?make=Toyota&model=Coro')
         .set("Authorization", "bearer " + jwt)
         .expect(200)
-        .then(resp => {
+        .then((resp: any) => {
             assert.include(resp.body, 'Corolla');
         })
     });
@@ -38,7 +38,7 @@ describe('Vehicle lookup api', function() {
         return host_request.get('/api/vehicle/lookup/MODEL?make=Toyota&model=Corolla')
         .set("Authorization", "bearer " + jwt)
         .expect(200)
-        .then(resp => {
+        .then((resp: any) => {
             assert.include(resp.body, 'Corolla');
         })
     });
@@ -47,7 +47,7 @@ describe('Vehicle lookup api', function() {
         return host_request.get('/api/vehicle/lookup/YEAR?make=Toyota&model=Corolla')
         .set("Authorization", "bearer " + jwt)
         .expect(200)
-        .then(resp => {
+        .then((resp: any) => {
             assert.include(resp.body, 2018);
         })
     });
@@ -56,7 +56,7 @@ describe('Vehicle lookup api', function() {
         return host_request.get('/api/vehicle/lookup/ENGINE?make=Toyota&model=Corolla&year=2018')
         .set("Authorization", "bearer " + jwt)
         .expect(200)
-        .then(resp => {
+        .then((resp: any) => {
             assert.include(resp.body, 'L 4-Cyl 1.8 (2ZR-FE) (GAS)');
         })
     });
@@ -65,7 +65,7 @@ describe('Vehicle lookup api', function() {
         return host_request.get('/api/vehicle/lookup?make=Toyota&model=Sienna&year=2018&engine=LE 6-Cyl 3.5 (2GR-FKS) (GAS)')
         .set("Authorization", "bearer " + jwt)
         .expect(200)
-        .then(resp => {
+        .then((resp: any) => {
             const vehicle = resp.body;
             assert.equal(vehicle.year, 2018);
             assert.equal(vehicle.make, 'Toyota');

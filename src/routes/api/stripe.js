@@ -5,9 +5,30 @@ const bodyParser = require('body-parser');
 const fileUpload = require('express-fileupload');
 const fileStore = require('../../data/file-store.js');
 const uuidV1 = require('uuid/v1');
+const axios = require('axios');
+const queryString = require('querystring');
+const ReferrerController = require('../../controllers/referrer');
 
 module.exports = function (router, models) {
+    const referrerController = new ReferrerController();
+    const authoritiesController = require('../../controllers/authorities')(models);
 
+    // TODO - move this down to controller level, duplicate of referrer api
+    async function checkIsCurrentReferrerOrAdmin(referrerId, req, res) {
+        if (await authoritiesController.hasAuthority(req, res, models.Authority.NAME.readReferrers)) {
+            return;
+        }
+        
+        const referrer = await models.Referrer.findByPk(referrerId);
+        if (!referrer) {
+            res.sendStatus(404);
+            throw 'Referrer not found';
+        }
+        if (referrer.userID !== req.user.id) {
+            res.sendStatus(403);
+            throw 'No access to referrer';
+        }
+    }
     
     router.get('/stripe/account', bodyParser.json(), async (req, res) => {
         const mechanic = await req.user.getMechanic();
@@ -18,6 +39,57 @@ module.exports = function (router, models) {
             return res.json(account);
         });
     });
+
+    router.get('/stripe/oauth-confirm', express.json(), async function (req, res) {
+        const isReferrer = req.query.isReferrer ?? true;
+        if (!req.query.code) {
+            res.sendStatus(400);
+            return;
+        }
+
+        if (isReferrer) {
+            // Post confirm with code to stripe
+            const response = await axios.post("https://connect.stripe.com/oauth/token",
+                queryString.stringify({
+                    grant_type: 'authorization_code',
+                    client_id: constants.STRIPE_CONNECT_CLIENT_ID,
+                    client_secret: constants.STRIPE_SECRET_KEY,
+                    code: req.query.code
+                }),
+                { headers: {'Content-Type': 'application/x-www-form-urlencoded'} }
+            );
+
+            if (!response || response.error || !response.data) {
+                throw "Missing data in stripe response";
+            }
+            const stripeAccountID = response.data.stripe_user_id;
+            
+            const referrer = await referrerController.createReferrerForUserWithExistingStripeAccount(req.user.id, stripeAccountID);
+            res.json(referrer);
+        } else {
+            // Unhandled, might use for mechanic in the future
+            res.sendStatus(400);
+        }
+    });
+
+    router.get('/stripe/express-login-link', express.json(), async function (req, res) {
+        const redirectPath = req.query.redirect;
+        const referrerID = req.query.referrerID;
+
+        checkIsCurrentReferrerOrAdmin(referrerID, req, res);
+    
+        const referrer = await models.Referrer.findByPk(referrerID);
+
+        if (!redirectPath || !referrer || !referrer.stripeExpressAccountID) {
+            return res.status(400).send("Missing redirect link or stripe account");
+        }
+
+        const loginLink = await stripe.accounts.createLoginLink(referrer.stripeExpressAccountID, {
+            redirect_url: process.env.PUBLIC_URL + redirectPath
+        })
+
+        return res.json({link: loginLink.url});
+    })
 
     router.get('/stripe/externalAccount', bodyParser.json(), async (req, res) => {
         const mechanic = await req.user.getMechanic();

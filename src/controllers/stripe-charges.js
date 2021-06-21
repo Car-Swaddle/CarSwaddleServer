@@ -3,7 +3,7 @@ const uuidV1 = require('uuid/v1');
 const stripe = require('stripe')(constants.STRIPE_SECRET_KEY);
 const Email = require('../notifications/email');
 
-const ALL_PRICE_TYPES = ['discount', 'oilChange', 'distance', 'bookingFee', 'processingFee', 'bookingFeeDiscount'];
+const ALL_PRICE_TYPES = ['discount', 'oilChange', 'distance', 'bookingFee', 'processingFee', 'bookingFeeDiscount', 'taxes'];
 
 const stripeConnectProcessPercentage = 0.0025;
 const stripeConnectAccountDebitPercentage = 0.015;
@@ -74,51 +74,104 @@ StripeCharges.prototype.monthlyDebitFee = function (mechanicPayment) {
     return stripeConnectMonthlyDebit;
 }
 
-StripeCharges.prototype.executeTransfers = async function(paymentIntentID) {
+StripeCharges.prototype.executeMechanicTransfer = async function(paymentIntentID) {
     const transactionMetadata = await this.models.TransactionMetadata.fetchWithPaymentIntentID(paymentIntentID);
+    if (!transactionMetadata) {
+        console.warn(`No mechanic with payment intent id: ${paymentIntentID}`)
+        return;
+    }
+    await this.executeMechanicTransferWithMetadata(transactionMetadata);
+}
+
+StripeCharges.prototype.executeMechanicTransferWithMetadata = async function(transactionMetadata) {
+    if (!transactionMetadata) {
+        console.warn(`No transaction metadata to execute mechanic transfer`)
+        return;
+    }
+
+    if (!transactionMetadata.mechanicTransferAmount || transactionMetadata.mechanicTransferAmount == 0) {
+        console.warn(`No mechanic amounts to transfer: ${transactionMetadata?.id ?? "missing"}`)
+        return;
+    }
+    
+    if (transactionMetadata.stripeMechanicTransferID) {
+        console.warn(`Mechanic transaction id already found: ${transactionMetadata.stripeMechanicTransferID}`)
+        return;
+    }
+    
+    const mechanic = await transactionMetadata.getMechanic();
+    if (!mechanic || !mechanic.stripeAccountID) {
+        console.warn(`Mechanic missing or no stripe account id ${transactionMetadata.mechanicID}`)
+        return;
+    }
+
     const autoServiceID = transactionMetadata.autoServiceID;
-
-    if (transactionMetadata.mechanicTransferAmount && transactionMetadata.mechanicTransferAmount != 0) {
-        if (!transactionMetadata.stripeMechanicTransferID) {
-            const mechanic = await transactionMetadata.getMechanic();
-            if (mechanic && mechanic.stripeAccountID) {
-                const transfer = await stripe.transfers.create({
-                    amount: transactionMetadata.mechanicTransferAmount,
-                    currency: 'usd',
-                    destination: mechanic.stripeAccountID,
-                    description: `Transfer to mechanic ${mechanic.id}`,
-                    transfer_group: autoServiceID,
-                });
-                transactionMetadata.stripeMechanicTransferID = transfer.id;
-            } else {
-                console.warn(`Mechanic missing or no stripe account id ${transactionMetadata.mechanicID}`)
-            }
-        } else {
-            console.warn(`Mechanic transaction id already found: ${transactionMetadata.stripeMechanicTransferID}`)
-        }
-    }
-
-    if (transactionMetadata.referrerTransferAmount && transactionMetadata.referrerTransferAmount != 0) {
-        if (!transactionMetadata.stripeReferrerTransferID) {
-            const referrer = await this.models.Referrer.findByPk(transactionMetadata.referrerID);
-            if (referrer && referrer.stripeExpressAccountID) {
-                const transfer = await stripe.transfers.create({
-                    amount: transactionMetadata.referrerTransferAmount,
-                    currency: 'usd',
-                    destination: referrer.stripeExpressAccountID,
-                    description: `Transfer to referrer ${referrer.id}`,
-                    transfer_group: autoServiceID,
-                });
-                transactionMetadata.stripeReferrerTransferID = transfer.id;
-            } else {
-                console.warn(`No referrer stripe account, can't transfer for id ${transactionMetadata.referrerID}`)
-            }
-        } else {
-            console.warn(`Referrer transaction id already found: ${transactionMetadata.stripeReferrerTransferID}`)
-        }
-    }
+    const transfer = await stripe.transfers.create({
+        amount: transactionMetadata.mechanicTransferAmount,
+        currency: 'usd',
+        destination: mechanic.stripeAccountID,
+        description: `Transfer to mechanic ${mechanic.id}`,
+        metadata: {
+            mechanicID: mechanic.id,
+            autoServiceID: autoServiceID,
+            paymentIntentID: paymentIntentID,
+        },
+        transfer_group: autoServiceID,
+    });
+    transactionMetadata.stripeMechanicTransferID = transfer.id;
 
     await transactionMetadata.save();
+}
+
+StripeCharges.prototype.createReferrerTransferIfNecessary = async function(autoServiceID) {
+    // Fetch matching transaction metadata
+    const transactionMetadata = await this.models.TransactionMetadata.findOne({
+        where: {
+            autoServiceID: autoServiceID
+        },
+    });
+
+    if (!transactionMetadata || !transactionMetadata.referrerID || transactionMetadata.stripeReferrerTransferID) {
+        return;
+    }
+
+    const referrer = await this.models.Referrer.findByPk(transactionMetadata.referrerID);
+
+    if (!referrer || !referrer.stripeExpressAccountID) {
+        throw `No referrer stripe account, can't transfer for ${referrerID}`;
+    }
+
+    async function updateMetadataStripeTransferID(transactionMetadata, transferID) {
+        transactionMetadata.stripeReferrerTransferID = transferID;
+        await transactionMetadata.save({ fields: ['stripeReferrerTransferID'] });
+    }
+
+    await updateMetadataStripeTransferID(transactionMetadata, "IN_PROGRESS");
+
+    const transfer = await stripe.transfers.create({
+        amount: transactionMetadata.referrerTransferAmount,
+        currency: 'usd',
+        destination: referrer.stripeExpressAccountID,
+        description: `Transfer to referrer ${referrer.id}`,
+        metadata: {
+            referrerID: referrer.id,
+            autoServiceID: autoServiceID,
+        },
+    });
+
+    if (!transfer || !transfer.id) {
+        await updateMetadataStripeTransferID(transactionMetadata, null);
+        throw "Failed to create transfer";
+    }
+
+    try {
+        await updateMetadataStripeTransferID(transactionMetadata, transfer.id);
+    } catch (e) {
+        await stripe.transfers.createReversal(
+            transfer.id,
+        )
+        throw `Failed to persist stripe transfer id: ${transfer.id}, reversed`
+    }
 }
 
 StripeCharges.prototype.payInvoices = async function(invoiceID, sourceID, mechanicID, transferAmount) {
@@ -224,7 +277,6 @@ StripeCharges.prototype.updateDraft = async function(customer, prices, metadata,
 
     const invoiceUpdates = {
         customer: draftInvoice ? undefined : customer,
-        default_tax_rates: taxRate ? [taxRate.id] : [],
         description: "Oil Change from Car Swaddle",
         statement_descriptor: "Car Swaddle Oil Change",
         metadata,
@@ -233,9 +285,6 @@ StripeCharges.prototype.updateDraft = async function(customer, prices, metadata,
     const finalInvoice = draftInvoice
         ? await stripe.invoices.update(draftInvoice.id, invoiceUpdates)
         : await stripe.invoices.create(invoiceUpdates);
-
-    prices.taxes = finalInvoice.tax || 0;
-    prices.total = finalInvoice.total;
 
     return finalInvoice;
 };

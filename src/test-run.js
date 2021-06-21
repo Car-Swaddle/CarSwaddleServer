@@ -20,7 +20,7 @@ console.log(body);
 function runTests(token) {
     process.env.TEST_JWT = token;
     var args = process.argv.slice(2);
-    var testsToRun = args[0] || './built/test/**/*.*s'
+    var testsToRun = args[0] || './build/test/**/*.*s'
     execSync(
         'mocha ' + testsToRun,
         {stdio: 'inherit'}

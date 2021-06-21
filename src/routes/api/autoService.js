@@ -5,8 +5,7 @@ const pushService = require('../../notifications/pushNotifications.js');
 const bodyParser = require('body-parser');
 const constants = require('../../controllers/constants');
 const stripe = require('stripe')(constants.STRIPE_SECRET_KEY);
-const distance = require('../distance.js');
-const VehicleService = require('../../controllers/vehicle').VehicleService
+const { VehicleService } = require('../../controllers/vehicle')
 
 module.exports = function (router, models) {
 
@@ -16,12 +15,11 @@ module.exports = function (router, models) {
     const autoServiceScheduler = require('../../controllers/auto-service-scheduler.js')(models);
     const billingCalculations = require('../../controllers/billing-calculations')(models);
     const taxes = require('../../controllers/taxes')(models);
-    const vehicleService = new VehicleService(models);
+    const vehicleService = new VehicleService();
+    const stripeCharges = require('../../controllers/stripe-charges.js')(models);
 
     const reminderFile = require('../../notifications/reminder.js');
     const reminder = new reminderFile(models);
-
-    const Op = models.Sequelize.Op;
 
     router.get('/auto-service-details', bodyParser.json(), function (req, res) {
         if (!req.query.autoServiceID) {
@@ -216,6 +214,10 @@ module.exports = function (router, models) {
                             // pushService.sendUserNotification(user, alert, null, null, null);
                             pushService.sendUserMechanicChangedAutoServiceStatusNotification(user, newAutoService, body.status);
                             if (body.status == models.AutoService.STATUS.completed) {
+                                stripeCharges.createReferrerTransferIfNecessary(newAutoService.id).catch(error => {
+                                    console.warn(`Failed to transfer to referrer for auto service ${newAutoService.id} error: ${error}`);
+                                });
+
                                 pushService.sendRateMechanicNotificationToUserOf(newAutoService);
 
                                 reminder.scheduleNPSSurvey(user.firstName, user.email);
@@ -283,7 +285,7 @@ module.exports = function (router, models) {
             couponID,
         } = req.body;
 
-        const usePaymentIntent = req.query.usePaymentIntent || false;
+        const usePaymentIntent = req.query.usePaymentIntent || req.user.activeReferrerID || false;
 
         const oilChangeService = serviceEntities.find(x => x.entityType === 'OIL_CHANGE');
         const oilType = oilChangeService && oilChangeService.specificService.oilType;
@@ -319,6 +321,7 @@ module.exports = function (router, models) {
         var referrerID = null;
 
         if (usePaymentIntent && req.user.activeReferrerID) {
+            req.log.info("Using payment intent and found active referrer, validating")
             const referrer = await models.Referrer.findByPk(req.user.activeReferrerID, {
                 include: [
                     {model: models.Coupon},
@@ -333,7 +336,7 @@ module.exports = function (router, models) {
             }
 
             const referrerCoupon = (await referrer.getCoupons()).find(c => c.id == referrer.activeCouponID);
-            const referrerPayStructure = (await referrer.getPayStructures()).find(ps => ps.id == referrer.activePayStructureID);
+            const referrerPayStructure = referrer.activePayStructureID ? (await models.PayStructure.findByPk(referrer.activePayStructureID)) : null;
             if (referrerCoupon && !finalCoupon) {
                 finalCoupon = referrerCoupon;
             }
@@ -376,22 +379,23 @@ module.exports = function (router, models) {
                 }
 
                 if (currentUserReferralCount == 0) {
-                    // Send email, this is a new completed referral
+                    // TODO - send email, this is a new completed referral
                 }
             }
 
             if (removeActiveReferrer === true) {
+                req.log.info(`Invalid active referrer, removing for user ${req.user.id} (was ${req.user.activeReferrerID})`)
                 payStructure = null;
                 req.user.activeReferrerID = null;
                 await req.user.save({ fields: ['activeReferrerID'] });
             }
         }
 
-        const taxRate = await taxes.taxRateForLocation(location);
-        const prices = await billingCalculations.calculatePrices(mechanic, location, oilType, vehicleID, finalCoupon, taxRate);
+        const taxMetadata = await taxes.taxMetadataForLocation(location);
+        const prices = await billingCalculations.calculatePrices(mechanic, location, oilType, vehicleID, finalCoupon, taxMetadata);
 
         autoServiceScheduler.scheduleAutoService(req.user, status, scheduledDate, vehicleID, mechanicID, sourceID,
-            prices, oilType, serviceEntities, address, locationID, taxRate,
+            prices, oilType, serviceEntities, address, locationID, taxMetadata.rate,
             finalCoupon ? finalCoupon.id : null, payStructure ? payStructure.id : null, referrerID, usePaymentIntent, notes, function (err, autoService) {
             if (!err) {
                 return res.json(autoService);

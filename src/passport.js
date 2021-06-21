@@ -3,9 +3,6 @@ const uuidV1 = require('uuid/v1');
 const passportJWT = require("passport-jwt");
 const JWTStrategy = passportJWT.Strategy;
 const ExtractJWT = passportJWT.ExtractJwt;
-// const bodyParser = require('body-parser');
-// const models = require('./src/models');
-// const bCrypt = require('bcrypt-nodejs');
 
 const LocalStrategy = require('passport-local').Strategy;
 
@@ -30,8 +27,24 @@ module.exports = function (models) {
         }).catch(err => cb(err));
     }));
 
+    const hybridJwtExtractor = req => {
+        var token = null;
+
+        // Auth header 
+        if (req.headers && req.headers["authorization"]) {
+            token = ExtractJWT.fromAuthHeaderAsBearerToken()(req);
+        }
+
+        // Browser cookie
+        if (!token && req.cookies && req.cookies["cs-jwt"]) {
+            token = req.cookies["cs-jwt"];
+        }
+
+        return token;
+    }
+
     passport.use('jwt', new JWTStrategy({
-        jwtFromRequest: ExtractJWT.fromAuthHeaderAsBearerToken(),
+        jwtFromRequest: hybridJwtExtractor,
         secretOrKey: 'your_jwt_secret'
     },
         function (jwtPayload, cb) {
@@ -75,6 +88,8 @@ module.exports = function (models) {
                                 email: email,
                                 phoneNumber: req.body.phoneNumber,
                                 password: models.User.generateHash(password),
+                                signUpReferrerID: req.body.referrerID,
+                                activeReferrerID: req.body.referrerID,
                             }).then((user) => {
                                 var json = JSON.stringify({
                                     'user': user.toJSON(),

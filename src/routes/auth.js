@@ -1,10 +1,7 @@
 const jwt = require('jsonwebtoken');
-const uuidV1 = require('uuid/v1');
-const constants = require('../controllers/constants.js');
-const stripe = require('stripe')(constants.STRIPE_SECRET_KEY);
-const bodyParser = require('body-parser');
 const accountCreationFile = require('../controllers/account-creation.js');
-
+const express = require('express');
+const ReferrerController = require("../controllers/referrer");
 
 module.exports = function (app, models, passport) {
 
@@ -12,8 +9,15 @@ module.exports = function (app, models, passport) {
     const emailer = new emailFile(models);
     const accountCreation = accountCreationFile(models);
     const resetPasswordController = require('../controllers/passwordReset')(models);
+    const referrerController = new ReferrerController();
 
-    app.post('/login', bodyParser.urlencoded({ extended: true }), function (req, res, next) {
+    const createJWTFromUser = (user) => {
+        return {
+            id: user.id
+        }
+    }
+
+    app.post('/login', express.urlencoded({ extended: true }), function (req, res, next) {
         passport.authenticate('local-login', { session: false }, (err, user, info) => {
             if (err || !user) {
                 return res.status(400).json({
@@ -21,17 +25,21 @@ module.exports = function (app, models, passport) {
                     user: user
                 });
             }
-            req.login(user, { session: false }, (err) => {
+            req.login(user, { session: false }, async (err) => {
                 if (err) {
                     return res.send(err);
                 }
 
-                const token = jwt.sign(user.dataValues, 'your_jwt_secret');
+                const token = jwt.sign(createJWTFromUser(user), 'your_jwt_secret');
+                res.setHeader('Set-Cookie', 'cs-jwt=' + token);
 
                 if (req.query.isMechanic == "true") {
                     accountCreation.completeMechanicCreationOrUpdate(user, req.connection.remoteAddress, function (err, mechanic) {
                         return res.json({ user, mechanic, token });
                     });
+                } else if (req.query.isReferrer == "true") {
+                    const referrer = await referrerController.getReferrerForUserID(user.id);
+                    return res.json({ user, referrer, token });
                 } else {
                     return res.json({ user, token });
                 }
@@ -39,7 +47,7 @@ module.exports = function (app, models, passport) {
         })(req, res);
     });
 
-    app.post('/signup', bodyParser.urlencoded({ extended: true }), function (req, res, next) {
+    app.post('/signup', express.urlencoded({ extended: true }), function (req, res, next) {
         passport.authenticate('local-signup', { session: false }, (err, user, info) => {
             if (err || !user) {
                 return res.status(400).json({
@@ -55,10 +63,10 @@ module.exports = function (app, models, passport) {
 
                 req.login(user, { session: false }, (err) => {
                     if (err) {
-                        res.send(err);
+                        res.send(err); 
                     }
 
-                    const token = jwt.sign(user.dataValues, 'your_jwt_secret');
+                    const token = jwt.sign(createJWTFromUser(user), 'your_jwt_secret');
 
                     if (!user.isEmailVerified) {
                         emailer.sendEmailVerificationEmail(user, function (err) {
@@ -81,7 +89,7 @@ module.exports = function (app, models, passport) {
     });
 
 
-    app.post('/api/request-reset-password', bodyParser.urlencoded({ extended: true }), function (req, res) {
+    app.post('/api/request-reset-password', express.urlencoded({ extended: true }), function (req, res) {
         const email = req.body.email;
         const appName = req.body.appName || 'car-swaddle';
         if (!email) {
@@ -98,7 +106,7 @@ module.exports = function (app, models, passport) {
         });
     });
 
-    app.post('/api/reset-password', bodyParser.urlencoded({ extended: true }), function (req, res) {
+    app.post('/api/reset-password', express.urlencoded({ extended: true }), function (req, res) {
         const newPassword = req.body.newPassword;
         const token = req.body.token;
         if (!newPassword || !token) {
@@ -115,7 +123,7 @@ module.exports = function (app, models, passport) {
         });
     });
 
-    app.get('/email-unsubscribe', bodyParser.json(), function (req, res) {
+    app.get('/email-unsubscribe', express.json(), function (req, res) {
         const unsubscribeID = req.query.unsubscribeID;
         if (!unsubscribeID) {
             return res.status(422).send('Invalid parameter(s)');

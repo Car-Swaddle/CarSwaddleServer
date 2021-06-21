@@ -2,7 +2,7 @@
 var methods = function(models) {
     
     function numberOfAutoServicesProvided(id) {
-        return models.sequelize.query(`SELECT COUNT(object) as count FROM (SELECT FROM "autoService" as a WHERE "mechanicID" = ? AND "status" = 'completed') as object`, {
+        return models.sequelize.query(`SELECT COALESCE(COUNT(object), 0) as count FROM (SELECT FROM "autoService" as a WHERE "mechanicID" = ? AND "status" = 'completed') as object`, {
             replacements: [id],
             type: models.sequelize.QueryTypes.SELECT
         });
@@ -16,7 +16,7 @@ var methods = function(models) {
     };
 
     function numberOfRatingsReceived(id) {
-        return models.sequelize.query('SELECT COUNT(object) as count FROM (SELECT FROM review as r WHERE "revieweeID" = ?) as object', {
+        return models.sequelize.query('SELECT COALESCE(COUNT(object), 0) as count FROM (SELECT FROM review as r WHERE "revieweeID" = ?) as object', {
             replacements: [id],
             type: models.sequelize.QueryTypes.SELECT
         });

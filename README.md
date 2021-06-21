@@ -38,6 +38,11 @@ Start service (monitors for file changes and sets debug configs)
 yarn start
 ```
 
+To run the web app (auto-served in production):
+```
+cd web && yarn start
+```
+
 To debug, run the Visual Studio Code "Attach to local" launch config (port 9229)
 
 ## Running tests

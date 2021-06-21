@@ -49,11 +49,11 @@ module.exports = function (router, models) {
             return res.status(422).send();
         }
 
-        const taxRate = await taxes.taxRateForLocation(location);
-        const prices = await billingCalculations.calculatePrices(mechanic, location, oilType, vehicleID, finalCoupon, taxRate);
+        const taxMetadata = await taxes.taxMetadataForLocation(location);
+        const prices = await billingCalculations.calculatePrices(mechanic, location, oilType, vehicleID, finalCoupon, taxMetadata);
         const meta = { oilType, mechanicID, locationID: location.id };
 
-        await stripeChargesFile.updateDraft(stripeCustomerID, prices, meta, taxRate);
+        await stripeChargesFile.updateDraft(stripeCustomerID, prices, meta, taxMetadata.rate);
         
         return res.json({
             prices,
