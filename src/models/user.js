@@ -64,6 +64,7 @@ const user = function (sequelize, DataTypes) {
         User.hasMany(models.Vehicle, { foreignKey: 'userID' });
         User.hasMany(models.DeviceToken, { foreignKey: 'userID' });
         User.hasMany(models.Review, { foreignKey: 'userID' });
+        User.hasOne(models.Referrer, { foreignKey: 'userID', constraints: false });
     };
 
     User.generateHash = function (password) {
