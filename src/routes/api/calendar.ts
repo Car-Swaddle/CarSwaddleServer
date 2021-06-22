@@ -3,6 +3,6 @@ import { getAllEvents } from '../../controllers/calendar';
 
 const api = Router();
 
-api.get('/all/:id/calendar.ics', getAllEvents);
+api.get('/all/:key/calendar.ics', getAllEvents);
 
 export = api;

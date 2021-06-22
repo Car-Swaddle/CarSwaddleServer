@@ -5,9 +5,9 @@ const { DateTime } = require('luxon');
 
 export async function getAllEvents(req: Request, res: Response, next: NextFunction) {
     try {
-        const calendarId = req.params.id;
-        if (!calendarId || calendarId != '354a4570-c914-42bd-a614-24a09a5b703e') {
-            throw "Invalid calendar id";
+        const calendarKey = req.params.key;
+        if (!calendarKey || calendarKey != '354a4570-c914-42bd-a614-24a09a5b703e') {
+            throw "Invalid calendar key";
         }
 
         // Query all events
