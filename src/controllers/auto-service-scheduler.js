@@ -421,7 +421,7 @@ AutoServiceScheduler.prototype.autoServiceWhereDict = function (mechanicID, user
 
     if (startDate != null && endDate != null) {
         whereDict.scheduledDate = {
-            "$between": [startDate, endDate]
+            [Op.between]: [startDate, endDate]
         };
     }
     if (mechanicID != null) {

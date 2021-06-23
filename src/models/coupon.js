@@ -57,6 +57,9 @@ const coupon = function (sequelize, DataTypes) {
     };
 
     Coupon.findRedeemable = async (couponId, currentUserId, mechanicId) => {
+        if (!couponId) {
+            return {coupon: null, error: null};
+        }
         const coupon = await Coupon.findOne({
             where: {
                 id: couponId
