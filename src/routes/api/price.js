@@ -33,13 +33,9 @@ module.exports = function (router, models) {
         var finalCoupon = requestedCoupon;
         // Only attempt to apply a referrer coupon if they didn't have one
         if (!finalCoupon && req.user.activeReferrerID) {
-            const referrer = await models.Referrer.findByPk(req.user.activeReferrerID, {
-                include: [
-                    {model: models.Coupon},
-                ] 
-            });
+            const referrer = await models.Referrer.findByPk(req.user.activeReferrerID);
 
-            const referrerRedeemableCoupon = models.Coupon.findRedeemable(referrer.activeCouponID, req.user.id, mechanicID);
+            const referrerRedeemableCoupon = (referrer && referrer.activeCouponID) ? models.Coupon.findRedeemable(referrer.activeCouponID, req.user.id, mechanicID) : null;
             if (referrerRedeemableCoupon) {
                 finalCoupon = referrerRedeemableCoupon;
             }

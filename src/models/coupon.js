@@ -53,7 +53,6 @@ const coupon = function (sequelize, DataTypes) {
     Coupon.associate = models => {
         Coupon.belongsTo(models.User, { foreignKey: 'createdByUserID' });
         Coupon.belongsTo(models.Mechanic, { foreignKey: 'createdByMechanicID' });
-        Coupon.belongsTo(models.Referrer, { foreignKey: 'referrerID', allowNull: true })
     };
 
     Coupon.findRedeemable = async (couponId, currentUserId, mechanicId) => {

@@ -322,12 +322,7 @@ module.exports = function (router, models) {
 
         if (usePaymentIntent && req.user.activeReferrerID) {
             req.log.info("Using payment intent and found active referrer, validating")
-            const referrer = await models.Referrer.findByPk(req.user.activeReferrerID, {
-                include: [
-                    {model: models.Coupon},
-                    {model: models.PayStructure}
-                ] 
-            });
+            const referrer = await models.Referrer.findByPk(req.user.activeReferrerID);
             referrerID = referrer.id;
 
             var removeActiveReferrer = false;
