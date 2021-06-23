@@ -1,3 +1,4 @@
+const calendar = require('./api/calendar')
 
 module.exports = function (app, models, passport) {
     require('./auth.js')(app, models, passport);
@@ -5,5 +6,6 @@ module.exports = function (app, models, passport) {
     require('./email.js')(app, models);
 
     var api = require('./api')(app, models);
+    app.use('/api/calendar', calendar)
     app.use('/api', passport.authenticate('jwt', {session: false}), api)
 }

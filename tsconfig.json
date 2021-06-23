@@ -1,6 +1,7 @@
 {
   "extends": "@tsconfig/recommended/tsconfig.json",
   "compilerOptions": {
+    "module": "commonjs",
     "allowJs": true,                          /* Allow javascript files to be compiled. */
     "checkJs": false,                       /* Report errors in .js files. */
     "outDir": "build",                        /* Redirect output structure to the directory. */
