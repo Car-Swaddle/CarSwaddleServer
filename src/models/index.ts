@@ -4,6 +4,7 @@ import { ReferrerFactory } from './referrer';
 import { Models } from './types'
 import Umzug from 'umzug';
 import vehicle from "./vehicle";
+import { GiftCardFactory } from './giftCard';
 const Reminder = require('../notifications/reminder.js');
 const logger = require('pino')()
 
@@ -88,9 +89,9 @@ const Coupon = require('./coupon')(sequelize, DataTypes);
 // Typescript model definitions
 const PayStructure = PayStructureFactory(sequelize);
 const Referrer = ReferrerFactory(sequelize);
+const GiftCard = GiftCardFactory(sequelize);
 
 // Typescript model relationships
-//   Note: only one side of relationship required, prefer defining belongs side (belongsTo, belongsToMany)
 PayStructure.belongsTo(Referrer, {
   foreignKey: "referrerID"
 });
@@ -106,6 +107,7 @@ const models: Models = {
   sequelize,
   PayStructure,
   Referrer,
+  GiftCard,
 
   User,
   AutoService,

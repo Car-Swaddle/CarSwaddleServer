@@ -1,4 +1,5 @@
 import { Sequelize } from "sequelize";
+import { GiftCardStatic } from "./giftCard";
 import { PayStructureStatic } from "./payStructure";
 import { ReferrerStatic } from "./referrer";
 
@@ -6,6 +7,7 @@ export interface Models {
     sequelize: Sequelize;
     PayStructure: PayStructureStatic;
     Referrer: ReferrerStatic;
+    GiftCard: GiftCardStatic;
   
     User: any;
     AutoService: any;
