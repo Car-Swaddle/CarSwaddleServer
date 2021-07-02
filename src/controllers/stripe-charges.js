@@ -114,7 +114,6 @@ StripeCharges.prototype.executeMechanicTransferWithMetadata = async function(tra
         metadata: {
             mechanicID: mechanic.id,
             autoServiceID: autoServiceID,
-            paymentIntentID: paymentIntentID,
         },
         transfer_group: autoServiceID,
     });
