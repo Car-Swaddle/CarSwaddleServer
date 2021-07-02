@@ -43,10 +43,6 @@ const transactionMetadata = function (sequelize, DataTypes) {
             type: DataTypes.STRING,
             allowNull: true
         },
-        giftCardID: {
-            type: DataTypes.STRING,
-            allowNull: true,
-        },
         payStructureID: {
             type: DataTypes.STRING,
             allowNull: true

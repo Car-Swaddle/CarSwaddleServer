@@ -28,12 +28,12 @@ export interface TaxMetadata {
     rate: number;
 }
 
-export async function calculatePrices(mechanic: any, location: any, oilType: string, couponID?: string, giftCardIDs?: string[], vehicleID?: string) {
+export async function calculatePrices(mechanic: any, location: any, oilType: string, couponID?: string, giftCardCodes?: string[], vehicleID?: string) {
     const oilChangePricing = await OilChangePricing.findOne({ where: { mechanicID: mechanic.id } });
     const coupon = couponID ? await Coupon.findByPk(couponID) : null;
-    const giftCards = giftCardIDs && giftCardIDs.length ? await GiftCard.findAll({where: {id: {[Op.in]: giftCardIDs}}}) : [];
+    const giftCards = giftCardCodes && giftCardCodes.length ? await GiftCard.findAll({where: {code: {[Op.in]: giftCardCodes}}}) : [];
     const vehicle = vehicleID ? vehicleService.getVehicle(vehicleID) : null;
-    const taxMetadata = await taxService.taxMetadataForLocation(location);
+    const taxMetadata: TaxMetadata = await taxService.taxMetadataForLocation(location);
 
     if (!taxMetadata || !taxMetadata.rate) {
         throw "No tax metadata, can't calculate price"

@@ -282,8 +282,8 @@ module.exports = function (router, models) {
             location: address,
             locationID,
             notes,
-            couponID, // Deprecated - replaced by `codes`
-            codes, // Coupon + gift cards
+            couponID,
+            giftCardCodes,
         } = req.body;
 
         const usePaymentIntent = req.query.usePaymentIntent || req.user.activeReferrerID || false;
@@ -317,10 +317,9 @@ module.exports = function (router, models) {
             return res.status(422).send();
         }
         
-        // TODO - fetch all coupons matching codes, grab first one
         // TODO - fetch all gift cards matching codes, grab all
-        // endpoint needs to return map of code => discount applied
-        // probably don't fail any more if coupon is invalid? - maybe handle at pricing
+        // TODO - new pricing endpoint needs to return map of code => discount applied/gift card amount available
+        // probably don't fail any more if coupon is invalid? - handle at pricing
 
         var finalCouponID = couponID;
         var payStructure = null;
@@ -394,8 +393,7 @@ module.exports = function (router, models) {
             }
         }
 
-        // TODO - add gift card
-        const prices = await billingCalculations.calculatePrices(mechanic, location, oilType, finalCouponID, null, vehicleID);
+        const prices = await billingCalculations.calculatePrices(mechanic, location, oilType, finalCouponID, giftCardCodes, vehicleID);
 
         autoServiceScheduler.scheduleAutoService(req.user, status, scheduledDate, vehicleID, mechanicID, sourceID,
             prices, oilType, serviceEntities, address, locationID, taxMetadata.rate,
