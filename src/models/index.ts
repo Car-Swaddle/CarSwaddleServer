@@ -93,7 +93,7 @@ const GiftCard = GiftCardFactory(sequelize);
 
 // Typescript model relationships
 PayStructure.belongsTo(Referrer, {
-  foreignKey: "referrerID"
+  foreignKey: "referrerID",
 });
 Referrer.belongsTo(User, {
   foreignKey: "userID",

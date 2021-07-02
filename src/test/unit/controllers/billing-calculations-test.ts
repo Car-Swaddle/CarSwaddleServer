@@ -1,7 +1,7 @@
 export{}
+import { calculatePrices } from "../../../controllers/billing-calculations";
 const { assert } = require('chai');
 const sinon = require("sinon");
-const BillingCalculations = require('../../../controllers/billing-calculations');
 const { OilChangePricing } = require('../../../models');
 
 describe("Billing Calculations", function() {
@@ -22,8 +22,7 @@ describe("Billing Calculations", function() {
 
     it("should return correct billing values", async function() {
         const coupon = {discountBookingFee: false}
-        const billingCalculations = BillingCalculations();
-        const prices = await billingCalculations.calculatePrices(fakeMechanic, null, "SYNTHETIC", null, coupon, taxMetadata);
+        const prices = await calculatePrices(fakeMechanic, null, "SYNTHETIC", coupon);
 
         assert.equal(prices.oilChange, 6600);
         assert.equal(prices.subtotal, 6600);
@@ -37,8 +36,7 @@ describe("Billing Calculations", function() {
 
     it("should return correct oil change value no booking fee", async function() {
         const coupon = {discountBookingFee: true};
-        const billingCalculations = BillingCalculations();
-        const prices = await billingCalculations.calculatePrices(fakeMechanic, null, "SYNTHETIC", null, coupon, taxMetadata);
+        const prices = await calculatePrices(fakeMechanic, null, "SYNTHETIC", coupon);
 
         assert.equal(prices.oilChange, 6600);
         assert.equal(prices.subtotal, 6600);
@@ -49,8 +47,7 @@ describe("Billing Calculations", function() {
 
     it("should return correct oil change value with booking fee 10% coupon", async function() {
         const coupon = {discountBookingFee: false, percentOff: .1};
-        const billingCalculations = BillingCalculations();
-        const prices = await billingCalculations.calculatePrices(fakeMechanic, null, "SYNTHETIC", null, coupon, taxMetadata);
+        const prices = await calculatePrices(fakeMechanic, null, "SYNTHETIC", coupon);
 
         assert.equal(prices.oilChange, 6600);
         assert.equal(prices.subtotal, 6600);
@@ -62,8 +59,7 @@ describe("Billing Calculations", function() {
 
     it("should return correct oil change value with $90 off coupon", async function() {
         const coupon = {discountBookingFee: false, amountOff: 9000};
-        const billingCalculations = BillingCalculations();
-        const prices = await billingCalculations.calculatePrices(fakeMechanic, null, "SYNTHETIC", null, coupon, taxMetadata);
+        const prices = await calculatePrices(fakeMechanic, null, "SYNTHETIC", coupon);
 
         assert.equal(prices.oilChange, 6600);
         assert.equal(prices.subtotal, 6600);
@@ -75,8 +71,7 @@ describe("Billing Calculations", function() {
 
     it("should return correct oil change value with $90 off coupon + booking fee", async function() {
         const coupon = {discountBookingFee: true, amountOff: 9000};
-        const billingCalculations = BillingCalculations();
-        const prices = await billingCalculations.calculatePrices(fakeMechanic, null, "SYNTHETIC", null, coupon, taxMetadata);
+        const prices = await calculatePrices(fakeMechanic, null, "SYNTHETIC", coupon);
 
         assert.equal(prices.oilChange, 6600);
         assert.equal(prices.subtotal, 6600);
@@ -87,8 +82,7 @@ describe("Billing Calculations", function() {
     });
 
     it("should return correct oil change value with no coupon", async function() {
-        const billingCalculations = BillingCalculations();
-        const prices = await billingCalculations.calculatePrices(fakeMechanic, null, "SYNTHETIC", null, null, taxMetadata);
+        const prices = await calculatePrices(fakeMechanic, null, "SYNTHETIC", null);
 
         assert.equal(prices.oilChange, 6600);
         assert.equal(prices.subtotal, 6600);

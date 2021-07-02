@@ -1,28 +1,15 @@
-const distance = require('../routes/distance');
-const constants = require('./constants');
-const { OilChangePricing } = require('../models');
-const { VehicleService } = require('./vehicle');
-
-// All in cents
-// const centsPerMile = 78;
-// const oilFilterCents = 950;
-// const mechanicHourlyRate = 1200;
-
-// const bookingFeePercentage = 0.10;
-
-// const conventionalQuartPrice = 300;
-// const blendQuartPrice = 390;
-// const syntheticQuartPrice = 440;
-
-// const quartsPerOilChange = 5.5;
+import {metersBetween} from "../routes/distance";
+import * as models from '../models';
+import { OilChangePricing, GiftCard, Coupon } from '../models';
+import { VehicleService } from './vehicle';
+import * as constants from "./constants";
+import { Op } from "sequelize"
+const vehicleService = new VehicleService();
+const taxService = require('./taxes')(models);
 
 const METERS_TO_MILES = 1609.344;
 
-function BillingCalculations(_) {
-    this.vehicleService = new VehicleService();
-}
-
-BillingCalculations.prototype.calculateCouponDiscount = function(coupon, subTotal) {
+export function calculateCouponDiscount(coupon: any, subTotal: number) {
     var discount;
 
     if(coupon.amountOff) {
@@ -36,8 +23,17 @@ BillingCalculations.prototype.calculateCouponDiscount = function(coupon, subTota
     return Math.max(Math.round(discount), -subTotal);
 }
 
-BillingCalculations.prototype.calculatePrices = async function(mechanic, location, oilType, vehicleID, coupon, taxMetadata) {
+export interface TaxMetadata {
+    id?: string;
+    rate: number;
+}
+
+export async function calculatePrices(mechanic: any, location: any, oilType: string, couponID?: string, giftCardIDs?: string[], vehicleID?: string) {
     const oilChangePricing = await OilChangePricing.findOne({ where: { mechanicID: mechanic.id } });
+    const coupon = couponID ? await Coupon.findByPk(couponID) : null;
+    const giftCards = giftCardIDs && giftCardIDs.length ? await GiftCard.findAll({where: {id: {[Op.in]: giftCardIDs}}}) : [];
+    const vehicle = vehicleID ? vehicleService.getVehicle(vehicleID) : null;
+    const taxMetadata = await taxService.taxMetadataForLocation(location);
 
     if (!taxMetadata || !taxMetadata.rate) {
         throw "No tax metadata, can't calculate price"
@@ -49,17 +45,16 @@ BillingCalculations.prototype.calculatePrices = async function(mechanic, locatio
         const region = await mechanic.getRegion();
         const locationPoint = { latitude: location.point.coordinates[1], longitude: location.point.coordinates[0] };
         const regionPoint = { latitude: region.origin.coordinates[1], longitude: region.origin.coordinates[0] };
-        const meters = distance.metersBetween(locationPoint, regionPoint);
+        const meters = metersBetween(locationPoint, regionPoint);
         const miles = meters / METERS_TO_MILES;
         const centsPerMile = (oilChangePricing && oilChangePricing.centsPerMile) || constants.DEFAULT_CENTS_PER_MILE;
         distancePrice =  Math.round((centsPerMile * miles) * 2);
     }
 
-    const vehicle = vehicleID ? this.vehicleService.getVehicle(vehicleID) : null;
     const oilChangePrice = centsForOilType(oilType, oilChangePricing, vehicle) || constants.DEFAULT_CONVENTIONAL_PRICE;
 
     const mechanicBasePrice = oilChangePrice + distancePrice;
-    const discountPrice = coupon ? this.calculateCouponDiscount(coupon, mechanicBasePrice) : null;
+    const discountPrice = coupon ? calculateCouponDiscount(coupon, mechanicBasePrice) : null;
     const subtotalPreBookingFee = mechanicBasePrice + (discountPrice || 0);
 
     const bookingFeePrice = Math.round(constants.BOOKING_FEE_PERCENTAGE * subtotalPreBookingFee);
@@ -102,7 +97,7 @@ BillingCalculations.prototype.calculatePrices = async function(mechanic, locatio
     return prices;
 }
 
-function calculateProcessingFeeTaxes(subtotal, taxRate) {
+function calculateProcessingFeeTaxes(subtotal: number, taxRate: number) {
     if (subtotal === 0) {
         return { processingFeePrice: 0, salesTax: 0 };
     }
@@ -111,11 +106,11 @@ function calculateProcessingFeeTaxes(subtotal, taxRate) {
     const stripeProcessPercentage = 0.029;
     const stripeProcessTransactionFee = 30; // In cents, per-transaction fee
 
-    const calculateStripeScalingFee = (value) => {
+    const calculateStripeScalingFee = (value: number) => {
         return Math.round(value * stripeProcessPercentage);
     };
 
-    const calculateTax = (value) => {
+    const calculateTax = (value: number) => {
         return Math.round(value * taxRate);
     }
 
@@ -149,7 +144,7 @@ function calculateProcessingFeeTaxes(subtotal, taxRate) {
     return { processingFeePrice: finalProcessingFee, salesTax: finalTaxes }
 }
 
-function centsForOilType(oilType, oilChangePricing, vehicle) {
+function centsForOilType(oilType: string, oilChangePricing: any, vehicle: any) {
     var base;
     var costPerQuart;
     if (oilType == 'CONVENTIONAL') {
@@ -175,7 +170,3 @@ function centsForOilType(oilType, oilChangePricing, vehicle) {
     }
     return totalCost;
 }
-
-module.exports = function (models) {
-    return new BillingCalculations(models);
-};

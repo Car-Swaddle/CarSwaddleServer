@@ -2,10 +2,10 @@ const express = require('express');
 const constants = require('../../controllers/constants');
 const bodyParser = require('body-parser');
 const distance = require('../distance.js');
+const billingCalculations = require('../../controllers/billing-calculations');
 
 module.exports = function (router, models) {
     const stripeChargesFile = require('../../controllers/stripe-charges')(models);
-    const billingCalculations = require('../../controllers/billing-calculations')(models);
     const taxes = require('../../controllers/taxes')(models);
 
     router.post('/price', bodyParser.json(), async function (req, res) {
@@ -45,8 +45,8 @@ module.exports = function (router, models) {
             return res.status(422).send();
         }
 
-        const taxMetadata = await taxes.taxMetadataForLocation(location);
-        const prices = await billingCalculations.calculatePrices(mechanic, location, oilType, vehicleID, finalCoupon, taxMetadata);
+        // TODO - add gift card
+        const prices = await billingCalculations.calculatePrices(mechanic, location, oilType, finalCoupon, null, vehicleID);
         const meta = { oilType, mechanicID, locationID: location.id };
 
         await stripeChargesFile.updateDraft(stripeCustomerID, prices, meta, taxMetadata.rate);

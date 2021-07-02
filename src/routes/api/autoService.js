@@ -5,7 +5,8 @@ const pushService = require('../../notifications/pushNotifications.js');
 const bodyParser = require('body-parser');
 const constants = require('../../controllers/constants');
 const stripe = require('stripe')(constants.STRIPE_SECRET_KEY);
-const { VehicleService } = require('../../controllers/vehicle')
+const { VehicleService } = require('../../controllers/vehicle');
+const billingCalculations = require('../../controllers/billing-calculations');
 
 module.exports = function (router, models) {
 
@@ -13,7 +14,6 @@ module.exports = function (router, models) {
     const emailer = new emailFile(models);
 
     const autoServiceScheduler = require('../../controllers/auto-service-scheduler.js')(models);
-    const billingCalculations = require('../../controllers/billing-calculations')(models);
     const taxes = require('../../controllers/taxes')(models);
     const vehicleService = new VehicleService();
     const stripeCharges = require('../../controllers/stripe-charges.js')(models);
@@ -282,7 +282,8 @@ module.exports = function (router, models) {
             location: address,
             locationID,
             notes,
-            couponID,
+            couponID, // Deprecated - replaced by `codes`
+            codes, // Coupon + gift cards
         } = req.body;
 
         const usePaymentIntent = req.query.usePaymentIntent || req.user.activeReferrerID || false;
@@ -315,29 +316,36 @@ module.exports = function (router, models) {
         if (location == null || mechanic == null) {
             return res.status(422).send();
         }
+        
+        // TODO - fetch all coupons matching codes, grab first one
+        // TODO - fetch all gift cards matching codes, grab all
+        // endpoint needs to return map of code => discount applied
+        // probably don't fail any more if coupon is invalid? - maybe handle at pricing
 
-        var finalCoupon = requestCoupon;
+        var finalCouponID = couponID;
         var payStructure = null;
         var referrerID = null;
 
         if (usePaymentIntent && req.user.activeReferrerID) {
             req.log.info("Using payment intent and found active referrer, validating")
+            referrerID = req.user.activeReferrerID;
             const referrer = await models.Referrer.findByPk(req.user.activeReferrerID);
-            referrerID = referrer.id;
-
+            if (!referrer) {
+                removeActiveReferrer = true;
+            }
+            const referrerPayStructure = referrer?.activePayStructureID ? (await models.PayStructure.findByPk(referrer.activePayStructureID)) : null;
+            
             var removeActiveReferrer = false;
-            if (referrer.userID && req.user.id == referrer.userID) {
+            if (referrer?.userID && req.user.id == referrer.userID) {
                 removeActiveReferrer = true;
             }
 
-            const referrerCoupon = referrer.activeCouponID ? (await models.Coupon.findByPk(referrer.activeCouponID)) : null;
-            const referrerPayStructure = referrer.activePayStructureID ? (await models.PayStructure.findByPk(referrer.activePayStructureID)) : null;
-            if (referrerCoupon && !finalCoupon) {
-                finalCoupon = referrerCoupon;
+            if (referrer?.activeCouponID && !finalCouponID) {
+                finalCouponID = referrer.activeCouponID;
             }
 
             // Still valid referrer for future purchases but can't use pay structure for this one if coupon applied
-            const canUsePayStructure = !finalCoupon || referrerPayStructure.getPaidEvenIfCouponIsApplied === true;
+            const canUsePayStructure = !finalCouponID || referrerPayStructure.getPaidEvenIfCouponIsApplied === true;
             if (referrerPayStructure && canUsePayStructure) {
 
                 const currentUserReferralCount = await models.sequelize.query(`
@@ -386,8 +394,8 @@ module.exports = function (router, models) {
             }
         }
 
-        const taxMetadata = await taxes.taxMetadataForLocation(location);
-        const prices = await billingCalculations.calculatePrices(mechanic, location, oilType, vehicleID, finalCoupon, taxMetadata);
+        // TODO - add gift card
+        const prices = await billingCalculations.calculatePrices(mechanic, location, oilType, finalCouponID, null, vehicleID);
 
         autoServiceScheduler.scheduleAutoService(req.user, status, scheduledDate, vehicleID, mechanicID, sourceID,
             prices, oilType, serviceEntities, address, locationID, taxMetadata.rate,
