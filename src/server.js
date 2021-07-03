@@ -24,7 +24,7 @@ if(process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'staging') 
             next()
         }
     })
-  }
+}
 
 express.static.mime.define({'application/pkcs7-mime': ['apple-app-site-association']});
 express.static.mime.define({'application/pkcs7-mime': ['.well-known/apple-app-site-association']});
@@ -48,3 +48,19 @@ if (port == null || port == "") {
 app.listen(port);
 
 console.log('working on ' + port);
+
+// Gracefully handle heroku reboots
+process.on('SIGTERM', shutdown('SIGTERM')).on('SIGINT', shutdown('SIGINT')).on('uncaughtException', shutdown('uncaughtException'));
+
+function shutdown(signal) {
+    return (err) => {
+        console.log(`${ signal }...`);
+        if (err) { console.error(err.stack || err) };
+        setTimeout(() => {
+            console.log('...waited 10s, exiting.');
+            process.exit(err ? 1 : 0);
+        }, 10_000).unref();
+    };
+}
+
+process.on('warning', e => {console.warn(e.message); console.warn(e.stack)});
