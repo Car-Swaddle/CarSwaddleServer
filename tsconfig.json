@@ -9,6 +9,7 @@
     "noEmitOnError": true, // Don't emit js outputs on error
     "alwaysStrict": true,
   },
+  "typeRoots": [ "@types" ],
   "include": [
     "./src/**/*"
   ],
