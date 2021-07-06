@@ -1,14 +1,29 @@
 import { json, Request, Response, Router } from 'express';
-import { calculatePrices } from '../../controllers/billing-calculations';
+import { calculatePrices, OilType } from '../../controllers/billing-calculations';
 import models from '../../models';
 import { GiftCard, Coupon } from '../../models';
+import { Op } from 'sequelize';
+import { CouponModel } from '../../models/coupon';
+import { RedemptionError } from '../../models/types';
+import { GiftCardModel } from '../../models/giftCard';
 
 module.exports = function (router: Router) {
     const stripeChargesFile = require('../../controllers/stripe-charges')(models);
     const taxes = require('../../controllers/taxes')(models);
 
-    router.get('/codes/:code', json()), async function (req: Request, res: Response) {
+    interface CodeCheckResponse {
+        error?: RedemptionError,
+        coupon?: CouponModel,
+        giftCard?: GiftCardModel,
+        redeemMessages?: string[],
+    }
+
+    router.get('/codes/:code', json()), async function (req: Request<{code: string}, {}, {}, {mechanicID?: string}>, res: Response<CodeCheckResponse>) {
         const code = req.params.code;
+
+        if (!code) {
+            res.status(400).send({ error: RedemptionError.INCORRECT_CODE });
+        }
 
         // Check for gift card first, then coupon if not found
         const giftCard = await GiftCard.findOne({where: {code: code}});
@@ -16,16 +31,42 @@ module.exports = function (router: Router) {
 
         }
 
-        const coupon = await Coupon.findOne({where: {id: code}});
+        const {coupon, error}: {coupon: CouponModel, error: RedemptionError} = await Coupon.findRedeemable(code, req.user.id, req.query.mechanicID);
         if (coupon) {
-            return res.send({});
+            const redeemMessages = [];
+            if (coupon.amountOff) {
+                const noDecimal = coupon.amountOff % 100 > 0;
+                redeemMessages.push(`$${(coupon.amountOff / 100.0).toFixed(noDecimal ? 0 : 2)} off`);
+            }
+            if (coupon.percentOff) {
+                redeemMessages.push(`${(coupon.percentOff * 100.0).toFixed(0)}% off`);
+            }
+            if (coupon.discountBookingFee) {
+                redeemMessages.push("$0 booking fee");
+            }
+            return res.send({coupon, redeemMessages});
         }
-
-        return res.status(422).send({ valid: false, message: "Invalid redemption code" });
+        return res.status(422).send({ error });
     }
 
-    router.post('/price', json(), async function (req: Request, res: Response) {
-        const { oilType, mechanicID, coupon, giftCardIDs, locationID, vehicleID, location: address } = req.body;
+    interface Address {
+        longitude: number,
+        latitude: number,
+        streetAddress: number,
+    }
+
+    interface PriceRequest {
+        oilType: string,
+        mechanicID: string,
+        coupon: string,
+        giftCardCodes: string[],
+        locationID: string,
+        vehicleID: string,
+        location: Address,
+    }
+
+    router.post('/price', json(), async function (req: Request<{}, {}, PriceRequest>, res: Response) {
+        const { oilType, mechanicID, coupon, giftCardCodes, locationID, vehicleID, location: address } = req.body;
         const { stripeCustomerID } = req.user;
 
         if (!oilType || !mechanicID) {
@@ -36,14 +77,20 @@ module.exports = function (router: Router) {
             location,
             mechanic,
             { coupon: requestedCoupon, error: couponError },
+            giftCards
         ] = await Promise.all([
             models.Location.findBySearch(locationID, address),
             models.Mechanic.findByPk(mechanicID),
             models.Coupon.findRedeemable(coupon, req.user.id, mechanicID),
+            giftCardCodes && giftCardCodes.length ? models.GiftCard.findAll({where: {code: {[Op.in]: giftCardCodes}}}) : Promise.resolve([])
         ]);
 
         if(coupon && !requestedCoupon) {
             return res.status(422).send({ code: couponError });
+        }
+
+        if (location == null || mechanic == null) {
+            return res.status(422).send();
         }
 
         var finalCoupon = requestedCoupon;
@@ -57,11 +104,7 @@ module.exports = function (router: Router) {
             }
         }
 
-        if (location == null || mechanic == null) {
-            return res.status(422).send();
-        }
-
-        const prices = await calculatePrices(mechanic, location, oilType, finalCoupon, giftCardIDs, vehicleID);
+        const prices = await calculatePrices(mechanic, location, oilType as OilType, finalCoupon, giftCards, vehicleID);
         const meta = { oilType, mechanicID, locationID: location.id };
 
         const taxMetadata = await taxes.taxMetadataForLocation(location);

@@ -37,3 +37,15 @@ export interface Models {
     AuthorityRequest: any;
     Coupon: any;
   }
+
+export interface DBPoint {
+  coordinates: number[] // [longitude, latitude]
+}
+
+export enum RedemptionError {
+  INCORRECT_CODE = "INCORRECT_CODE",
+  EXPIRED = "EXPIRED",
+  SELF_REDEEM = "SELF_REDEEM",
+  INCORRECT_MECHANIC = "INCORRECT_MECHANIC",
+  DEPLETED_REDEMPTIONS = "DEPLETED_REDEMPTIONS",
+}

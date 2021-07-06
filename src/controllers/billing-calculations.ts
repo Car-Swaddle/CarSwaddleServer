@@ -1,9 +1,12 @@
 import {metersBetween} from "../routes/distance";
 import * as models from '../models';
-import { OilChangePricing, GiftCard, Coupon } from '../models';
+import { OilChangePricing } from '../models';
 import { VehicleService } from './vehicle';
 import * as constants from "./constants";
-import { Op } from "sequelize"
+import { GiftCardModel } from "../models/giftCard";
+import { LocationModel } from "../models/location";
+import { OilChangePricingModel } from "../models/oilChangePricing";
+import { CouponModel } from "../models/coupon";
 const vehicleService = new VehicleService();
 const taxService = require('./taxes')(models);
 
@@ -28,10 +31,15 @@ export interface TaxMetadata {
     rate: number;
 }
 
-export async function calculatePrices(mechanic: any, location: any, oilType: string, couponID?: string, giftCardCodes?: string[], vehicleID?: string) {
-    const oilChangePricing = await OilChangePricing.findOne({ where: { mechanicID: mechanic.id } });
-    const coupon = couponID ? await Coupon.findByPk(couponID) : null;
-    const giftCards = giftCardCodes && giftCardCodes.length ? await GiftCard.findAll({where: {code: {[Op.in]: giftCardCodes}}}) : [];
+export enum OilType {
+    CONVENTIONAL = "CONVENTIONAL",
+    BLEND = "BLEND",
+    SYNTHETIC = "SYNTHETIC",
+    HIGH_MILEAGE = "HIGH_MILEAGE"
+}
+
+export async function calculatePrices(mechanic: any, location: LocationModel, oilType: OilType, coupon?: CouponModel, giftCards?: GiftCardModel[], vehicleID?: string) {
+    const oilChangePricing: OilChangePricingModel = await OilChangePricing.findOne({ where: { mechanicID: mechanic.id } });
     const vehicle = vehicleID ? vehicleService.getVehicle(vehicleID) : null;
     const taxMetadata: TaxMetadata = await taxService.taxMetadataForLocation(location);
 
@@ -42,7 +50,7 @@ export async function calculatePrices(mechanic: any, location: any, oilType: str
     // If the mechanic doesn't charge for travel, set to 0
     var distancePrice = 0.0;
     if (mechanic.chargeForTravel) {
-        const region = await mechanic.getRegion();
+        const region: RegionModel = await mechanic.getRegion();
         const locationPoint = { latitude: location.point.coordinates[1], longitude: location.point.coordinates[0] };
         const regionPoint = { latitude: region.origin.coordinates[1], longitude: region.origin.coordinates[0] };
         const meters = metersBetween(locationPoint, regionPoint);
@@ -66,8 +74,8 @@ export async function calculatePrices(mechanic: any, location: any, oilType: str
     var transferAmountPrice = mechanicBasePrice;
 
     if(coupon && !coupon.isCorporate) {
-        transferAmountPrice += discountPrice;
-        mechanicCostPrice = Math.round((mechanicBasePrice + discountPrice) * .7)
+        transferAmountPrice += (discountPrice ?? 0);
+        mechanicCostPrice = Math.round((mechanicBasePrice + (discountPrice ?? 0)) * .7)
     }
 
     console.log("prices metadata: " + JSON.stringify({
@@ -144,22 +152,22 @@ function calculateProcessingFeeTaxes(subtotal: number, taxRate: number) {
     return { processingFeePrice: finalProcessingFee, salesTax: finalTaxes }
 }
 
-function centsForOilType(oilType: string, oilChangePricing: any, vehicle: any) {
-    var base;
-    var costPerQuart;
-    if (oilType == 'CONVENTIONAL') {
+function centsForOilType(oilType: OilType, oilChangePricing: OilChangePricingModel, vehicle: any) {
+    // Default to synthetic
+    var base = oilChangePricing.synthetic || constants.DEFAULT_SYNTHETIC_PRICE;
+    var costPerQuart = oilChangePricing.syntheticPerQuart || constants.DEFAULT_SYNTHETIC_PRICE_PER_QUART;
+
+    if (oilType == OilType.CONVENTIONAL) {
         base = oilChangePricing.conventional || constants.DEFAULT_CONVENTIONAL_PRICE;
         costPerQuart = oilChangePricing.conventionalPerQuart || constants.DEFAULT_CONVENTIONAL_PRICE_PER_QUART;
-    } else if (oilType == 'BLEND') {
+    } else if (oilType == OilType.BLEND) {
         base = oilChangePricing.blend || constants.DEFAULT_BLEND_PRICE;
         costPerQuart = oilChangePricing.blendPerQuart || constants.DEFAULT_BLEND_PRICE_PER_QUART;
-    } else if (oilType == 'SYNTHETIC') {
-        base = oilChangePricing.synthetic || constants.DEFAULT_SYNTHETIC_PRICE;
-        costPerQuart = oilChangePricing.syntheticPerQuart || constants.DEFAULT_SYNTHETIC_PRICE_PER_QUART;
-    } else if (oilType == 'HIGH_MILEAGE') {
+    } else if (oilType == OilType.HIGH_MILEAGE) {
         base = oilChangePricing.highMileage || constants.DEFAULT_HIGH_MILEAGE_PRICE;
         costPerQuart = oilChangePricing.highMileagePerQuart || constants.DEFAULT_HIGH_MILEAGE_PRICE_PER_QUART;
     }
+
     var totalCost = base;
     const quarts = vehicle && vehicle.vehicleDescription && vehicle.vehicleDescription.specs && vehicle.vehicleDescription.specs.quarts ?
         vehicle.vehicleDescription.specs.quarts : constants.DEFAULT_QUARTS_COUNT;
