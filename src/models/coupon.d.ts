@@ -1,11 +1,11 @@
 
 export interface CouponModel {
     id: string;
-    amountOff: number | null;
-    percentOff: number | null;
+    amountOff?: number;
+    percentOff?: number;
     redemptions: number;
-    maxRedemptions: number | null;
-    maxRedemptionsPerUser: number | null;
+    maxRedemptions?: number;
+    maxRedemptionsPerUser?: number;
     name: string;
     redeemBy: Date;
     discountBookingFee: boolean;

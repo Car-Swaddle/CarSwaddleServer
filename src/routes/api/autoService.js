@@ -316,12 +316,8 @@ module.exports = function (router, models) {
         if (location == null || mechanic == null) {
             return res.status(422).send();
         }
-        
-        // TODO - fetch all gift cards matching codes, grab all
-        // TODO - new pricing endpoint needs to return map of code => discount applied/gift card amount available
-        // probably don't fail any more if coupon is invalid? - handle at pricing
 
-        var finalCouponID = couponID;
+        var finalCoupon = requestCoupon;
         var payStructure = null;
         var referrerID = null;
 
@@ -332,19 +328,20 @@ module.exports = function (router, models) {
             if (!referrer) {
                 removeActiveReferrer = true;
             }
-            const referrerPayStructure = referrer?.activePayStructureID ? (await models.PayStructure.findByPk(referrer.activePayStructureID)) : null;
             
             var removeActiveReferrer = false;
             if (referrer?.userID && req.user.id == referrer.userID) {
                 removeActiveReferrer = true;
             }
 
-            if (referrer?.activeCouponID && !finalCouponID) {
-                finalCouponID = referrer.activeCouponID;
+            const referrerCoupon = referrer.activeCouponID ? (await models.Coupon.findByPk(referrer.activeCouponID)) : null;
+            if (referrerCoupon && !finalCoupon) {
+                finalCoupon = referrerCoupon;
             }
 
             // Still valid referrer for future purchases but can't use pay structure for this one if coupon applied
-            const canUsePayStructure = !finalCouponID || referrerPayStructure.getPaidEvenIfCouponIsApplied === true;
+            const referrerPayStructure = referrer?.activePayStructureID ? (await models.PayStructure.findByPk(referrer.activePayStructureID)) : null;
+            const canUsePayStructure = !finalCoupon || referrerPayStructure.getPaidEvenIfCouponIsApplied === true;
             if (referrerPayStructure && canUsePayStructure) {
 
                 const currentUserReferralCount = await models.sequelize.query(`
@@ -393,11 +390,12 @@ module.exports = function (router, models) {
             }
         }
 
-        const prices = await billingCalculations.calculatePrices(mechanic, location, oilType, finalCouponID, giftCardCodes, vehicleID);
+        const prices = await billingCalculations.calculatePrices(mechanic, location, oilType, finalCoupon, giftCardCodes, vehicleID);
 
+        const taxMetadata = await taxes.taxMetadataForLocation(location);
         autoServiceScheduler.scheduleAutoService(req.user, status, scheduledDate, vehicleID, mechanicID, sourceID,
             prices, oilType, serviceEntities, address, locationID, taxMetadata.rate,
-            finalCoupon ? finalCoupon.id : null, payStructure ? payStructure.id : null, referrerID, usePaymentIntent, notes, function (err, autoService) {
+            finalCoupon?.id, payStructure?.id, referrerID, usePaymentIntent, notes, function (err, autoService) {
             if (!err) {
                 return res.json(autoService);
             } else {

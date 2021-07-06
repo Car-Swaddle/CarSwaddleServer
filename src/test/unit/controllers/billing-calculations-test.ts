@@ -1,8 +1,11 @@
 export{}
 import { calculatePrices } from "../../../controllers/billing-calculations";
-import sinon from "sinon";
 import { assert } from "chai";
-import { OilChangePricing, Coupon } from '../../../models';
+import { LocationModel } from "../../../models/location";
+import { OilType } from "../../../models/types";
+import { CouponModel } from "../../../models/coupon";
+import sinon from "sinon";
+import { OilChangePricing } from "../../../models";
 
 describe("Billing Calculations", function() {
 
@@ -18,6 +21,24 @@ describe("Billing Calculations", function() {
     const taxMetadata = {
         rate: 0.0715,
     };
+    const fakeLocation: LocationModel = {
+        id: "",
+        point: {
+            coordinates: [0, 0]
+        },
+        streetAddress: "123 Fake St"
+    }
+
+    function createFakeCoupon(): CouponModel {
+        return {
+            id: "",
+            redemptions: 0,
+            name: "",
+            redeemBy: new Date(),
+            discountBookingFee: false,
+            isCorporate: true,
+        }
+    }
 
     // Mocks
     sinon.stub(OilChangePricing, "findOne").returns(fakePricing);
@@ -28,10 +49,10 @@ describe("Billing Calculations", function() {
     this.afterEach(() => {
         sandbox.restore();
     });
+    
 
     it("should return correct billing values", async function() {
-        sandbox.stub(Coupon, "findByPk").returns({discountBookingFee: false});
-        const prices = await calculatePrices(fakeMechanic, null, "SYNTHETIC", "1234");
+        const prices = await calculatePrices(fakeMechanic, fakeLocation, OilType.SYNTHETIC, createFakeCoupon());
 
         assert.equal(prices.oilChange, 6600);
         assert.equal(prices.subtotal, 6600);
@@ -44,8 +65,9 @@ describe("Billing Calculations", function() {
     });
 
     it("should return correct oil change value no booking fee", async function() {
-        sandbox.stub(Coupon, "findByPk").returns({discountBookingFee: true});
-        const prices = await calculatePrices(fakeMechanic, null, "SYNTHETIC", "1234");
+        const coupon: CouponModel = createFakeCoupon();
+        coupon.discountBookingFee = true;
+        const prices = await calculatePrices(fakeMechanic, fakeLocation, OilType.SYNTHETIC, coupon);
 
         assert.equal(prices.oilChange, 6600);
         assert.equal(prices.subtotal, 6600);
@@ -55,8 +77,9 @@ describe("Billing Calculations", function() {
     });
 
     it("should return correct oil change value with booking fee 10% coupon", async function() {
-        sandbox.stub(Coupon, "findByPk").returns({discountBookingFee: false, percentOff: .1});
-        const prices = await calculatePrices(fakeMechanic, null, "SYNTHETIC", "1234");
+        const coupon: CouponModel = createFakeCoupon();
+        coupon.percentOff = .1;
+        const prices = await calculatePrices(fakeMechanic, fakeLocation, OilType.SYNTHETIC, coupon);
 
         assert.equal(prices.oilChange, 6600);
         assert.equal(prices.subtotal, 6600);
@@ -67,8 +90,9 @@ describe("Billing Calculations", function() {
     });
 
     it("should return correct oil change value with $90 off coupon", async function() {
-        sandbox.stub(Coupon, "findByPk").returns({discountBookingFee: false, amountOff: 9000});
-        const prices = await calculatePrices(fakeMechanic, null, "SYNTHETIC", "1234");
+        const coupon: CouponModel = createFakeCoupon();
+        coupon.amountOff = 9000;
+        const prices = await calculatePrices(fakeMechanic, fakeLocation, OilType.SYNTHETIC, coupon);
 
         assert.equal(prices.oilChange, 6600);
         assert.equal(prices.subtotal, 6600);
@@ -79,8 +103,10 @@ describe("Billing Calculations", function() {
     });
 
     it("should return correct oil change value with $90 off coupon + booking fee", async function() {
-        sandbox.stub(Coupon, "findByPk").returns({discountBookingFee: true, amountOff: 9000});
-        const prices = await calculatePrices(fakeMechanic, null, "SYNTHETIC", "1234");
+        const coupon: CouponModel = createFakeCoupon();
+        coupon.discountBookingFee = true;
+        coupon.amountOff = 9000;
+        const prices = await calculatePrices(fakeMechanic, fakeLocation, OilType.SYNTHETIC, coupon);
 
         assert.equal(prices.oilChange, 6600);
         assert.equal(prices.subtotal, 6600);
@@ -91,7 +117,7 @@ describe("Billing Calculations", function() {
     });
 
     it("should return correct oil change value with no coupon", async function() {
-        const prices = await calculatePrices(fakeMechanic, null, "SYNTHETIC");
+        const prices = await calculatePrices(fakeMechanic, fakeLocation, OilType.SYNTHETIC);
 
         assert.equal(prices.oilChange, 6600);
         assert.equal(prices.subtotal, 6600);

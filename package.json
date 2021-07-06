@@ -69,7 +69,7 @@
   "scripts": {
     "build": "cd ./web && yarn run build",
     "deps": "docker-compose -f docker-compose.deps.yml up",
-    "test": "mocha -r ts-node/register --extension js,ts --recursive src/test/unit",
+    "test": "SKIP_MIGRATIONS=true mocha -r ts-node/register --extension js,ts --recursive src/test/unit",
     "test:debug": "mocha --inspect-brk -r ts-node/register --extension js,ts --recursive src/test/unit",
     "testIT": "docker-compose -f docker-compose.test.yml up --build --abort-on-container-exit",
     "testIT:debug": "yarn run build && node --inspect=0.0.0.0:9228 build/test-run.js",

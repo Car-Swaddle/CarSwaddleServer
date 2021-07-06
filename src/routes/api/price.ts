@@ -22,7 +22,7 @@ module.exports = function (router: Router) {
         const code = req.params.code;
 
         if (!code) {
-            res.status(400).send({ error: RedemptionError.INCORRECT_CODE });
+            return res.status(400).send({ error: RedemptionError.INCORRECT_CODE });
         }
 
         // Check for gift card first, then coupon if not found

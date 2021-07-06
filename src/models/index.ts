@@ -8,7 +8,7 @@ import { GiftCardFactory } from './giftCard';
 const Reminder = require('../notifications/reminder.js');
 const logger = require('pino')()
 
-var sequelize = null;
+let sequelize: Sequelize;
 
 if (process.env.DATABASE_URL) {
   // the application is executed on Heroku
@@ -148,22 +148,25 @@ Object.entries(models).forEach(([key, model]) => {
   }
 });
 
-const umzug = new Umzug({
-  migrations: {
-    path: __dirname + '/../migrations', // Path from src/models
-    params: [
-      sequelize.getQueryInterface()
-    ]
-  },
-  storage: 'sequelize',
-  storageOptions: { sequelize }
-});
-
-umzug.up().then(() => {
-  console.log("Finished migrations")
-  const reminder = new Reminder(models);
-  reminder.rescheduleRemindersForAllAutoServices();
-})
-.catch((err: Error) => {
-  console.error("Error during migrations: " + err);
-});
+if (process.env.SKIP_MIGRATIONS) {
+  console.info("Skipped migrations")
+} else {
+  const umzug = new Umzug({
+    migrations: {
+      path: __dirname + '/../migrations', // Path from src/models
+      params: [
+        sequelize.getQueryInterface()
+      ]
+    },
+    storage: 'sequelize',
+    storageOptions: { sequelize }
+  });
+  umzug.up().then(() => {
+    console.log("Finished migrations")
+    const reminder = new Reminder(models);
+    reminder.rescheduleRemindersForAllAutoServices();
+  })
+  .catch((err: Error) => {
+    console.error("Error during migrations: " + err);
+  });
+}
