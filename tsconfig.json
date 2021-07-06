@@ -8,8 +8,11 @@
     "rootDir": "src",                         /* Specify the root directory of input files. Use to control the output directory structure with --outDir. */
     "noEmitOnError": true, // Don't emit js outputs on error
     "alwaysStrict": true,
+    "typeRoots": [
+      "./src/@types",
+      "./node_modules/@types"
+    ],
   },
-  "typeRoots": [ "@types" ],
   "include": [
     "./src/**/*"
   ],

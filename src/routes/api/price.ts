@@ -1,10 +1,10 @@
 import { json, Request, Response, Router } from 'express';
-import { calculatePrices, OilType } from '../../controllers/billing-calculations';
+import { calculatePrices } from '../../controllers/billing-calculations';
 import models from '../../models';
 import { GiftCard, Coupon } from '../../models';
 import { Op } from 'sequelize';
 import { CouponModel } from '../../models/coupon';
-import { RedemptionError } from '../../models/types';
+import { OilType, RedemptionError, UserRequest } from '../../models/types';
 import { GiftCardModel } from '../../models/giftCard';
 
 module.exports = function (router: Router) {
@@ -25,13 +25,19 @@ module.exports = function (router: Router) {
             return res.status(400).send({ error: RedemptionError.INCORRECT_CODE });
         }
 
-        // Check for gift card first, then coupon if not found
         const giftCard = await GiftCard.findOne({where: {code: code}});
+        let giftCardError = RedemptionError.INCORRECT_CODE;
         if (giftCard) {
-
+            if (giftCard.expiration && giftCard.expiration.getTime() < Date.now()) {
+                giftCardError = RedemptionError.EXPIRED;
+            } else if (giftCard.remainingBalance <= 0) {
+                giftCardError = RedemptionError.DEPLETED_REDEMPTIONS;
+            } else {
+                return res.send({giftCard, redeemMessage: `Gift card with $${giftCard.remainingBalance} balance`});
+            }
         }
 
-        const {coupon, error}: {coupon: CouponModel, error: RedemptionError} = await Coupon.findRedeemable(code, req.user.id, req.query.mechanicID);
+        const {coupon, error: couponError}: {coupon: CouponModel, error: RedemptionError} = await Coupon.findRedeemable(code, req.user.id, req.query.mechanicID);
         if (coupon) {
             const redeemMessages = [];
             if (coupon.amountOff) {
@@ -46,7 +52,7 @@ module.exports = function (router: Router) {
             }
             return res.send({coupon, redeemMessage: redeemMessages.join(', ')});
         }
-        return res.status(422).send({ error });
+        return res.status(422).send({ error: giftCardError ?? couponError });
     }
 
     interface Address {

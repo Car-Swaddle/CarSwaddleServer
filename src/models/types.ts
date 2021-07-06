@@ -2,6 +2,7 @@ import { Sequelize } from "sequelize";
 import { GiftCardStatic } from "./giftCard";
 import { PayStructureStatic } from "./payStructure";
 import { ReferrerStatic } from "./referrer";
+import { Request } from 'express';
 
 export interface Models {
     sequelize: Sequelize;
@@ -60,4 +61,8 @@ export enum OilType {
   BLEND = "BLEND",
   SYNTHETIC = "SYNTHETIC",
   HIGH_MILEAGE = "HIGH_MILEAGE"
+}
+
+export interface UserRequest<P, Q, R, S> extends Request<P, Q, R, S> {
+  user: any // Change type when ready
 }
