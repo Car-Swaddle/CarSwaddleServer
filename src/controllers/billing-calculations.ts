@@ -7,6 +7,8 @@ import { GiftCardModel } from "../models/giftCard";
 import { LocationModel } from "../models/location";
 import { OilChangePricingModel } from "../models/oilChangePricing";
 import { CouponModel } from "../models/coupon";
+import { OilType, TaxMetadata } from "../models/types";
+import { RegionModel } from "../models/region";
 const vehicleService = new VehicleService();
 const taxService = require('./taxes')(models);
 
@@ -24,18 +26,6 @@ export function calculateCouponDiscount(coupon: any, subTotal: number) {
     }
 
     return Math.max(Math.round(discount), -subTotal);
-}
-
-export interface TaxMetadata {
-    id?: string;
-    rate: number;
-}
-
-export enum OilType {
-    CONVENTIONAL = "CONVENTIONAL",
-    BLEND = "BLEND",
-    SYNTHETIC = "SYNTHETIC",
-    HIGH_MILEAGE = "HIGH_MILEAGE"
 }
 
 export async function calculatePrices(mechanic: any, location: LocationModel, oilType: OilType, coupon?: CouponModel, giftCards?: GiftCardModel[], vehicleID?: string) {

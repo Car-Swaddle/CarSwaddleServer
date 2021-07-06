@@ -49,3 +49,15 @@ export enum RedemptionError {
   INCORRECT_MECHANIC = "INCORRECT_MECHANIC",
   DEPLETED_REDEMPTIONS = "DEPLETED_REDEMPTIONS",
 }
+
+export interface TaxMetadata {
+  id?: string;
+  rate: number;
+}
+
+export enum OilType {
+  CONVENTIONAL = "CONVENTIONAL",
+  BLEND = "BLEND",
+  SYNTHETIC = "SYNTHETIC",
+  HIGH_MILEAGE = "HIGH_MILEAGE"
+}
