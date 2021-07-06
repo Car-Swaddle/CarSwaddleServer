@@ -10,7 +10,7 @@ module.exports = (router) => {
     const editAuthority = Authority.NAME.editReferrers;
 
     async function checkIsCurrentReferrerOrAdmin(referrerId, req, res) {
-        if (await authoritiesController.hasAuthority(req, res, readAuthority)) {
+        if (await authoritiesController.hasAuthority(req.user.id, readAuthority)) {
             return;
         }
         

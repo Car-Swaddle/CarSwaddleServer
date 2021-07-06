@@ -124,6 +124,9 @@ AccountCreation.prototype.completeMechanicCreationOrUpdate = function (user, rem
 }
 
 function stripeCreateDict(ip, email, firstName, lastName) {
+    if (ip.startsWith("fe80::")) { // fe80:: is a local ipv6 address
+        ip = 'f7af:42da:51c6:7eb0:a076:8bea:7fb0:eb77'; // Randomly generated 
+    }
     return {
         country: 'US',
         type: 'custom',
@@ -132,7 +135,6 @@ function stripeCreateDict(ip, email, firstName, lastName) {
             ip: ip
         },
         business_type: 'individual',
-        requested_capabilities: ['platform_payments'], // This appears to be removed in new api and replaced with `capabilities`
         capabilities: {
             transfers: { // renaming of 'platform_payments' for new api version
                 requested: true

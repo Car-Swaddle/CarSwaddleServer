@@ -15,7 +15,7 @@ module.exports = function (router, models) {
 
     // TODO - move this down to controller level, duplicate of referrer api
     async function checkIsCurrentReferrerOrAdmin(referrerId, req, res) {
-        if (await authoritiesController.hasAuthority(req, res, models.Authority.NAME.readReferrers)) {
+        if (await authoritiesController.hasAuthority(req.user.id, models.Authority.NAME.readReferrers)) {
             return;
         }
         
@@ -49,23 +49,29 @@ module.exports = function (router, models) {
 
         if (isReferrer) {
             // Post confirm with code to stripe
-            const response = await axios.post("https://connect.stripe.com/oauth/token",
-                queryString.stringify({
-                    grant_type: 'authorization_code',
-                    client_id: constants.STRIPE_CONNECT_CLIENT_ID,
-                    client_secret: constants.STRIPE_SECRET_KEY,
-                    code: req.query.code
-                }),
-                { headers: {'Content-Type': 'application/x-www-form-urlencoded'} }
-            );
-
-            if (!response || response.error || !response.data) {
-                throw "Missing data in stripe response";
+            const query = queryString.stringify({
+                grant_type: 'authorization_code',
+                client_id: constants.STRIPE_CONNECT_CLIENT_ID,
+                client_secret: constants.STRIPE_SECRET_KEY,
+                code: req.query.code
+            })
+            try {
+                const response = await axios.post("https://connect.stripe.com/oauth/token",
+                    query,
+                    { headers: {'Content-Type': 'application/x-www-form-urlencoded'} }
+                );
+                if (!response || response.error || !response.data) {
+                    throw "Missing data in stripe response";
+                }
+                const stripeAccountID = response.data.stripe_user_id;
+                
+                const referrer = await referrerController.createReferrerForUserWithExistingStripeAccount(req.user.id, stripeAccountID);
+                res.json(referrer);
             }
-            const stripeAccountID = response.data.stripe_user_id;
-            
-            const referrer = await referrerController.createReferrerForUserWithExistingStripeAccount(req.user.id, stripeAccountID);
-            res.json(referrer);
+            catch(err) {
+                console.log(err)
+                return res.sendStatus(err.status || 400);
+            }
         } else {
             // Unhandled, might use for mechanic in the future
             res.sendStatus(400);

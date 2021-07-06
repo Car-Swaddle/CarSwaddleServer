@@ -11,9 +11,6 @@
       "protocol": "auto",
       "port": 9229,
       "restart": true,
-      // "skipFiles": [
-      //   "<node_internals>/**/*.js",
-      // ]
     },
     {
       "type": "node",

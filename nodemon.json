@@ -6,9 +6,11 @@
     "env": {
       "LOCAL_S3": "true",
       "STRIPE_LIVE": "NO",
-      "NO_EMAIL": "true",
+      "NO_EMAIL": "false",
       "ENV": "dev",
-      "PUBLIC_URL": "http://localhost:3001"
+      "PUBLIC_URL": "http://localhost:3001",
+      "BRANCH_API_KEY": "key_test_gmPgHCvQlmYytFwzpINsnefhFuiysbC9",
+      "BRANCH_APP_ID": "618696658221289799"
     },
     "inspect": "true"
   }
