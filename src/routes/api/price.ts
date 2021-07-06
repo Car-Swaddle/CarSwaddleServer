@@ -15,7 +15,7 @@ module.exports = function (router: Router) {
         error?: RedemptionError,
         coupon?: CouponModel,
         giftCard?: GiftCardModel,
-        redeemMessages?: string[],
+        redeemMessage?: string,
     }
 
     router.get('/codes/:code', json()), async function (req: Request<{code: string}, {}, {}, {mechanicID?: string}>, res: Response<CodeCheckResponse>) {
@@ -44,7 +44,7 @@ module.exports = function (router: Router) {
             if (coupon.discountBookingFee) {
                 redeemMessages.push("$0 booking fee");
             }
-            return res.send({coupon, redeemMessages});
+            return res.send({coupon, redeemMessage: redeemMessages.join(', ')});
         }
         return res.status(422).send({ error });
     }
