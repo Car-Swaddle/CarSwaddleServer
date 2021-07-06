@@ -28,6 +28,12 @@
   color: #61dafb;
 }
 
+.button {
+  background: red;
+  border-radius: 8px;
+  color: white;
+}
+
 @keyframes App-logo-spin {
   from {
     transform: rotate(0deg);

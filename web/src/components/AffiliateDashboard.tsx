@@ -11,6 +11,8 @@ export default function AffiliateDashboard() {
     const [requestingDashboard, setRequestingDashboard] = React.useState<boolean>(false);
     const [stripeDashboardLink, setStripeDashboardLink] = React.useState<string | null>();
 
+    const [didCopyLink, setDidCopyLink] = React.useState<boolean>(false);
+
     React.useEffect(() => {
         if (referrer && referrer.vanityID) {
             const linkBase = process.env.REACT_APP_ENV === "production" ? "go.carswaddle.com/" : "carswaddle.test-app.link/";
@@ -28,6 +30,11 @@ export default function AffiliateDashboard() {
         }
     }, [referrer])
 
+    function copyLink(vanityLink: string) {
+        navigator.clipboard.writeText(vanityLink);
+        setDidCopyLink(true);
+    }
+
     return (
         <Container>
             <Row>
@@ -38,7 +45,11 @@ export default function AffiliateDashboard() {
             <Row className="my-4">
                 <Col>
                 {vanityLink ?
-                    <h4 className="text-center">Your affiliate link is <a href={`https://${vanityLink}`}>{vanityLink}</a> </h4>
+                    <h4 className="text-center">Your affiliate link is <a href={`https://${vanityLink}`}>{vanityLink} </a>
+                     <button 
+                    onClick={() => copyLink(vanityLink) }>
+                    {didCopyLink ? "Copied" : "Copy"}
+                  </button> </h4>
                     :
                     <h4 className="text-center">Unable to generate your affiliate link, please contact <a href="mailto:support@carswaddle.com">support@carswaddle.com</a></h4>
                 }
