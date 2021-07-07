@@ -15,7 +15,7 @@ export default function StripeLanding({finishedAuth}: StripeLandingProps) {
 
     function generate() {
         const user = UserContext.getCurrentUser();
-        if (!user) {
+        if (authorizeURI.length || !user) {
             return;
         }
         let parameters = {
@@ -60,7 +60,7 @@ export default function StripeLanding({finishedAuth}: StripeLandingProps) {
                 console.warn("No code found");
             }
         }
-    })
+    }, [requestedCode, authorizeURI]);
     
 
     return (

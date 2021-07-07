@@ -22,7 +22,7 @@ export default function App() {
     <Container>
         <Row>
             <Col>
-                <div className="mt-4 mb-3 text-center"><img src={`/img/cs-logo.png`} style={{maxWidth: "300px"}}/></div>
+                <div className="mt-4 mb-3 text-center"><img src={`/img/cs-logo.png`} style={{maxWidth: "300px"}} alt="Car Swaddle"/></div>
             </Col>
         </Row>
         <Row>

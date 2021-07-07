@@ -37,7 +37,7 @@ function login(email: string, password: string) {
 
 function logout() {
     // Delete cookie
-    document.cookie = "cw-jwt" +'=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+    document.cookie = "cw-jwt=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;";
     // Move to login page
     // history.replaceState({}, "Login", "/login");
 }

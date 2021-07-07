@@ -6,13 +6,13 @@ import React from 'react';
 
 export default function AffiliateDashboard() {
 
-    const [referrer, setReferrer] = React.useState<Referrer | null>(UserContext.getCurrentReferrer());
+    const [referrer] = React.useState<Referrer | null>(UserContext.getCurrentReferrer());
     const [vanityLink, setVanityLink] = React.useState<string>("");
     const [requestingDashboard, setRequestingDashboard] = React.useState<boolean>(false);
     const [stripeDashboardLink, setStripeDashboardLink] = React.useState<string | null>();
 
     React.useEffect(() => {
-        if (referrer && referrer.vanityID) {
+        if (referrer && referrer.vanityID && !requestingDashboard) {
             const linkBase = process.env.REACT_APP_ENV === "production" ? "go.carswaddle.com/" : "carswaddle.test-app.link/";
             setVanityLink(`${linkBase}${referrer.vanityID}`)
             if (!stripeDashboardLink && !requestingDashboard) {
@@ -26,7 +26,7 @@ export default function AffiliateDashboard() {
                 setRequestingDashboard(true);
             }
         }
-    }, [referrer])
+    }, [referrer, vanityLink, requestingDashboard, stripeDashboardLink])
 
     return (
         <Container>
@@ -49,7 +49,7 @@ export default function AffiliateDashboard() {
                 {stripeDashboardLink ?
                     <h4 className="text-center"><a href={stripeDashboardLink}>Stripe dashboard <i className="fas fa-arrow-right"></i></a></h4>
                     :
-                    <h4 className="text-center"></h4>
+                    <div></div>
                 }
                 </Col>
             </Row>
