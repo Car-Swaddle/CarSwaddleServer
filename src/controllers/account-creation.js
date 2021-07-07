@@ -36,7 +36,7 @@ AccountCreation.prototype.findOrCreateOilChangePricing = function (mechanic, cal
     this.models.OilChangePricing.findOrCreate({
         where: { mechanicID: mechanic.id },
         defaults: { id: uuidV1() }
-    }).spread(function (oilChangePricing, created) {
+    }).then(([oilChangePricing, created]) => {
         if (oilChangePricing.mechanicID == mechanic.id) {
             callback(null, oilChangePricing);
         } else {
@@ -81,7 +81,7 @@ AccountCreation.prototype.findOrCreateMechanic = function (user, callback) {
     this.models.Mechanic.findOrCreate({
         where: { userID: user.id },
         defaults: { isActive: true, id: uuidV1() }
-    }).spread(function (mechanic, created) {
+    }).then(([mechanic, created]) => {
         if (created) {
             user.setMechanic(mechanic).then(function () {
                 callback(user, mechanic, created);

@@ -17,10 +17,8 @@ module.exports = function (app, models) {
 
     app.post('/stripe-webhook-connect', bodyParser.raw({ type: '*/*' }), async function (req, res) {
         var event = eventFromReq(req, true);
-        // var event = req.body
 
-        console.log('stripe webhook');
-        console.log(event);
+        console.log('stripe webhook connect ' + JSON.stringify(event));
 
         const stripeAccountID = event.account;
 
@@ -31,37 +29,37 @@ module.exports = function (app, models) {
         if (event.type == eventTypes.PAYOUT_PAID) {
             const amount = event.data.object.amount;
             if (stripeAccountID != null && amount != null) {
-                findMechanicWithStripeID(stripeAccountID).then(mechanic => {
-                    if (mechanic == null) {
-                        return res.json({ received: true });
-                    }
-                    const dollars = dollarFormat(amount);
-                    const alert = 'A deposit was paid of $' + dollars;
-                    const title = 'Deposit: $' + dollars;
-                    pushService.sendMechanicNotification(mechanic, alert, null, null, title);
+                const mechanic = await findMechanicWithStripeID(stripeAccountID)
 
-                    stripeCharges.performPayoutDebits(mechanic, function (error) {
-                        console.log(error);
-                    });
-
+                if (mechanic == null) {
                     return res.json({ received: true });
+                }
+                const dollars = dollarFormat(amount);
+                const alert = 'A deposit was paid of $' + dollars;
+                const title = 'Deposit: $' + dollars;
+                pushService.sendMechanicNotification(mechanic, alert, null, null, title);
+
+                stripeCharges.performPayoutDebits(mechanic, function (error) {
+                    console.log(error);
                 });
+
+                return res.json({ received: true });
             }
         } else if (event.type == eventTypes.PAYOUT_CANCELED) {
 
         } else if (event.type == eventTypes.PAYOUT_CREATED) {
             const amount = event.data.object.amount;
             if (stripeAccountID != null && amount != null) {
-                findMechanicWithStripeID(stripeAccountID).then(mechanic => {
-                    if (mechanic == null) {
-                        return res.json({ received: true });
-                    }
-                    const dollars = dollarFormat(amount);
-                    const alert = 'A Deposit was scheduled. $' + dollars;
-                    const title = 'Deposit: $' + dollars;
-                    pushService.sendMechanicNotification(mechanic, alert, null, null, title);
+                const mechanic = await findMechanicWithStripeID(stripeAccountID)
+
+                if (mechanic == null) {
                     return res.json({ received: true });
-                });
+                }
+                const dollars = dollarFormat(amount);
+                const alert = 'A Deposit was scheduled. $' + dollars;
+                const title = 'Deposit: $' + dollars;
+                pushService.sendMechanicNotification(mechanic, alert, null, null, title);
+                return res.json({ received: true });
             }
         } else if (event.type == eventTypes.PAYOUT_FAILED) {
             const payoutID = event.data.object.id;
@@ -121,8 +119,7 @@ module.exports = function (app, models) {
         var event = eventFromReq(req, false);
         // var event = req.body
 
-        console.log('stripe webhook');
-        console.log(event);
+        console.log('stripe webhook ' + JSON.stringify(event));
 
         if (event == null) {
             return res.status(200).send();
