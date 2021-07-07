@@ -1,10 +1,9 @@
 import { json, Request, Response, Router } from 'express';
 import { calculatePrices } from '../../controllers/billing-calculations';
-import models from '../../models';
-import { GiftCard, Coupon } from '../../models';
+import models, { GiftCard, Coupon } from '../../models';
 import { Op } from 'sequelize';
 import { CouponModel } from '../../models/coupon';
-import { OilType, RedemptionError, UserRequest } from '../../models/types';
+import { OilType, RedemptionError } from '../../models/types';
 import { GiftCardModel } from '../../models/giftCard';
 
 module.exports = function (router: Router) {
@@ -18,7 +17,7 @@ module.exports = function (router: Router) {
         redeemMessage?: string,
     }
 
-    router.get('/codes/:code', json()), async function (req: Request<{code: string}, {}, {}, {mechanicID?: string}>, res: Response<CodeCheckResponse>) {
+    router.get('/price/codes/:code', json(), async function (req: Request<{code: string}, {}, {}, {mechanicID?: string}>, res: Response<CodeCheckResponse>) {
         const code = req.params.code;
 
         if (!code) {
@@ -33,7 +32,8 @@ module.exports = function (router: Router) {
             } else if (giftCard.remainingBalance <= 0) {
                 giftCardError = RedemptionError.DEPLETED_REDEMPTIONS;
             } else {
-                return res.send({giftCard, redeemMessage: `Gift card with $${giftCard.remainingBalance} balance`});
+                const noDecimal = giftCard.remainingBalance % 100 === 0;
+                return res.send({giftCard, redeemMessage: `$${(giftCard.remainingBalance / 100.0).toFixed(noDecimal ? 0 : 2)} gift card`});
             }
         }
 
@@ -41,7 +41,7 @@ module.exports = function (router: Router) {
         if (coupon) {
             const redeemMessages = [];
             if (coupon.amountOff) {
-                const noDecimal = coupon.amountOff % 100 > 0;
+                const noDecimal = coupon.amountOff % 100 === 0;
                 redeemMessages.push(`$${(coupon.amountOff / 100.0).toFixed(noDecimal ? 0 : 2)} off`);
             }
             if (coupon.percentOff) {
@@ -53,7 +53,7 @@ module.exports = function (router: Router) {
             return res.send({coupon, redeemMessage: redeemMessages.join(', ')});
         }
         return res.status(422).send({ error: giftCardError ?? couponError });
-    }
+    });
 
     interface Address {
         longitude: number,

@@ -24,7 +24,7 @@ if(process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'staging') 
             next()
         }
     })
-  }
+}
 
 express.static.mime.define({'application/pkcs7-mime': ['apple-app-site-association']});
 express.static.mime.define({'application/pkcs7-mime': ['.well-known/apple-app-site-association']});
@@ -40,13 +40,5 @@ app.use(express.static(path.join(__dirname, '../build/public')));
 app.get('/*', (_, res) => {
     res.sendFile(path.join(__dirname, '../build/public/index.html'));
 })
-
-var port = process.env.PORT;
-if (port == null || port == "") {
-    port = "3000";
-}
-app.listen(port);
-
-console.log('working on ' + port);
 
 module.exports = app;
