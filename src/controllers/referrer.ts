@@ -73,7 +73,7 @@ module.exports = class ReferrerController {
 
     async createReferrer(referrer: ReferrerModel) {
         // Generate short id designed to be shared
-        referrer.id = Util.generateRandomHex(4);
+        referrer.id = Util.generateFiveCharacterReadableID();
         if (!referrer.vanityID) {
             referrer.vanityID = referrer.id;
         }
@@ -90,7 +90,7 @@ module.exports = class ReferrerController {
             throw "Missing user id or stripe account id"
         }
 
-        const referrerID = Util.generateRandomHex(4);
+        const referrerID = Util.generateFiveCharacterReadableID();
         const [referrer, created] = await Referrer.findOrCreate({
             where: { userID: userID },
             defaults: {

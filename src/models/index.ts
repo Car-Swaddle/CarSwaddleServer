@@ -4,10 +4,11 @@ import { ReferrerFactory } from './referrer';
 import { Models } from './types'
 import Umzug from 'umzug';
 import vehicle from "./vehicle";
+import { GiftCardFactory } from './giftCard';
 const Reminder = require('../notifications/reminder.js');
 const logger = require('pino')()
 
-var sequelize = null;
+let sequelize: Sequelize;
 
 if (process.env.DATABASE_URL) {
   // the application is executed on Heroku
@@ -88,11 +89,11 @@ const Coupon = require('./coupon')(sequelize, DataTypes);
 // Typescript model definitions
 const PayStructure = PayStructureFactory(sequelize);
 const Referrer = ReferrerFactory(sequelize);
+const GiftCard = GiftCardFactory(sequelize);
 
 // Typescript model relationships
-//   Note: only one side of relationship required, prefer defining belongs side (belongsTo, belongsToMany)
 PayStructure.belongsTo(Referrer, {
-  foreignKey: "referrerID"
+  foreignKey: "referrerID",
 });
 Referrer.belongsTo(User, {
   foreignKey: "userID",
@@ -106,6 +107,7 @@ const models: Models = {
   sequelize,
   PayStructure,
   Referrer,
+  GiftCard,
 
   User,
   AutoService,
@@ -146,22 +148,25 @@ Object.entries(models).forEach(([key, model]) => {
   }
 });
 
-const umzug = new Umzug({
-  migrations: {
-    path: __dirname + '/../migrations', // Path from src/models
-    params: [
-      sequelize.getQueryInterface()
-    ]
-  },
-  storage: 'sequelize',
-  storageOptions: { sequelize }
-});
-
-umzug.up().then(() => {
-  console.log("Finished migrations")
-  const reminder = new Reminder(models);
-  reminder.rescheduleRemindersForAllAutoServices();
-})
-.catch((err: Error) => {
-  console.error("Error during migrations: " + err);
-});
+if (process.env.SKIP_MIGRATIONS) {
+  console.info("Skipped migrations")
+} else {
+  const umzug = new Umzug({
+    migrations: {
+      path: __dirname + '/../migrations', // Path from src/models
+      params: [
+        sequelize.getQueryInterface()
+      ]
+    },
+    storage: 'sequelize',
+    storageOptions: { sequelize }
+  });
+  umzug.up().then(() => {
+    console.log("Finished migrations")
+    const reminder = new Reminder(models);
+    reminder.rescheduleRemindersForAllAutoServices();
+  })
+  .catch((err: Error) => {
+    console.error("Error during migrations: " + err);
+  });
+}

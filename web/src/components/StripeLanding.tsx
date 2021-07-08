@@ -13,30 +13,29 @@ export default function StripeLanding({finishedAuth}: StripeLandingProps) {
     const [authorizeURI, setAuthorizeURI] = React.useState("");
     const [requestedCode, setRequestedCode] = React.useState(false);
 
-    function generate() {
-        const user = UserContext.getCurrentUser();
-        if (!user) {
-            return;
-        }
-        let parameters = {
-            client_id: process.env.REACT_APP_ENV === "production" ? "ca_Ev4P3GYnV9zLuKcJAQGSbIc15c614wzV" : "ca_Ev4P1QZsqdxi1oJzS9SrXyooFCGiI4mC",
-            redirect_uri: `${window.location.origin}/affiliate/stripe`,
-
-            // Passing these parameters prefills them in the stripe oauth flow
-            'stripe_user[business_type]': 'individual',
-            'stripe_user[first_name]': user.firstName || undefined,
-            'stripe_user[last_name]': user.lastName || undefined,
-            'stripe_user[phone_number]': user.phoneNumber || undefined,
-            'stripe_user[email]': user.email || undefined,
-            'stripe_user[country]': "US",
-            'stripe_user[product_description]': "Car Swaddle referral program. Individuals may receive compensation for customers that download the Car Swaddle app and purchase an oil change. Terms and conditions related to both the eligibility to receive and amount of compensation are governed by the agreement that individual enters into with Car Swaddle."
-        };
-
-        const uri = 'https://connect.stripe.com/express/oauth/authorize?' + querystring.stringify(parameters);
-        setAuthorizeURI(uri);
-    }
-
     React.useEffect(() => {
+        function generate() {
+            const user = UserContext.getCurrentUser();
+            if (authorizeURI.length || !user) {
+                return;
+            }
+            let parameters = {
+                client_id: process.env.REACT_APP_ENV === "production" ? "ca_Ev4P3GYnV9zLuKcJAQGSbIc15c614wzV" : "ca_Ev4P1QZsqdxi1oJzS9SrXyooFCGiI4mC",
+                redirect_uri: `${window.location.origin}/affiliate/stripe`,
+    
+                // Passing these parameters prefills them in the stripe oauth flow
+                'stripe_user[business_type]': 'individual',
+                'stripe_user[first_name]': user.firstName || undefined,
+                'stripe_user[last_name]': user.lastName || undefined,
+                'stripe_user[phone_number]': user.phoneNumber || undefined,
+                'stripe_user[email]': user.email || undefined,
+                'stripe_user[country]': "US",
+                'stripe_user[product_description]': "Car Swaddle referral program. Individuals may receive compensation for customers that download the Car Swaddle app and purchase an oil change. Terms and conditions related to both the eligibility to receive and amount of compensation are governed by the agreement that individual enters into with Car Swaddle."
+            };
+    
+            const uri = 'https://connect.stripe.com/express/oauth/authorize?' + querystring.stringify(parameters);
+            setAuthorizeURI(uri);
+        }
         generate();
 
         if (window.location.search && !requestedCode) {
@@ -60,7 +59,7 @@ export default function StripeLanding({finishedAuth}: StripeLandingProps) {
                 console.warn("No code found");
             }
         }
-    })
+    }, [requestedCode, authorizeURI, finishedAuth]);
     
 
     return (

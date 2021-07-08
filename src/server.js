@@ -4,7 +4,7 @@ const constants = require('./controllers/constants');
 const stripe = require("stripe")(constants.STRIPE_SECRET_KEY);
 const pino = require('pino-http')(require('./util/pino-config'));
 const cookieParser = require('cookie-parser');
-const { reservationsUrl } = require('twilio/lib/jwt/taskrouter/util');
+const path = require('path');
 
 stripe.setAppInfo({
     name: "Car Swaddle Server Stripe Library",
@@ -34,33 +34,11 @@ const passport = require('./passport')(models);
 require('./routes')(app, models, passport);
 
 // Serve all static assets (.well-known, web app assets)
-app.use(express.static(__dirname + '/public'));
+app.use(express.static(path.join(__dirname, '../build/public')));
 
 // Fallback to serving web app for all other unknown paths
 app.get('/*', (_, res) => {
-    res.sendFile(__dirname + '/public/index.html');
+    res.sendFile(path.join(__dirname, '../build/public/index.html'));
 })
 
-var port = process.env.PORT;
-if (port == null || port == "") {
-    port = "3000";
-}
-app.listen(port);
-
-console.log('working on ' + port);
-
-// Gracefully handle heroku reboots
-process.on('SIGTERM', shutdown('SIGTERM')).on('SIGINT', shutdown('SIGINT')).on('uncaughtException', shutdown('uncaughtException'));
-
-function shutdown(signal) {
-    return (err) => {
-        console.log(`${ signal }...`);
-        if (err) { console.error(err.stack || err) };
-        setTimeout(() => {
-            console.log('...waited 10s, exiting.');
-            process.exit(err ? 1 : 0);
-        }, 10_000).unref();
-    };
-}
-
-process.on('warning', e => {console.warn(e.message); console.warn(e.stack)});
+module.exports = app;

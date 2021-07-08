@@ -39,14 +39,5 @@
         "<node_internals>/**/*.js",
       ]
     },
-    {
-      "type": "node",
-      "request": "launch",
-      "name": "Debug",
-      "program": "${workspaceFolder}/src/server.js",
-      "env": {
-        "ENV": "dev"
-      }
-    }
   ]
 }

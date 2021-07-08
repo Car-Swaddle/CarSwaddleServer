@@ -5,7 +5,8 @@ const pushService = require('../../notifications/pushNotifications.js');
 const bodyParser = require('body-parser');
 const constants = require('../../controllers/constants');
 const stripe = require('stripe')(constants.STRIPE_SECRET_KEY);
-const { VehicleService } = require('../../controllers/vehicle')
+const { VehicleService } = require('../../controllers/vehicle');
+const billingCalculations = require('../../controllers/billing-calculations');
 
 module.exports = function (router, models) {
 
@@ -13,7 +14,6 @@ module.exports = function (router, models) {
     const emailer = new emailFile(models);
 
     const autoServiceScheduler = require('../../controllers/auto-service-scheduler.js')(models);
-    const billingCalculations = require('../../controllers/billing-calculations')(models);
     const taxes = require('../../controllers/taxes')(models);
     const vehicleService = new VehicleService();
     const stripeCharges = require('../../controllers/stripe-charges.js')(models);
@@ -283,6 +283,7 @@ module.exports = function (router, models) {
             locationID,
             notes,
             couponID,
+            giftCardCodes,
         } = req.body;
 
         const usePaymentIntent = req.query.usePaymentIntent || req.user.activeReferrerID || false;
@@ -322,21 +323,24 @@ module.exports = function (router, models) {
 
         if (usePaymentIntent && req.user.activeReferrerID) {
             req.log.info("Using payment intent and found active referrer, validating")
+            referrerID = req.user.activeReferrerID;
             const referrer = await models.Referrer.findByPk(req.user.activeReferrerID);
-            referrerID = referrer.id;
-
+            if (!referrer) {
+                removeActiveReferrer = true;
+            }
+            
             var removeActiveReferrer = false;
-            if (referrer.userID && req.user.id == referrer.userID) {
+            if (referrer?.userID && req.user.id == referrer.userID) {
                 removeActiveReferrer = true;
             }
 
             const referrerCoupon = referrer.activeCouponID ? (await models.Coupon.findByPk(referrer.activeCouponID)) : null;
-            const referrerPayStructure = referrer.activePayStructureID ? (await models.PayStructure.findByPk(referrer.activePayStructureID)) : null;
             if (referrerCoupon && !finalCoupon) {
                 finalCoupon = referrerCoupon;
             }
 
             // Still valid referrer for future purchases but can't use pay structure for this one if coupon applied
+            const referrerPayStructure = referrer?.activePayStructureID ? (await models.PayStructure.findByPk(referrer.activePayStructureID)) : null;
             const canUsePayStructure = !finalCoupon || referrerPayStructure.getPaidEvenIfCouponIsApplied === true;
             if (referrerPayStructure && canUsePayStructure) {
 
@@ -386,12 +390,12 @@ module.exports = function (router, models) {
             }
         }
 
-        const taxMetadata = await taxes.taxMetadataForLocation(location);
-        const prices = await billingCalculations.calculatePrices(mechanic, location, oilType, vehicleID, finalCoupon, taxMetadata);
+        const prices = await billingCalculations.calculatePrices(mechanic, location, oilType, finalCoupon, giftCardCodes, vehicleID);
 
+        const taxMetadata = await taxes.taxMetadataForLocation(location);
         autoServiceScheduler.scheduleAutoService(req.user, status, scheduledDate, vehicleID, mechanicID, sourceID,
             prices, oilType, serviceEntities, address, locationID, taxMetadata.rate,
-            finalCoupon ? finalCoupon.id : null, payStructure ? payStructure.id : null, referrerID, usePaymentIntent, notes, function (err, autoService) {
+            finalCoupon?.id, payStructure?.id, referrerID, usePaymentIntent, notes, function (err, autoService) {
             if (!err) {
                 return res.json(autoService);
             } else {
