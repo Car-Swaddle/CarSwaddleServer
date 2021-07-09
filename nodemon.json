@@ -8,8 +8,7 @@
       "STRIPE_LIVE": "NO",
       "NO_EMAIL": "true",
       "ENV": "dev",
-      "PUBLIC_URL": "http://localhost:3001",
-      "TS_NODE_TRANSPILE_ONLY": "true"
+      "PUBLIC_URL": "http://localhost:3001"
     },
     "inspect": "true"
   }
