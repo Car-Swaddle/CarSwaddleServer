@@ -1,4 +1,4 @@
-import * as app from "./server";
+import { app } from "./server";
 
 var port = process.env.PORT;
 if (port == null || port == "") {
@@ -17,7 +17,7 @@ function signalListener(): (signal: NodeJS.Signals) => void {
         setTimeout(() => {
             console.log('...waited 10s, exiting.');
             process.exit(0);
-        }, 10_000).unref();
+        }, 1_000).unref();
     };
 }
 
