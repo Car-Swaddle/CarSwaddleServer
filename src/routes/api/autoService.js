@@ -7,6 +7,7 @@ const constants = require('../../controllers/constants');
 const stripe = require('stripe')(constants.STRIPE_SECRET_KEY);
 const { VehicleService } = require('../../controllers/vehicle');
 const billingCalculations = require('../../controllers/billing-calculations');
+const { Op } = require('sequelize');
 
 module.exports = function (router, models) {
 
@@ -295,12 +296,14 @@ module.exports = function (router, models) {
             location,
             mechanic,
             requestCoupon,
+            giftCards,
             inTimeSlot,
             isAlreadyScheduled,
         ] = await Promise.all([
             models.Location.findBySearch(locationID, address),
             models.Mechanic.findByPk(mechanicID),
             models.Coupon.findByPk(couponID),
+            (giftCardCodes && giftCardCodes.length) ? await GiftCard.findAll({where: {code: {[Op.in]: giftCardCodes}}}) : Promise.resolve([]),
             autoServiceScheduler.isDateInMechanicSlot(scheduledDate, req.user, mechanicID),
             autoServiceScheduler.isDatePreviouslyScheduled(scheduledDate, req.user, mechanicID)
         ]);
@@ -390,12 +393,12 @@ module.exports = function (router, models) {
             }
         }
 
-        const prices = await billingCalculations.calculatePrices(mechanic, location, oilType, finalCoupon, giftCardCodes, vehicleID);
+        const prices = await billingCalculations.calculatePrices(mechanic, location, oilType, finalCoupon, giftCards, vehicleID);
 
         const taxMetadata = await taxes.taxMetadataForLocation(location);
         autoServiceScheduler.scheduleAutoService(req.user, status, scheduledDate, vehicleID, mechanicID, sourceID,
             prices, oilType, serviceEntities, address, locationID, taxMetadata.rate,
-            finalCoupon?.id, payStructure?.id, referrerID, usePaymentIntent, notes, function (err, autoService) {
+            finalCoupon?.id, giftCards, payStructure?.id, referrerID, usePaymentIntent, notes, function (err, autoService) {
             if (!err) {
                 return res.json(autoService);
             } else {
