@@ -23,7 +23,7 @@ module.exports = {
             )
         `;
 
-        return Promise.all(queryInterface.sequelize.query(giftCardTableSQL), queryInterface.sequelize.query(giftCardTransactionTableSQL));
+        return Promise.all([queryInterface.sequelize.query(giftCardTableSQL), queryInterface.sequelize.query(giftCardTransactionTableSQL)]);
     },
 
     async down() {
