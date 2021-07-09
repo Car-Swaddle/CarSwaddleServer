@@ -3,6 +3,7 @@
   "version": "1.4.7",
   "main": "passport.js",
   "dependencies": {
+    "@tsconfig/recommended": "^1.0.1",
     "apn": "^2.2.0",
     "aws-sdk": "^2.644.0",
     "axios": "^0.21.1",
@@ -44,7 +45,6 @@
     "uuid": "^3.3.2"
   },
   "devDependencies": {
-    "@tsconfig/recommended": "^1.0.1",
     "@types/better-sqlite3": "^5.4.0",
     "@types/chai": "^4.2.11",
     "@types/express": "^4.17.3",
