@@ -34,11 +34,12 @@ const passport = require('./passport')(models);
 require('./routes')(app, models, passport);
 
 // Serve all static assets (.well-known, web app assets)
-app.use(express.static(path.join(__dirname, '../build/public')));
+const basePath = path.join(__dirname, '../build/public');
+app.use(express.static(basePath));
 
 // Fallback to serving web app for all other unknown paths
 app.get('/*', (_, res) => {
-    res.sendFile(path.join(__dirname, '../build/public/index.html'));
+    res.sendFile(basePath + '/index.html');
 })
 
-module.exports = app;
+module.exports = { app };

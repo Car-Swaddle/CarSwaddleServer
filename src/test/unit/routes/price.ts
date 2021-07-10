@@ -6,7 +6,7 @@ import { Coupon, GiftCard, User } from "../../../models";
 import { GiftCardModel } from "../../../models/giftCard";
 import { FindOptions } from "sequelize";
 import { RedemptionError } from '../../../models/types';
-const app = require('../../../server');
+import { app } from '../../../server';
 const server = app.listen();
 
 describe("Billing Calculations", function() {

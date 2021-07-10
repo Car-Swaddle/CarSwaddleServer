@@ -1,4 +1,4 @@
-import * as app from "./server";
+import { app } from "./server";
 
 var port = process.env.PORT;
 if (port == null || port == "") {

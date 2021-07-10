@@ -1211,6 +1211,11 @@
   resolved "https://registry.yarnpkg.com/@firebase/app-types/-/app-types-0.6.1.tgz#dcbd23030a71c0c74fc95d4a3f75ba81653850e9"
   integrity sha512-L/ZnJRAq7F++utfuoTKX4CLBG5YR7tFO3PLzG1/oXXKEezJ0kRL3CMRoueBEmTCzVb/6SIs2Qlaw++uDgi5Xyg==
 
+"@firebase/app-types@^0.6.2":
+  version "0.6.2"
+  resolved "https://registry.yarnpkg.com/@firebase/app-types/-/app-types-0.6.2.tgz#8578cb1061a83ced4570188be9e225d54e0f27fb"
+  integrity sha512-2VXvq/K+n8XMdM4L2xy5bYp2ZXMawJXluUIDzUBvMthVR+lhxK4pfFiqr1mmDbv9ydXvEAuFsD+6DpcZuJcSSw==
+
 "@firebase/auth-interop-types@0.1.5":
   version "0.1.5"
   resolved "https://registry.yarnpkg.com/@firebase/auth-interop-types/-/auth-interop-types-0.1.5.tgz#9fc9bd7c879f16b8d1bb08373a0f48c3a8b74557"
@@ -13343,20 +13348,21 @@ tweetnacl@^0.14.3, tweetnacl@~0.14.0:
   resolved "https://registry.yarnpkg.com/tweetnacl/-/tweetnacl-0.14.5.tgz#5ae68177f192d4456269d108afa93ff8743f4f64"
   integrity sha1-WuaBd/GS1EViadEIr6k/+HQ/T2Q=
 
-twilio@^3.41.1:
-  version "3.54.1"
-  resolved "https://registry.yarnpkg.com/twilio/-/twilio-3.54.1.tgz#d42be0a920d618f756faba46306a69c987f05813"
-  integrity sha512-rUlEGFNAmmnaxYsWvoTib77eycOCIfncveh6SvP3+RbbKpos2wuzhLy0p1gm8FQSAZvjAm2xNVWi5oJRRF8Ueg==
+twilio@^3.65.0:
+  version "3.65.0"
+  resolved "https://registry.yarnpkg.com/twilio/-/twilio-3.65.0.tgz#c1b67c7d7494b2d68b3c5ce66936a97d05e3d950"
+  integrity sha512-NCktK8H5JqFvIOJjKmxheNHsGFBQh0dhVJYCASpVLPw1/XvurwhpCFIyvufr+jmHPdMwu2UMpq6ERDC7Ya6qVg==
   dependencies:
-    axios "^0.19.2"
+    axios "^0.21.1"
     dayjs "^1.8.29"
+    https-proxy-agent "^5.0.0"
     jsonwebtoken "^8.5.1"
-    lodash "^4.17.19"
+    lodash "^4.17.21"
     q "2.0.x"
     qs "^6.9.4"
     rootpath "^0.1.2"
     scmp "^2.1.0"
-    url-parse "^1.4.7"
+    url-parse "^1.5.0"
     xmlbuilder "^13.0.2"
 
 type-check@^0.4.0, type-check@~0.4.0:
@@ -13628,18 +13634,10 @@ url-parse-lax@^3.0.0:
   dependencies:
     prepend-http "^2.0.0"
 
-url-parse@^1.4.3, url-parse@^1.5.1:
+url-parse@^1.4.3, url-parse@^1.5.0, url-parse@^1.5.1:
   version "1.5.1"
   resolved "https://registry.yarnpkg.com/url-parse/-/url-parse-1.5.1.tgz#d5fa9890af8a5e1f274a2c98376510f6425f6e3b"
   integrity sha512-HOfCOUJt7iSYzEx/UqgtwKRMC6EU91NFhsCHMv9oM03VJcVo2Qrp8T8kI9D7amFf1cu+/3CEhgb3rF9zL7k85Q==
-  dependencies:
-    querystringify "^2.1.1"
-    requires-port "^1.0.0"
-
-url-parse@^1.4.7:
-  version "1.4.7"
-  resolved "https://registry.yarnpkg.com/url-parse/-/url-parse-1.4.7.tgz#a8a83535e8c00a316e403a5db4ac1b9b853ae278"
-  integrity sha512-d3uaVyzDB9tQoSXFvuSUNFibTd9zxd2bkVrDRvF5TmvWWQwqE4lgYJ5m+x1DbecWkw+LK4RNl2CU1hHuOKPVlg==
   dependencies:
     querystringify "^2.1.1"
     requires-port "^1.0.0"
