@@ -8,13 +8,14 @@ const stripe = require('stripe')(constants.STRIPE_SECRET_KEY);
 const { VehicleService } = require('../../controllers/vehicle');
 const billingCalculations = require('../../controllers/billing-calculations');
 const { Op } = require('sequelize');
+const { AutoServiceScheduler } = require('../../controllers/auto-service-scheduler.js');
 
 module.exports = function (router, models) {
 
     const emailFile = require('../../notifications/email.js');
     const emailer = new emailFile(models);
 
-    const autoServiceScheduler = require('../../controllers/auto-service-scheduler.js')(models);
+    const autoServiceScheduler = new AutoServiceScheduler();
     const taxes = require('../../controllers/taxes')(models);
     const vehicleService = new VehicleService();
     const stripeCharges = require('../../controllers/stripe-charges.js')(models);
@@ -303,7 +304,7 @@ module.exports = function (router, models) {
             models.Location.findBySearch(locationID, address),
             models.Mechanic.findByPk(mechanicID),
             models.Coupon.findByPk(couponID),
-            (giftCardCodes && giftCardCodes.length) ? await GiftCard.findAll({where: {code: {[Op.in]: giftCardCodes}}}) : Promise.resolve([]),
+            (giftCardCodes && giftCardCodes.length) ? await models.GiftCard.findAll({where: {code: {[Op.in]: giftCardCodes}}}) : Promise.resolve([]),
             autoServiceScheduler.isDateInMechanicSlot(scheduledDate, req.user, mechanicID),
             autoServiceScheduler.isDatePreviouslyScheduled(scheduledDate, req.user, mechanicID)
         ]);

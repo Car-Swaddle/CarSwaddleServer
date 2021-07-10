@@ -8,12 +8,9 @@ const { DateTime } = require('luxon');
 const reminderFile = require('../notifications/reminder.js');
 const stripeChargesFile = require('../controllers/stripe-charges.js');
 const emailFile = require('../notifications/email.js');
+const models = require('../models');
 
-module.exports = function (models) {
-    return new AutoServiceScheduler(models);
-};
-
-function AutoServiceScheduler(models) {
+export function AutoServiceScheduler() {
     this.models = models;
     this.reminder = new reminderFile(models);
     this.stripeCharges = stripeChargesFile(models);

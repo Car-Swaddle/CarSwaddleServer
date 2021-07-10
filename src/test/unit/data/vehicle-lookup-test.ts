@@ -1,6 +1,6 @@
 export{}
 const assert = require('chai').assert
-const lookup = require('../../data/vehicle-lookup').VehicleLookup
+const lookup = require('../../../data/vehicle-lookup').VehicleLookup
 
 describe('Vehicle lookup', function() {
     it('Should have years', function() {
