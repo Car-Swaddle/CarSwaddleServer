@@ -49,9 +49,9 @@ export default function AffiliateDashboard() {
             flexWrap: 'wrap'
         },
         copyButton: {
-            width: '20px',
-            height: '20px',
-            stroke: '#F0F',
+            width: '26px',
+            height: '26px',
+            stroke: Colors.brand,
             fill: Colors.brand,
         },
         button: {
@@ -59,7 +59,7 @@ export default function AffiliateDashboard() {
             borderWidth: 0,
         },
         tooltip: {
-            
+
         }
     }
 
@@ -73,7 +73,7 @@ export default function AffiliateDashboard() {
             <Row className="my-4">
                 <Col>
                     {vanityLink ?
-                        <h4 className="text-center">Your affiliate link is <a href={`https://${vanityLink}`}>{vanityLink} </a>
+                        <h4 className="text-center">Your affiliate link is <a href={`https://${vanityLink}`}>{vanityLink}</a>
                             <OverlayTrigger
                                 placement='top'
                                 overlay={
@@ -83,8 +83,11 @@ export default function AffiliateDashboard() {
                                 }
                                 onExited={() => setDidCopyLink(false)}
                             >
-                                <Button style={styles.button} onClick={() => setDidCopyLink(true)}>
-                                    <CopySVG fill={styles.copyButton.fill}/>
+                                <Button style={styles.button} onClick={() => {
+                                    navigator.clipboard.writeText(vanityLink)
+                                    setDidCopyLink(true)
+                                }}>
+                                    <CopySVG fill={styles.copyButton.fill} />
                                 </Button>
                             </OverlayTrigger>
                         </h4>
