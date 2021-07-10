@@ -3,6 +3,10 @@ import { UserContext } from '../services/user-context';
 import { ReferrerService } from '../services/ReferrerService';
 import { Referrer } from '../models';
 import React from 'react';
+import { OverlayTrigger, Overlay, Tooltip, Button } from 'react-bootstrap';
+// import { ReactComponent as CopySVG } from '../resources/copy.svg'
+import Colors from '../resources/Colors'
+import CopySVG from './CopySVG'
 
 export default function AffiliateDashboard() {
 
@@ -35,33 +39,67 @@ export default function AffiliateDashboard() {
         setDidCopyLink(true);
     }
 
+    const styles = {
+        header: {
+            width: '100%'
+        },
+        wrapper: {
+            borderTop: 'black solid 1px',
+            display: 'flex',
+            flexWrap: 'wrap'
+        },
+        copyButton: {
+            width: '20px',
+            height: '20px',
+            stroke: '#F0F',
+            fill: Colors.brand,
+        },
+        button: {
+            backgroundColor: Colors.background,
+            borderWidth: 0,
+        },
+        tooltip: {
+            
+        }
+    }
+
     return (
         <Container>
             <Row>
-                <Col className="my-3" sm={{span: 8, offset: 2}} lg={{span: 6, offset: 3}}>
-                Use the personal link below to invite others to learn more about Car Swaddle and download the app.
+                <Col className="my-3" sm={{ span: 8, offset: 2 }} lg={{ span: 6, offset: 3 }}>
+                    Use the personal link below to invite others to learn more about Car Swaddle and download the app.
                 </Col>
             </Row>
             <Row className="my-4">
                 <Col>
-                {vanityLink ?
-                    <h4 className="text-center">Your affiliate link is <a href={`https://${vanityLink}`}>{vanityLink} </a>
-                     <button 
-                    onClick={() => copyLink(vanityLink) }>
-                    {didCopyLink ? "Copied" : "Copy"}
-                  </button> </h4>
-                    :
-                    <h4 className="text-center">Unable to generate your affiliate link, please contact <a href="mailto:support@carswaddle.com">support@carswaddle.com</a></h4>
-                }
+                    {vanityLink ?
+                        <h4 className="text-center">Your affiliate link is <a href={`https://${vanityLink}`}>{vanityLink} </a>
+                            <OverlayTrigger
+                                placement='top'
+                                overlay={
+                                    <Tooltip id={`click-to-copy`}>
+                                        {didCopyLink ? 'Copied' : 'Click to copy'}
+                                    </Tooltip>
+                                }
+                                onExited={() => setDidCopyLink(false)}
+                            >
+                                <Button style={styles.button} onClick={() => setDidCopyLink(true)}>
+                                    <CopySVG fill={styles.copyButton.fill}/>
+                                </Button>
+                            </OverlayTrigger>
+                        </h4>
+                        :
+                        <h4 className="text-center">Unable to generate your affiliate link, please contact <a href="mailto:support@carswaddle.com">support@carswaddle.com</a></h4>
+                    }
                 </Col>
             </Row>
             <Row className="my-2">
                 <Col>
-                {stripeDashboardLink ?
-                    <h4 className="text-center"><a href={stripeDashboardLink}>Stripe dashboard <i className="fas fa-arrow-right"></i></a></h4>
-                    :
-                    <h4 className="text-center"></h4>
-                }
+                    {stripeDashboardLink ?
+                        <h4 className="text-center"><a href={stripeDashboardLink}>Stripe dashboard <i className="fas fa-arrow-right"></i></a></h4>
+                        :
+                        <h4 className="text-center"></h4>
+                    }
                 </Col>
             </Row>
         </Container>
