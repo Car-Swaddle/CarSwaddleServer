@@ -2,7 +2,8 @@ import { Container, Row, Col } from 'react-bootstrap';
 import { UserContext } from '../services/user-context';
 import { ReferrerService } from '../services/ReferrerService';
 import { Referrer } from '../models';
-import React from 'react';
+import { Transaction } from '../models';
+import React, { useEffect, useState} from 'react';
 import { OverlayTrigger, Overlay, Tooltip, Button } from 'react-bootstrap';
 // import { ReactComponent as CopySVG } from '../resources/copy.svg'
 import Colors from '../resources/Colors'
@@ -10,14 +11,15 @@ import CopySVG from './CopySVG'
 
 export default function AffiliateDashboard() {
 
-    const [referrer, setReferrer] = React.useState<Referrer | null>(UserContext.getCurrentReferrer());
-    const [vanityLink, setVanityLink] = React.useState<string>("");
-    const [requestingDashboard, setRequestingDashboard] = React.useState<boolean>(false);
-    const [stripeDashboardLink, setStripeDashboardLink] = React.useState<string | null>();
+    const [referrer, setReferrer] = useState<Referrer | null>(UserContext.getCurrentReferrer());
+    const [vanityLink, setVanityLink] = useState<string>("");
+    const [requestingDashboard, setRequestingDashboard] = useState<boolean>(false);
+    const [stripeDashboardLink, setStripeDashboardLink] = useState<string | null>();
+    const [transactions, setTransactions] = useState<Array<Transaction> | null>();
 
-    const [didCopyLink, setDidCopyLink] = React.useState<boolean>(false);
+    const [didCopyLink, setDidCopyLink] = useState<boolean>(false);
 
-    React.useEffect(() => {
+    useEffect(() => {
         if (referrer && referrer.vanityID) {
             const linkBase = process.env.REACT_APP_ENV === "production" ? "go.carswaddle.com/" : "carswaddle.test-app.link/";
             setVanityLink(`${linkBase}${referrer.vanityID}`)
@@ -31,12 +33,14 @@ export default function AffiliateDashboard() {
                 requestLink();
                 setRequestingDashboard(true);
             }
+            importTransactions()
         }
-    }, [referrer])
+    }, [referrer, transactions])
 
-    function copyLink(vanityLink: string) {
-        navigator.clipboard.writeText(vanityLink);
-        setDidCopyLink(true);
+    async function importTransactions() {
+        const transactionsJSON = (await ReferrerService.getTransactions(referrer?.id ?? "") as unknown) as Transaction[]
+        var transactions: Array<Transaction> = []
+        setTransactions(transactionsJSON)
     }
 
     const styles = {
@@ -67,7 +71,10 @@ export default function AffiliateDashboard() {
         <Container>
             <Row>
                 <Col className="my-3" sm={{ span: 8, offset: 2 }} lg={{ span: 6, offset: 3 }}>
-                    Use the personal link below to invite others to learn more about Car Swaddle and download the app.
+                    Use your personal link below to invite others to learn more about Car Swaddle and download the app.
+                </Col>
+                <Col className="my-3" sm={{ span: 8, offset: 2 }} lg={{ span: 6, offset: 3 }}>
+                    When other people tap on this link, download the app, sign up and pay for an oil change, you will receive a portion of the profits. This link will take people directly to the Car Swaddle app in the App Store or Google Play store.
                 </Col>
             </Row>
             <Row className="my-4">
@@ -83,10 +90,11 @@ export default function AffiliateDashboard() {
                                 }
                                 onExited={() => setDidCopyLink(false)}
                             >
-                                <Button style={styles.button} onClick={() => {
-                                    navigator.clipboard.writeText(vanityLink)
-                                    setDidCopyLink(true)
-                                }}>
+                                <Button style={styles.button}
+                                    onClick={() => {
+                                        navigator.clipboard.writeText(vanityLink)
+                                        setDidCopyLink(true)
+                                    }}>
                                     <CopySVG fill={styles.copyButton.fill} />
                                 </Button>
                             </OverlayTrigger>
@@ -98,12 +106,15 @@ export default function AffiliateDashboard() {
             </Row>
             <Row className="my-2">
                 <Col>
-                    {stripeDashboardLink ?
-                        <h4 className="text-center"><a href={stripeDashboardLink}>Stripe dashboard <i className="fas fa-arrow-right"></i></a></h4>
-                        :
-                        <h4 className="text-center"></h4>
-                    }
+                <h4 className="text-center"><a href={stripeDashboardLink ?? ""}>Stripe dashboard <i className="fas fa-arrow-right"></i></a></h4>
                 </Col>
+            </Row>
+            <Row>
+            {(transactions?.length ?? 0) > 0 ?
+                        <h4 className="text-center">true thing</h4>
+                        :
+                        <h4 className="text-center">false thing</h4>
+                    }
             </Row>
         </Container>
     )

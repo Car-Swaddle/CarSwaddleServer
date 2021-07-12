@@ -14,3 +14,10 @@ export type User = {
     email: string,
     phoneNumber: string,
 };
+
+export type Transaction = {
+    date: Date,
+    status: string,
+    amount: number,
+    transferID: string,
+};

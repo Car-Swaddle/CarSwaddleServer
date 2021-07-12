@@ -1,4 +1,4 @@
-import { handleResponse } from './handleResponse'
+import { handleResponse, handleTextResponse, verifyAuthentication } from './handleResponse'
 
 export const ReferrerService = {
     getCurrentUserReferrer,
@@ -26,8 +26,8 @@ async function getSummary(referrerID: string) {
 }
 
 async function getTransactions(referrerID: string) {
-    return fetch(`/referrers/${referrerID}/transactions`)
-        .then(handleResponse)
+    return fetch(`api/referrers/${referrerID}/transactions`)
+    .then(handleTextResponse)
         .then(data => {
             return data;
         });
