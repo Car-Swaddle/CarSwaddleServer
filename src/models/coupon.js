@@ -59,11 +59,7 @@ const coupon = function (sequelize, DataTypes) {
         if (!couponId) {
             return {coupon: null, error: null};
         }
-        const coupon = await Coupon.findOne({
-            where: {
-                id: couponId
-            }
-        });
+        const coupon = await Coupon.findByPk(couponId);
         var error = null;
 
         if (!coupon) {

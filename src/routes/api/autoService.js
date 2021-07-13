@@ -9,6 +9,7 @@ const { VehicleService } = require('../../controllers/vehicle');
 const billingCalculations = require('../../controllers/billing-calculations');
 const { Op } = require('sequelize');
 const { AutoServiceScheduler } = require('../../controllers/auto-service-scheduler.js');
+const { findRedeemableGiftCards } = require('../../controllers/gift-card-controller');
 
 module.exports = function (router, models) {
 
@@ -297,14 +298,14 @@ module.exports = function (router, models) {
             location,
             mechanic,
             requestCoupon,
-            giftCards,
+            giftCardRedeemable,
             inTimeSlot,
             isAlreadyScheduled,
         ] = await Promise.all([
             models.Location.findBySearch(locationID, address),
             models.Mechanic.findByPk(mechanicID),
             models.Coupon.findByPk(couponID),
-            (giftCardCodes && giftCardCodes.length) ? await models.GiftCard.findAll({where: {code: {[Op.in]: giftCardCodes}}}) : Promise.resolve([]),
+            findRedeemableGiftCards(giftCardCodes),
             autoServiceScheduler.isDateInMechanicSlot(scheduledDate, req.user, mechanicID),
             autoServiceScheduler.isDatePreviouslyScheduled(scheduledDate, req.user, mechanicID)
         ]);
@@ -319,6 +320,11 @@ module.exports = function (router, models) {
 
         if (location == null || mechanic == null) {
             return res.status(422).send();
+        }
+
+        if (giftCardRedeemable.filter(g => g.error).length > 0) {
+            // Return first errored gift card
+            return res.status(422).send({code: giftCardRedeemable.filter(g => g.error)[0].error});
         }
 
         var finalCoupon = requestCoupon;
@@ -394,6 +400,7 @@ module.exports = function (router, models) {
             }
         }
 
+        const giftCards = giftCardRedeemable.map(g => g.giftCard);
         const prices = await billingCalculations.calculatePrices(mechanic, location, oilType, finalCoupon, giftCards, vehicleID);
 
         const taxMetadata = await taxes.taxMetadataForLocation(location);

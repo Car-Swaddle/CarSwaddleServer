@@ -62,11 +62,10 @@ describe("Auto service route tests", function() {
             mechanicID: "mechanic-1234",
             serviceEntities: [{entityType: "OIL_CHANGE", specificService: {oilType: "SYNTHETIC"}}],
             locationID: "location-1234",
-            giftCardCodes: ["gift-card-1234"],
+            giftCardCodes: ["fake-gift-card"],
         }
 
         const resp = await authenticatedPostRequest(request, "/api/auto-service", body);
-        // console.log(resp);
         assert.equal(resp.statusCode, 200);
         assert.exists(resp.body);
         assert.equal(resp.body.id, "auto-service-1234");
@@ -80,7 +79,7 @@ describe("Auto service route tests", function() {
         assert.exists(call.args[6].total); // Prices
         assert.equal(call.args[7], "SYNTHETIC");
         assert.equal(call.args[10], "location-1234");
-        // TODO - add checks for gift cards
+        assert.equal(call.args[13][0].code, "fake-gift-card");
     });
 
 });

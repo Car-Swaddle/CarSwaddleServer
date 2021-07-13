@@ -1,10 +1,8 @@
 export {}
 import supertest from 'supertest';
 import { assert } from 'chai';
-import sinon, { SinonStub } from 'sinon';
-import { Coupon, GiftCard, User } from "../../../models";
-import { GiftCardModel } from "../../../models/giftCard";
-import { FindOptions } from "sequelize";
+import sinon from 'sinon';
+import { Coupon, GiftCard } from "../../../models";
 import { RedemptionError } from '../../../models/types';
 import { app } from '../../../server';
 import { authenticatedGetRequest, stubTestGiftCard, stubTestUser } from '../util';
@@ -31,6 +29,7 @@ describe("Price route tests", function() {
 
     it("should return gift card with description", async function() {
         stubTestGiftCard(sandbox);
+        sandbox.stub(Coupon, "findByPk").returns(Promise.resolve(null));
 
         const resp = await authenticatedGetRequest(request, "/api/price/codes/fake-gift-card");
         assert.exists(resp.body.giftCard, "Missing gift card");
@@ -38,8 +37,18 @@ describe("Price route tests", function() {
         assert.equal(resp.body.redeemMessage, "$50 gift card")
     });
 
+    it("should return invalid code", async function() {
+        sandbox.stub(GiftCard, "findAll").returns(Promise.resolve([]));
+        sandbox.stub(Coupon, "findByPk").returns(Promise.resolve(null));
+
+        const resp = await authenticatedGetRequest(request, "/api/price/codes/fake-gift-card");
+        assert.notExists(resp.body.giftCard, "Should have no gift card");
+        assert.notExists(resp.body.coupon, "Should have no coupon");
+        assert.equal(resp.body.error, RedemptionError.INCORRECT_CODE);
+    });
+
     it("should return coupon with % description", async function() {
-        sandbox.stub(GiftCard, "findOne").returns(Promise.resolve(null));
+        sandbox.stub(GiftCard, "findAll").returns(Promise.resolve([]));
         sandbox.stub(Coupon, "findRedeemable").returns(Promise.resolve({coupon: {
             id: "fake-coupon-amount",
             percentOff: 0.10,
@@ -52,7 +61,7 @@ describe("Price route tests", function() {
     });
 
     it("should return coupon with $ description", async function() {
-        sandbox.stub(GiftCard, "findOne").returns(Promise.resolve(null));
+        sandbox.stub(GiftCard, "findAll").returns(Promise.resolve([]));
         sandbox.stub(Coupon, "findRedeemable").returns(Promise.resolve({coupon: {
             id: "fake-coupon-amount",
             amountOff: 1000,
@@ -65,7 +74,7 @@ describe("Price route tests", function() {
     });
 
     it("should return coupon with error", async function() {
-        sandbox.stub(GiftCard, "findOne").returns(Promise.resolve(null));
+        sandbox.stub(GiftCard, "findAll").returns(Promise.resolve([]));
         sandbox.stub(Coupon, "findRedeemable").returns(Promise.resolve({error: RedemptionError.INCORRECT_CODE}));
         
         const resp = await authenticatedGetRequest(request, "/api/price/codes/fake-coupon-amount");

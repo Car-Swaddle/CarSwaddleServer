@@ -1,10 +1,11 @@
 import { json, Request, Response, Router } from 'express';
 import { calculatePrices } from '../../controllers/billing-calculations';
-import models, { GiftCard, Coupon } from '../../models';
+import models, { Coupon } from '../../models';
 import { Op } from 'sequelize';
 import { CouponModel } from '../../models/coupon';
 import { OilType, RedemptionError } from '../../models/types';
 import { GiftCardModel } from '../../models/giftCard';
+import { findRedeemableGiftCards } from '../../controllers/gift-card-controller';
 
 module.exports = function (router: Router) {
     const stripeChargesFile = require('../../controllers/stripe-charges')(models);
@@ -24,21 +25,14 @@ module.exports = function (router: Router) {
             return res.status(400).send({ error: RedemptionError.INCORRECT_CODE });
         }
 
-        const giftCard = await GiftCard.findOne({where: {code: code}});
-        let giftCardError = RedemptionError.INCORRECT_CODE;
-        if (giftCard) {
-            if (giftCard.expiration && giftCard.expiration.getTime() < Date.now()) {
-                giftCardError = RedemptionError.EXPIRED;
-            } else if (giftCard.remainingBalance <= 0) {
-                giftCardError = RedemptionError.DEPLETED_REDEMPTIONS;
-            } else {
-                const noDecimal = giftCard.remainingBalance % 100 === 0;
-                return res.send({giftCard, redeemMessage: `$${(giftCard.remainingBalance / 100.0).toFixed(noDecimal ? 0 : 2)} gift card`});
-            }
-        }
-
+        const giftCardRedeemable = (await findRedeemableGiftCards([code]))[0];
         const {coupon, error: couponError}: {coupon: CouponModel, error: RedemptionError} = await Coupon.findRedeemable(code, req.user.id, req.query.mechanicID);
-        if (coupon) {
+
+        if (giftCardRedeemable.giftCard) {
+            let giftCard = giftCardRedeemable?.giftCard;
+            const noDecimal = giftCard.remainingBalance % 100 === 0;
+            return res.send({giftCard, redeemMessage: `$${(giftCard.remainingBalance / 100.0).toFixed(noDecimal ? 0 : 2)} gift card`});
+        } else if (coupon) {
             const redeemMessages = [];
             if (coupon.amountOff) {
                 const noDecimal = coupon.amountOff % 100 === 0;
@@ -52,7 +46,12 @@ module.exports = function (router: Router) {
             }
             return res.send({coupon, redeemMessage: redeemMessages.join(', ')});
         }
-        return res.status(422).send({ error: giftCardError ?? couponError });
+
+        let finalError = giftCardRedeemable.error;
+        if (couponError != RedemptionError.INCORRECT_CODE) {
+            finalError = couponError;
+        }
+        return res.status(422).send({ error: finalError });
     });
 
     interface Address {
