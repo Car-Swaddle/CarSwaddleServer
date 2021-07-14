@@ -147,7 +147,7 @@ AutoServiceScheduler.prototype.scheduleAutoService = async function (user, statu
                 throw `Remaining total ${remainingTotal} does not match expected service total: ${prices.serviceTotal}`;
             }
             // Store transaction metadata to gift card mapping, update each gift card's new remaining balance
-            const insertQuery = `INSERT INTO transactionGiftCard (transactionID, giftCardID, amount) VALUES ${redemptionAmounts.map(r => '(?)').join(',')};`;
+            const insertQuery = `INSERT INTO "transactionGiftCard" (transactionID, giftCardID, amount) VALUES ${redemptionAmounts.map(r => '(?)').join(',')};`;
             await this.models.sequelize.query(insertQuery, {
                 replacements: redemptionAmounts,
                 type: QueryTypes.INSERT,

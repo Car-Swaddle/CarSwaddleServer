@@ -250,23 +250,60 @@ module.exports = function (router, models) {
                     newAutoService.chargeID != null &&
                     (changedByMechanic || (changedByUser && new Date() < dayBeforeDate))) {
 
-                    Promise.all([
-                        stripe.refunds.create({
-                            charge: autoService.chargeID,
-                        }),
-                        autoService.transferID && stripe.transfers.createReversal(
-                            autoService.transferID,
-                            { refund_application_fee: true }
-                        ),
-                    ]).then(refunds => {
-                        newAutoService.refundID = refunds[0] && refunds[0].id;
-                        newAutoService.transferReversalID = refunds[1] && refunds[1].id;
-                        newAutoService.save().then(savedAutoService => {
-                            return res.json(savedAutoService);
-                        });
-                    }).catch(error => {
-                        return res.json(newAutoService);
+                    const transactionMetadata = await models.TransactionMetadata.findOne({
+                        where: {
+                            autoServiceID: newAutoService.id
+                        }
                     });
+                    if (transactionMetadata) {
+                        // Reverse gift cards
+                        const giftCardUses = await models.sequelize.query(`SELECT "giftCardID", "amount" FROM "transactionGiftCard" WHERE "transactionID" = ? AND reversed = 0;`, {
+                            replacements: transactionMetadata.id,
+                        });
+                        for (let giftCardUse of giftCardUses) {
+                            const giftCard = await models.GiftCard.findByPk(giftCardUse.giftCardID);
+                            giftCard.remainingBalance = giftCard.remainingBalance + giftCardUse.amount;
+                            giftCard.remainingBalance = Math.min(giftCard.totalBalance, giftCard.remainingBalance);
+                            await giftCard.save();
+                        }
+                        await this.models.sequelize.query(`UPDATE "transactionGiftCard" SET reversed = 1 WHERE "transactionID" = ?;`, {
+                            replacements: transactionMetadata.id,
+                        });
+                    }
+
+                    if (autoService.chargeID) {
+                        try {
+                            const chargeRefund = await stripe.refunds.create({
+                                charge: autoService.chargeID
+                            });
+                            newAutoService.refundID = chargeRefund?.id;
+                            if (autoService.transferID) {
+                                const transferReversal = await stripe.transfers.createReversal(
+                                    autoService.transferID,
+                                    { refund_application_fee: true }
+                                );
+                                newAutoService.transferReversalID = transferReversal?.id;
+                            }
+                            const savedAutoService = await newAutoService.save();
+                            return res.json(savedAutoService);
+                        } catch (error) {
+                            return res.json(newAutoService);
+                        }
+                    } else if (transactionMetadata?.payStructureID) {
+                        // Payment intent
+                        const paymentIntentRefund = await stripe.refunds.create({
+                            payment_intent: transactionMetadata.payStructureID
+                        })
+                        if (transactionMetadata.stripeMechanicTransferID) {
+                            const transferReversal = await stripe.transfers.createReversal(
+                                transactionMetadata.stripeMechanicTransferID,
+                                { refund_application_fee: true }
+                            );
+                            newAutoService.transferReversalID = transferReversal?.id;
+                        }
+                        const savedAutoService = await newAutoService.save();
+                        return res.json(savedAutoService);
+                    }
                 } else {
                     return res.json(newAutoService);
                 }
