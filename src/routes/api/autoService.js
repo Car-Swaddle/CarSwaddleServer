@@ -207,7 +207,7 @@ module.exports = function (router, models) {
             models.AutoService.findOne({
                 where: { id: autoService.id },
                 include: autoServiceScheduler.includeDict(),
-            }).then(newAutoService => {
+            }).then(async newAutoService => {
 
                 if (changedByMechanic == true) {
                     // (user, alert, payload, badge)
