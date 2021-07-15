@@ -371,7 +371,7 @@ AutoServiceScheduler.prototype.createTransactionMetadata = async function (mecha
     if (!region) { throw('unable to get region'); }
     const locationPoint = { latitude: location.point.coordinates[1], longitude: location.point.coordinates[0] };
     const regionPoint = { latitude: region.origin.coordinates[1], longitude: region.origin.coordinates[0] };
-    const meters = distance.metersBetween(locationPoint, regionPoint);
+    const meters = Math.round(distance.metersBetween(locationPoint, regionPoint));
 
     const transactionMetadata = await this.models.TransactionMetadata.create({
         id: uuidV1(),
