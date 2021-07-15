@@ -112,9 +112,8 @@ PasswordResetController.prototype.tokenIsValid = function (token, callback) {
     });
 }
 
-PasswordResetController.prototype.sendForgotPasswordEmail = function (email, appName, userFirstName, token) {
-    const options = this.emailer.sendResetPasswordEmail(userFirstName, email, this.resetPasswordDomain(appName, token))
-    this.emailer.sendMail(options);
+PasswordResetController.prototype.sendForgotPasswordEmail = async function (email, appName, userFirstName, token) {
+    return this.emailer.sendResetPasswordEmail(userFirstName, email, this.resetPasswordDomain(appName, token))
 }
 
 PasswordResetController.prototype.resetPasswordDomain = function (appName, token) {
