@@ -5,7 +5,7 @@ import { LocationModel } from "../../../models/location";
 import { OilType } from "../../../models/types";
 import { CouponModel } from "../../../models/coupon";
 import sinon from "sinon";
-import { OilChangePricing } from "../../../models";
+import { GiftCard, OilChangePricing } from "../../../models";
 
 describe("Billing Calculations", function() {
 
@@ -126,5 +126,25 @@ describe("Billing Calculations", function() {
         assert.equal(prices.bookingFeeDiscount, null);
         assert.equal(prices.taxes, Math.round((prices.total - prices.taxes) * taxMetadata.rate));
         assert.equal(prices.total, 8054)
+    });
+
+    it("should return correct gift card amount and order total", async function() {
+        const giftCard = GiftCard.build({
+            id: "",
+            code: "1234",
+            startingBalance: 1000,
+            remainingBalance: 500,
+        });
+        const prices = await calculatePrices(fakeMechanic, fakeLocation, OilType.SYNTHETIC, undefined, [giftCard]);
+
+        assert.equal(prices.oilChange, 6600);
+        assert.equal(prices.subtotal, 6600);
+        assert.equal(prices.discount, null);
+        assert.equal(prices.bookingFee, 660);
+        assert.equal(prices.bookingFeeDiscount, null);
+        assert.equal(prices.taxes, Math.round((prices.total - prices.taxes) * taxMetadata.rate));
+        assert.equal(prices.total, 8054);
+        assert.equal(prices.giftCard, -500);
+        assert.equal(prices.serviceTotal, 7554);
     });
 })

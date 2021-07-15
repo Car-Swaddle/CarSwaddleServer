@@ -78,6 +78,10 @@ export async function calculatePrices(mechanic: any, location: LocationModel, oi
     }));
 
     const total = subtotalPrice + processingFeePrice + salesTax;
+    const giftCardAvailableAmount = giftCards?.map(g => -g.remainingBalance).reduce((acc, balance) => {return acc + balance}, 0) ?? 0;
+    const giftCardAppliedAmount = Math.max(-total, giftCardAvailableAmount);
+    const serviceTotal = total + giftCardAppliedAmount;
+
     const prices = {
         oilChange: oilChangePrice,
         distance: distancePrice,
@@ -90,6 +94,8 @@ export async function calculatePrices(mechanic: any, location: LocationModel, oi
         transferAmount: transferAmountPrice,
         mechanicCost: mechanicCostPrice,
         total: total,
+        giftCard: giftCardAppliedAmount,
+        serviceTotal: serviceTotal,
     };
     console.log("prices: " + JSON.stringify(prices))
     return prices;

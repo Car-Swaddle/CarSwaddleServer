@@ -4,21 +4,23 @@ var port = process.env.PORT;
 if (port == null || port == "") {
     port = "3000";
 }
-app.listen(port);
+const server = app.listen(port);
 
 console.log('working on ' + port);
 
 // Gracefully handle heroku reboots
-process.on('SIGTERM', signalListener()).on('SIGINT', signalListener());
+if (process.env.ENV == "production" || process.env.ENV == "staging") {
+    process.on('SIGTERM', signalListener()).on('SIGINT', signalListener());
 
-function signalListener(): (signal: NodeJS.Signals) => void {
-    return (signal) => {
-        console.warn(`Received ${ signal }...`);
-        setTimeout(() => {
-            console.log('...waited 10s, exiting.');
-            process.exit(0);
-        }, 1_000).unref();
-    };
+    function signalListener(): (signal: NodeJS.Signals) => void {
+        return async (signal) => {
+            console.warn(`Received ${ signal }...`);
+            setTimeout(() => {
+                console.log('...waited 5s, exiting.');
+                server.close();
+            }, 5000);
+        };
+    }
 }
 
 process.on('uncaughtException', (err: Error) => {

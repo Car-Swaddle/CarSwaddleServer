@@ -3,7 +3,7 @@ const uuidV1 = require('uuid/v1');
 const stripe = require('stripe')(constants.STRIPE_SECRET_KEY);
 const Email = require('../notifications/email');
 
-const ALL_PRICE_TYPES = ['discount', 'oilChange', 'distance', 'bookingFee', 'processingFee', 'bookingFeeDiscount', 'taxes'];
+const ALL_PRICE_TYPES = ['discount', 'oilChange', 'distance', 'bookingFee', 'processingFee', 'bookingFeeDiscount', 'taxes', 'giftCard'];
 
 const stripeConnectProcessPercentage = 0.0025;
 const stripeConnectAccountDebitPercentage = 0.015;
@@ -174,7 +174,7 @@ StripeCharges.prototype.createReferrerTransferIfNecessary = async function(autoS
     }
 }
 
-StripeCharges.prototype.payInvoices = async function(invoiceID, sourceID, mechanicID, transferAmount) {
+StripeCharges.prototype.payInvoices = async function(invoiceID, sourceID, mechanicID, serviceTotal, transferAmount) {
     const mechanic = await this.models.Mechanic.findByPk(mechanicID);
 
     var invoice = null, transfer = null;
@@ -184,20 +184,22 @@ StripeCharges.prototype.payInvoices = async function(invoiceID, sourceID, mechan
     }
 
     try {
-        invoice = await stripe.invoices.pay(invoiceID, {
-            payment_method: sourceID,
-        });
+        if (serviceTotal > 0) {
+            invoice = await stripe.invoices.pay(invoiceID, {
+                payment_method: sourceID,
+            });
+        }
     } catch(e) {
         console.log(e);
      }
 
     try {
-        if(invoice && transferAmount > 0) {
+        if(transferAmount > 0) {
             transfer = await stripe.transfers.create({
                 amount: transferAmount,
                 currency: "usd",
                 destination: mechanic.stripeAccountID,
-                source_transaction: transferAmount > invoice.amount_paid ? undefined : invoice.charge,
+                source_transaction: transferAmount > (invoice?.amount_paid ?? 0) ? undefined : invoice.charge,
                 expand: ['destination_payment'],
             });
         }
@@ -380,6 +382,8 @@ function invoiceLineDescription(priceType) {
             return 'Car Swaddle Booking Fee Discount';
         case 'discount':
             return 'Discount from coupon';
+        case 'giftCard':
+            return 'Gift card';
         default:
             return '';
     }
