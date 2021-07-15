@@ -133,11 +133,6 @@ function stripeCreateDict(ip, email, firstName, lastName) {
         },
         business_type: 'individual',
         requested_capabilities: ['platform_payments'], // This appears to be removed in new api and replaced with `capabilities`
-        capabilities: {
-            transfers: { // renaming of 'platform_payments' for new api version
-                requested: true
-            }
-        },
         individual: {
             email: email,
             first_name: firstName,
