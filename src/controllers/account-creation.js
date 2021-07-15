@@ -97,7 +97,7 @@ AccountCreation.prototype.findOrCreateMechanic = function (user, callback) {
 AccountCreation.prototype.completeMechanicCreationOrUpdate = function (user, remoteAddress, callback) {
     var self = this;
     this.findOrCreateMechanic(user, function (user, mechanic, created) {
-        if (created == true) {
+        if (created == true || !mechanic.stripeAccountID) {
             self.createStripeMechanicAccount(mechanic, remoteAddress, user.email, user.firstName, user.lastName, function (err, stripeAccount) {
                 if (err) {
                     self.deleteMechanicAccount(mechanic, function (deleteError) {
