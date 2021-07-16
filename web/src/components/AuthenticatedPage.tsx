@@ -13,13 +13,13 @@ export enum Tab {
 export default function AuthenticatedPage() {
 
     return (
-        <Container>
-            <AuthenticatedNavigation tab={`/` + window.location.pathname.split('/')[1] ?? ""}/>
+        <>
+            <AuthenticatedNavigation tab={`/` + window.location.pathname.split('/')[1] ?? ""} />
             <Switch>
                 <Route exact path="/affiliate" component={AffiliateDashboard} />
                 <Route path="/transactions" component={TransactionsPage} />
-                <Redirect from='*' to='/affiliate'/>
+                <Redirect from='*' to='/affiliate' />
             </Switch>
-        </Container>
+        </>
     )
 }

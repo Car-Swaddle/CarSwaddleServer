@@ -59,10 +59,10 @@ export default function AffiliateDashboard() {
         <Container>
             <Row>
                 <Col className="my-3" sm={{ span: 8, offset: 2 }} lg={{ span: 6, offset: 3 }}>
-                    Use your personal link below to invite others to learn more about Car Swaddle and download the app.
+                    Use your personal affiliate link below to invite others to learn more about Car Swaddle and download the app.
                 </Col>
                 <Col className="my-3" sm={{ span: 8, offset: 2 }} lg={{ span: 6, offset: 3 }}>
-                    When other people tap on this link, download the app, sign up and pay for an oil change, you will receive a portion of the profits. This link will take people directly to the Car Swaddle app in the App Store or Google Play store.
+                This link will take people directly to the Car Swaddle app in the App Store or Google Play store. When other people tap on this link, download the app, sign up and pay for an oil change, you will receive a portion of the profits.
                 </Col>
             </Row>
             <Row className="my-4">

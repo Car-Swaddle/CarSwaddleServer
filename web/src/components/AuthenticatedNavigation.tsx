@@ -10,7 +10,7 @@ export default function AuthenticatedNavigation({ tab, onTabSelect }: Authentica
 
     return (
         <Container>
-            <Navbar bg="light" expand="sm">
+            <Navbar bg="white" expand="sm">
                 <Container>
                     <Navbar.Brand href="/affiliate">
                         <CarSwaddleLogo height='50px' />
