@@ -2,13 +2,11 @@ import { Container, Row, Col } from 'react-bootstrap';
 import { UserContext } from '../services/user-context';
 import { ReferrerService } from '../services/ReferrerService';
 import { Referrer } from '../models';
-import { Transaction } from '../models';
 import React, { useEffect, useState } from 'react';
 import { OverlayTrigger, Overlay, Tooltip, Button } from 'react-bootstrap';
 // import { ReactComponent as CopySVG } from '../resources/copy.svg'
 import Colors from '../resources/Colors'
 import CopySVG from './CopySVG'
-import TransactionListView from './transactions/TransactionListView'
 
 export default function AffiliateDashboard() {
 
@@ -16,7 +14,6 @@ export default function AffiliateDashboard() {
     const [vanityLink, setVanityLink] = useState<string>("");
     const [requestingDashboard, setRequestingDashboard] = useState<boolean>(false);
     const [stripeDashboardLink, setStripeDashboardLink] = useState<string | null>();
-    const [transactions, setTransactions] = useState<Array<Transaction> | null>();
 
     const [didCopyLink, setDidCopyLink] = useState<boolean>(false);
 
@@ -34,20 +31,8 @@ export default function AffiliateDashboard() {
                 requestLink();
                 setRequestingDashboard(true);
             }
-            if ((transactions?.length ?? 0) == 0) {
-                importTransactions()
-            }
         }
-    }, [referrer, vanityLink, requestingDashboard, stripeDashboardLink, transactions])
-
-    async function importTransactions() {
-        const transactionsJSON = await ReferrerService.getTransactions(referrer?.id ?? "")
-        // let d: Transaction[] = transactionsJSON.map{(json) => 
-        //     JSON.parse(json) as Transaction
-        // }
-        // let transactions: Transaction[] = JSON.parse(transactionsJSON)
-        setTransactions(transactionsJSON)
-    }
+    }, [referrer, vanityLink, requestingDashboard, stripeDashboardLink])
 
     const styles = {
         header: {

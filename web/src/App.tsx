@@ -14,7 +14,7 @@ import AuthenticatedPage from './components/AuthenticatedPage';
 
 export default function App() {
     const [authenticated, setAuthenticated] = React.useState(AuthenticationService.isAuthenticated());
-    const [referrer, setReferrer] = React.useState<Referrer | null>(UserContext.getCurrentReferrer())
+    const [referrer, setReferrer] = React.useState<Referrer | null>(UserContext.getCurrentReferrer());
 
     function finishedAuth() {
         setAuthenticated(true);
@@ -40,9 +40,7 @@ export default function App() {
                                 <Redirect from="*" to={`/affiliate/stripe${window.location.search}`} />
                             </>
                             :
-                            <>
-                                <AuthenticatedPage />
-                            </>
+                            <AuthenticatedPage />
                         )
                     }
                 </BrowserRouter>

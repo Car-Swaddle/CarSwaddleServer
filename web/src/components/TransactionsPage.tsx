@@ -14,7 +14,9 @@ export default function TransactionsPage() {
     const [transactions, setTransactions] = useState<Array<Transaction> | null>();
 
     useEffect(() => {
-        importTransactions()
+        if (!transactions) {
+            importTransactions()
+        }
     })
 
     async function importTransactions() {
