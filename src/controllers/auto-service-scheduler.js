@@ -1,5 +1,5 @@
 const constants = require('./constants.js');
-const { Op } = require('sequelize');
+const { QueryTypes, Op } = require('sequelize');
 const uuidV1 = require('uuid/v1');
 const stripe = require('stripe')(constants.STRIPE_SECRET_KEY);
 const pushService = require('../notifications/pushNotifications.js');
@@ -8,12 +8,9 @@ const { DateTime } = require('luxon');
 const reminderFile = require('../notifications/reminder.js');
 const stripeChargesFile = require('../controllers/stripe-charges.js');
 const emailFile = require('../notifications/email.js');
+const models = require('../models');
 
-module.exports = function (models) {
-    return new AutoServiceScheduler(models);
-};
-
-function AutoServiceScheduler(models) {
+export function AutoServiceScheduler() {
     this.models = models;
     this.reminder = new reminderFile(models);
     this.stripeCharges = stripeChargesFile(models);
@@ -60,7 +57,7 @@ AutoServiceScheduler.prototype.findAutoServices = function (mechanicID, userID, 
 
 AutoServiceScheduler.prototype.scheduleAutoService = async function (user, status, scheduledDate, vehicleID, mechanicID, sourceID,
     prices, oilType, serviceEntities, location, locationID, taxRate,
-    couponID, payStructureID, referrerID, usePaymentIntent, notes, callback) {
+    couponID, giftCards, payStructureID, referrerID, usePaymentIntent, notes, callback) {
     
     var paymentIntentID = null;
     const mechanicTransferAmount = prices.transferAmount;
@@ -99,9 +96,9 @@ AutoServiceScheduler.prototype.scheduleAutoService = async function (user, statu
         });
 
         if (usePaymentIntent) {
-            if (prices.total > 0) {
+            if (prices.orderTotal > 0) {
                 const paymentIntent = await stripe.paymentIntents.create({
-                    amount: prices.total,
+                    amount: prices.orderTotal,
                     currency: 'usd',
                     payment_method: sourceID,
                     customer: user.stripeCustomerID,
@@ -123,15 +120,44 @@ AutoServiceScheduler.prototype.scheduleAutoService = async function (user, statu
                 mechanicID,
                 oilType,
             }, taxRate);
-            var { invoice, transfer } = await this.stripeCharges.payInvoices(invoice.id, sourceID, mechanicID, prices.transferAmount);
+            var { invoice, transfer } = await this.stripeCharges.payInvoices(invoice.id, sourceID, mechanicID, prices.serviceTotal, prices.transferAmount);
         }
 
         const transactionMetadata = await this.createTransactionMetadata(mechanic, autoService.location, prices.mechanicCost, autoService,
             paymentIntentID, couponID, referrerID, payStructureID, mechanicTransferAmount, referrerTransferAmount, transaction);
 
+        if (giftCards?.length) {
+            // subtract from total until we hit 0, redeem each
+            const redemptionAmounts = [];
+            let remainingTotal = prices.total;
+            for (const giftCard of giftCards) {
+                const toApply = Math.min(remainingTotal, giftCard.remainingBalance);
+                if (toApply === 0) {
+                    break;
+                }
+                remainingTotal -= toApply;
+                redemptionAmounts.push([transactionMetadata.id, giftCard.id, toApply]);
+                giftCard.remainingBalance = giftCard.remainingBalance - toApply;
+                await giftCard.save({
+                    fields: ['remainingBalance'],
+                    transaction: transaction,
+                });
+            }
+            if (remainingTotal != prices.serviceTotal) {
+                throw `Remaining total ${remainingTotal} does not match expected service total: ${prices.serviceTotal}`;
+            }
+            // Store transaction metadata to gift card mapping, update each gift card's new remaining balance
+            const insertQuery = `INSERT INTO "transactionGiftCard" (transactionID, giftCardID, amount) VALUES ${redemptionAmounts.map(r => '(?)').join(',')};`;
+            await this.models.sequelize.query(insertQuery, {
+                replacements: redemptionAmounts,
+                type: QueryTypes.INSERT,
+                transaction: transaction,
+            });
+        }
+
         if (usePaymentIntent && paymentIntentID) {
             await stripe.paymentIntents.confirm(paymentIntentID);
-        } else if (usePaymentIntent && prices.total === 0) {
+        } else if (usePaymentIntent && prices.serviceTotal === 0) {
             // Pay mechanic directly - no webhook because service is free
             this.stripeCharges.executeMechanicTransferWithMetadata(transactionMetadata);
         }
@@ -345,7 +371,7 @@ AutoServiceScheduler.prototype.createTransactionMetadata = async function (mecha
     if (!region) { throw('unable to get region'); }
     const locationPoint = { latitude: location.point.coordinates[1], longitude: location.point.coordinates[0] };
     const regionPoint = { latitude: region.origin.coordinates[1], longitude: region.origin.coordinates[0] };
-    const meters = Math.floor(distance.metersBetween(locationPoint, regionPoint));
+    const meters = Math.round(distance.metersBetween(locationPoint, regionPoint));
 
     const transactionMetadata = await this.models.TransactionMetadata.create({
         id: uuidV1(),
@@ -421,7 +447,7 @@ AutoServiceScheduler.prototype.autoServiceWhereDict = function (mechanicID, user
 
     if (startDate != null && endDate != null) {
         whereDict.scheduledDate = {
-            "$between": [startDate, endDate]
+            [Op.between]: [startDate, endDate]
         };
     }
     if (mechanicID != null) {

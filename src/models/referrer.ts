@@ -1,5 +1,25 @@
-const referrer = function (sequelize, DataTypes) {
-    const Referrer = sequelize.define('referrer', {
+import { BuildOptions, DataTypes, Model, Sequelize } from "sequelize";
+
+export interface ReferrerAttributes {
+    id: string;
+    sourceType: string;
+    externalID?: string;
+    description?: string;
+    stripeExpressAccountID?: string;
+    vanityID: string;
+    activeCouponID?: string;
+    activePayStructureID?: string;
+    userID: string;
+}
+
+export interface ReferrerModel extends Model<ReferrerAttributes>, ReferrerAttributes {}
+
+export type ReferrerStatic = typeof Model & {
+    new (values?: object, options?: BuildOptions): ReferrerModel;
+}
+
+export function ReferrerFactory(sequelize: Sequelize) {
+    return <ReferrerStatic> sequelize.define('referrer', {
         id: {
             type: DataTypes.STRING,
             primaryKey: true,
@@ -35,17 +55,5 @@ const referrer = function (sequelize, DataTypes) {
             type: DataTypes.STRING,
             allowNull: true
         },
-    }, {
-        freezeTableName: true,
     });
-
-    Referrer.associate = models => {
-        Referrer.belongsTo(models.User, { foreignKey: "userID", allowNull: true });
-        Referrer.hasMany(models.Coupon, { foreignKey: "referrerID", allowNull: true, constraints: false });
-        Referrer.hasMany(models.PayStructure, { foreignKey: "referrerID", allowNull: true, constraints: false });
-    };
-
-    return Referrer;
 };
-
-module.exports = referrer;

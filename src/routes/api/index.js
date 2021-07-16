@@ -12,7 +12,7 @@ module.exports = function (app, models) {
     require('./region.js')(router, models);
     require('./mechanic.js')(router, models);
     require('./vehicle.js')(router, models);
-    require('./price.js')(router, models);
+    require('./price')(router, models);
     require('./referrer.js')(router, models);
     require('./stripe.js')(router, models);
     require('./review.js')(router, models);

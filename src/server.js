@@ -4,7 +4,7 @@ const constants = require('./controllers/constants');
 const stripe = require("stripe")(constants.STRIPE_SECRET_KEY);
 const pino = require('pino-http')(require('./util/pino-config'));
 const cookieParser = require('cookie-parser');
-const { reservationsUrl } = require('twilio/lib/jwt/taskrouter/util');
+const path = require('path');
 
 stripe.setAppInfo({
     name: "Car Swaddle Server Stripe Library",
@@ -24,7 +24,7 @@ if(process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'staging') 
             next()
         }
     })
-  }
+}
 
 express.static.mime.define({'application/pkcs7-mime': ['apple-app-site-association']});
 express.static.mime.define({'application/pkcs7-mime': ['.well-known/apple-app-site-association']});
@@ -34,17 +34,12 @@ const passport = require('./passport')(models);
 require('./routes')(app, models, passport);
 
 // Serve all static assets (.well-known, web app assets)
-app.use(express.static(__dirname + '/public'));
+const basePath = path.join(__dirname, '../build/public');
+app.use(express.static(basePath));
 
 // Fallback to serving web app for all other unknown paths
 app.get('/*', (_, res) => {
-    res.sendFile(__dirname + '/public/index.html');
+    res.sendFile(basePath + '/index.html');
 })
 
-var port = process.env.PORT;
-if (port == null || port == "") {
-    port = "3000";
-}
-app.listen(port);
-
-console.log('working on ' + port);
+module.exports = { app };

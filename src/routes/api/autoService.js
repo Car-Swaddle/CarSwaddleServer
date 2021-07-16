@@ -5,15 +5,18 @@ const pushService = require('../../notifications/pushNotifications.js');
 const bodyParser = require('body-parser');
 const constants = require('../../controllers/constants');
 const stripe = require('stripe')(constants.STRIPE_SECRET_KEY);
-const { VehicleService } = require('../../controllers/vehicle')
+const { VehicleService } = require('../../controllers/vehicle');
+const billingCalculations = require('../../controllers/billing-calculations');
+const { Op } = require('sequelize');
+const { AutoServiceScheduler } = require('../../controllers/auto-service-scheduler.js');
+const { findRedeemableGiftCards } = require('../../controllers/gift-card-controller');
 
 module.exports = function (router, models) {
 
     const emailFile = require('../../notifications/email.js');
     const emailer = new emailFile(models);
 
-    const autoServiceScheduler = require('../../controllers/auto-service-scheduler.js')(models);
-    const billingCalculations = require('../../controllers/billing-calculations')(models);
+    const autoServiceScheduler = new AutoServiceScheduler();
     const taxes = require('../../controllers/taxes')(models);
     const vehicleService = new VehicleService();
     const stripeCharges = require('../../controllers/stripe-charges.js')(models);
@@ -204,7 +207,7 @@ module.exports = function (router, models) {
             models.AutoService.findOne({
                 where: { id: autoService.id },
                 include: autoServiceScheduler.includeDict(),
-            }).then(newAutoService => {
+            }).then(async newAutoService => {
 
                 if (changedByMechanic == true) {
                     // (user, alert, payload, badge)
@@ -247,23 +250,60 @@ module.exports = function (router, models) {
                     newAutoService.chargeID != null &&
                     (changedByMechanic || (changedByUser && new Date() < dayBeforeDate))) {
 
-                    Promise.all([
-                        stripe.refunds.create({
-                            charge: autoService.chargeID,
-                        }),
-                        autoService.transferID && stripe.transfers.createReversal(
-                            autoService.transferID,
-                            { refund_application_fee: true }
-                        ),
-                    ]).then(refunds => {
-                        newAutoService.refundID = refunds[0] && refunds[0].id;
-                        newAutoService.transferReversalID = refunds[1] && refunds[1].id;
-                        newAutoService.save().then(savedAutoService => {
-                            return res.json(savedAutoService);
-                        });
-                    }).catch(error => {
-                        return res.json(newAutoService);
+                    const transactionMetadata = await models.TransactionMetadata.findOne({
+                        where: {
+                            autoServiceID: newAutoService.id
+                        }
                     });
+                    if (transactionMetadata) {
+                        // Reverse gift cards
+                        const giftCardUses = await models.sequelize.query(`SELECT "giftCardID", "amount" FROM "transactionGiftCard" WHERE "transactionID" = ? AND reversed = 0;`, {
+                            replacements: transactionMetadata.id,
+                        });
+                        for (let giftCardUse of giftCardUses) {
+                            const giftCard = await models.GiftCard.findByPk(giftCardUse.giftCardID);
+                            giftCard.remainingBalance = giftCard.remainingBalance + giftCardUse.amount;
+                            giftCard.remainingBalance = Math.min(giftCard.totalBalance, giftCard.remainingBalance);
+                            await giftCard.save();
+                        }
+                        await this.models.sequelize.query(`UPDATE "transactionGiftCard" SET reversed = 1 WHERE "transactionID" = ?;`, {
+                            replacements: transactionMetadata.id,
+                        });
+                    }
+
+                    if (autoService.chargeID) {
+                        try {
+                            const chargeRefund = await stripe.refunds.create({
+                                charge: autoService.chargeID
+                            });
+                            newAutoService.refundID = chargeRefund?.id;
+                            if (autoService.transferID) {
+                                const transferReversal = await stripe.transfers.createReversal(
+                                    autoService.transferID,
+                                    { refund_application_fee: true }
+                                );
+                                newAutoService.transferReversalID = transferReversal?.id;
+                            }
+                            const savedAutoService = await newAutoService.save();
+                            return res.json(savedAutoService);
+                        } catch (error) {
+                            return res.json(newAutoService);
+                        }
+                    } else if (transactionMetadata?.payStructureID) {
+                        // Payment intent
+                        const paymentIntentRefund = await stripe.refunds.create({
+                            payment_intent: transactionMetadata.payStructureID
+                        })
+                        if (transactionMetadata.stripeMechanicTransferID) {
+                            const transferReversal = await stripe.transfers.createReversal(
+                                transactionMetadata.stripeMechanicTransferID,
+                                { refund_application_fee: true }
+                            );
+                            newAutoService.transferReversalID = transferReversal?.id;
+                        }
+                        const savedAutoService = await newAutoService.save();
+                        return res.json(savedAutoService);
+                    }
                 } else {
                     return res.json(newAutoService);
                 }
@@ -283,6 +323,7 @@ module.exports = function (router, models) {
             locationID,
             notes,
             couponID,
+            giftCardCodes,
         } = req.body;
 
         const usePaymentIntent = req.query.usePaymentIntent || req.user.activeReferrerID || false;
@@ -294,12 +335,14 @@ module.exports = function (router, models) {
             location,
             mechanic,
             requestCoupon,
+            giftCardRedeemable,
             inTimeSlot,
             isAlreadyScheduled,
         ] = await Promise.all([
             models.Location.findBySearch(locationID, address),
             models.Mechanic.findByPk(mechanicID),
             models.Coupon.findByPk(couponID),
+            findRedeemableGiftCards(giftCardCodes),
             autoServiceScheduler.isDateInMechanicSlot(scheduledDate, req.user, mechanicID),
             autoServiceScheduler.isDatePreviouslyScheduled(scheduledDate, req.user, mechanicID)
         ]);
@@ -316,32 +359,35 @@ module.exports = function (router, models) {
             return res.status(422).send();
         }
 
+        if (giftCardRedeemable.filter(g => g.error).length > 0) {
+            // Return first errored gift card
+            return res.status(422).send({code: giftCardRedeemable.filter(g => g.error)[0].error});
+        }
+
         var finalCoupon = requestCoupon;
         var payStructure = null;
         var referrerID = null;
 
         if (usePaymentIntent && req.user.activeReferrerID) {
             req.log.info("Using payment intent and found active referrer, validating")
-            const referrer = await models.Referrer.findByPk(req.user.activeReferrerID, {
-                include: [
-                    {model: models.Coupon},
-                    {model: models.PayStructure}
-                ] 
-            });
-            referrerID = referrer.id;
-
+            referrerID = req.user.activeReferrerID;
+            const referrer = await models.Referrer.findByPk(req.user.activeReferrerID);
+            if (!referrer) {
+                removeActiveReferrer = true;
+            }
+            
             var removeActiveReferrer = false;
-            if (referrer.userID && req.user.id == referrer.userID) {
+            if (referrer?.userID && req.user.id == referrer.userID) {
                 removeActiveReferrer = true;
             }
 
-            const referrerCoupon = (await referrer.getCoupons()).find(c => c.id == referrer.activeCouponID);
-            const referrerPayStructure = referrer.activePayStructureID ? (await models.PayStructure.findByPk(referrer.activePayStructureID)) : null;
+            const referrerCoupon = referrer.activeCouponID ? (await models.Coupon.findByPk(referrer.activeCouponID)) : null;
             if (referrerCoupon && !finalCoupon) {
                 finalCoupon = referrerCoupon;
             }
 
             // Still valid referrer for future purchases but can't use pay structure for this one if coupon applied
+            const referrerPayStructure = referrer?.activePayStructureID ? (await models.PayStructure.findByPk(referrer.activePayStructureID)) : null;
             const canUsePayStructure = !finalCoupon || referrerPayStructure.getPaidEvenIfCouponIsApplied === true;
             if (referrerPayStructure && canUsePayStructure) {
 
@@ -391,12 +437,13 @@ module.exports = function (router, models) {
             }
         }
 
-        const taxMetadata = await taxes.taxMetadataForLocation(location);
-        const prices = await billingCalculations.calculatePrices(mechanic, location, oilType, vehicleID, finalCoupon, taxMetadata);
+        const giftCards = giftCardRedeemable.map(g => g.giftCard);
+        const prices = await billingCalculations.calculatePrices(mechanic, location, oilType, finalCoupon, giftCards, vehicleID);
 
+        const taxMetadata = await taxes.taxMetadataForLocation(location);
         autoServiceScheduler.scheduleAutoService(req.user, status, scheduledDate, vehicleID, mechanicID, sourceID,
             prices, oilType, serviceEntities, address, locationID, taxMetadata.rate,
-            finalCoupon ? finalCoupon.id : null, payStructure ? payStructure.id : null, referrerID, usePaymentIntent, notes, function (err, autoService) {
+            finalCoupon?.id, giftCards, payStructure?.id, referrerID, usePaymentIntent, notes, function (err, autoService) {
             if (!err) {
                 return res.json(autoService);
             } else {

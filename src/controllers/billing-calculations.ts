@@ -1,28 +1,20 @@
-const distance = require('../routes/distance');
-const constants = require('./constants');
-const { OilChangePricing } = require('../models');
-const { VehicleService } = require('./vehicle');
-
-// All in cents
-// const centsPerMile = 78;
-// const oilFilterCents = 950;
-// const mechanicHourlyRate = 1200;
-
-// const bookingFeePercentage = 0.10;
-
-// const conventionalQuartPrice = 300;
-// const blendQuartPrice = 390;
-// const syntheticQuartPrice = 440;
-
-// const quartsPerOilChange = 5.5;
+import {metersBetween} from "../routes/distance";
+import * as models from '../models';
+import { OilChangePricing } from '../models';
+import { VehicleService } from './vehicle';
+import * as constants from "./constants";
+import { GiftCardModel } from "../models/giftCard";
+import { LocationModel } from "../models/location";
+import { OilChangePricingModel } from "../models/oilChangePricing";
+import { CouponModel } from "../models/coupon";
+import { OilType, TaxMetadata } from "../models/types";
+import { RegionModel } from "../models/region";
+const vehicleService = new VehicleService();
+const taxService = require('./taxes')(models);
 
 const METERS_TO_MILES = 1609.344;
 
-function BillingCalculations(_) {
-    this.vehicleService = new VehicleService();
-}
-
-BillingCalculations.prototype.calculateCouponDiscount = function(coupon, subTotal) {
+export function calculateCouponDiscount(coupon: any, subTotal: number) {
     var discount;
 
     if(coupon.amountOff) {
@@ -36,8 +28,10 @@ BillingCalculations.prototype.calculateCouponDiscount = function(coupon, subTota
     return Math.max(Math.round(discount), -subTotal);
 }
 
-BillingCalculations.prototype.calculatePrices = async function(mechanic, location, oilType, vehicleID, coupon, taxMetadata) {
-    const oilChangePricing = await OilChangePricing.findOne({ where: { mechanicID: mechanic.id } });
+export async function calculatePrices(mechanic: any, location: LocationModel, oilType: OilType, coupon?: CouponModel, giftCards?: GiftCardModel[], vehicleID?: string) {
+    const oilChangePricing: OilChangePricingModel = await OilChangePricing.findOne({ where: { mechanicID: mechanic.id } });
+    const vehicle = vehicleID ? vehicleService.getVehicle(vehicleID) : null;
+    const taxMetadata: TaxMetadata = await taxService.taxMetadataForLocation(location);
 
     if (!taxMetadata || !taxMetadata.rate) {
         throw "No tax metadata, can't calculate price"
@@ -46,20 +40,19 @@ BillingCalculations.prototype.calculatePrices = async function(mechanic, locatio
     // If the mechanic doesn't charge for travel, set to 0
     var distancePrice = 0.0;
     if (mechanic.chargeForTravel) {
-        const region = await mechanic.getRegion();
+        const region: RegionModel = await mechanic.getRegion();
         const locationPoint = { latitude: location.point.coordinates[1], longitude: location.point.coordinates[0] };
         const regionPoint = { latitude: region.origin.coordinates[1], longitude: region.origin.coordinates[0] };
-        const meters = distance.metersBetween(locationPoint, regionPoint);
+        const meters = metersBetween(locationPoint, regionPoint);
         const miles = meters / METERS_TO_MILES;
         const centsPerMile = (oilChangePricing && oilChangePricing.centsPerMile) || constants.DEFAULT_CENTS_PER_MILE;
         distancePrice =  Math.round((centsPerMile * miles) * 2);
     }
 
-    const vehicle = vehicleID ? this.vehicleService.getVehicle(vehicleID) : null;
     const oilChangePrice = centsForOilType(oilType, oilChangePricing, vehicle) || constants.DEFAULT_CONVENTIONAL_PRICE;
 
     const mechanicBasePrice = oilChangePrice + distancePrice;
-    const discountPrice = coupon ? this.calculateCouponDiscount(coupon, mechanicBasePrice) : null;
+    const discountPrice = coupon ? calculateCouponDiscount(coupon, mechanicBasePrice) : null;
     const subtotalPreBookingFee = mechanicBasePrice + (discountPrice || 0);
 
     const bookingFeePrice = Math.round(constants.BOOKING_FEE_PERCENTAGE * subtotalPreBookingFee);
@@ -71,8 +64,8 @@ BillingCalculations.prototype.calculatePrices = async function(mechanic, locatio
     var transferAmountPrice = mechanicBasePrice;
 
     if(coupon && !coupon.isCorporate) {
-        transferAmountPrice += discountPrice;
-        mechanicCostPrice = Math.round((mechanicBasePrice + discountPrice) * .7)
+        transferAmountPrice += (discountPrice ?? 0);
+        mechanicCostPrice = Math.round((mechanicBasePrice + (discountPrice ?? 0)) * .7)
     }
 
     console.log("prices metadata: " + JSON.stringify({
@@ -85,6 +78,10 @@ BillingCalculations.prototype.calculatePrices = async function(mechanic, locatio
     }));
 
     const total = subtotalPrice + processingFeePrice + salesTax;
+    const giftCardAvailableAmount = giftCards?.map(g => -g.remainingBalance).reduce((acc, balance) => {return acc + balance}, 0) ?? 0;
+    const giftCardAppliedAmount = Math.max(-total, giftCardAvailableAmount);
+    const serviceTotal = total + giftCardAppliedAmount;
+
     const prices = {
         oilChange: oilChangePrice,
         distance: distancePrice,
@@ -97,12 +94,14 @@ BillingCalculations.prototype.calculatePrices = async function(mechanic, locatio
         transferAmount: transferAmountPrice,
         mechanicCost: mechanicCostPrice,
         total: total,
+        giftCard: giftCardAppliedAmount,
+        serviceTotal: serviceTotal,
     };
     console.log("prices: " + JSON.stringify(prices))
     return prices;
 }
 
-function calculateProcessingFeeTaxes(subtotal, taxRate) {
+function calculateProcessingFeeTaxes(subtotal: number, taxRate: number) {
     if (subtotal === 0) {
         return { processingFeePrice: 0, salesTax: 0 };
     }
@@ -111,11 +110,11 @@ function calculateProcessingFeeTaxes(subtotal, taxRate) {
     const stripeProcessPercentage = 0.029;
     const stripeProcessTransactionFee = 30; // In cents, per-transaction fee
 
-    const calculateStripeScalingFee = (value) => {
+    const calculateStripeScalingFee = (value: number) => {
         return Math.round(value * stripeProcessPercentage);
     };
 
-    const calculateTax = (value) => {
+    const calculateTax = (value: number) => {
         return Math.round(value * taxRate);
     }
 
@@ -149,22 +148,22 @@ function calculateProcessingFeeTaxes(subtotal, taxRate) {
     return { processingFeePrice: finalProcessingFee, salesTax: finalTaxes }
 }
 
-function centsForOilType(oilType, oilChangePricing, vehicle) {
-    var base;
-    var costPerQuart;
-    if (oilType == 'CONVENTIONAL') {
+function centsForOilType(oilType: OilType, oilChangePricing: OilChangePricingModel, vehicle: any) {
+    // Default to synthetic
+    var base = oilChangePricing.synthetic || constants.DEFAULT_SYNTHETIC_PRICE;
+    var costPerQuart = oilChangePricing.syntheticPerQuart || constants.DEFAULT_SYNTHETIC_PRICE_PER_QUART;
+
+    if (oilType == OilType.CONVENTIONAL) {
         base = oilChangePricing.conventional || constants.DEFAULT_CONVENTIONAL_PRICE;
         costPerQuart = oilChangePricing.conventionalPerQuart || constants.DEFAULT_CONVENTIONAL_PRICE_PER_QUART;
-    } else if (oilType == 'BLEND') {
+    } else if (oilType == OilType.BLEND) {
         base = oilChangePricing.blend || constants.DEFAULT_BLEND_PRICE;
         costPerQuart = oilChangePricing.blendPerQuart || constants.DEFAULT_BLEND_PRICE_PER_QUART;
-    } else if (oilType == 'SYNTHETIC') {
-        base = oilChangePricing.synthetic || constants.DEFAULT_SYNTHETIC_PRICE;
-        costPerQuart = oilChangePricing.syntheticPerQuart || constants.DEFAULT_SYNTHETIC_PRICE_PER_QUART;
-    } else if (oilType == 'HIGH_MILEAGE') {
+    } else if (oilType == OilType.HIGH_MILEAGE) {
         base = oilChangePricing.highMileage || constants.DEFAULT_HIGH_MILEAGE_PRICE;
         costPerQuart = oilChangePricing.highMileagePerQuart || constants.DEFAULT_HIGH_MILEAGE_PRICE_PER_QUART;
     }
+
     var totalCost = base;
     const quarts = vehicle && vehicle.vehicleDescription && vehicle.vehicleDescription.specs && vehicle.vehicleDescription.specs.quarts ?
         vehicle.vehicleDescription.specs.quarts : constants.DEFAULT_QUARTS_COUNT;
@@ -175,7 +174,3 @@ function centsForOilType(oilType, oilChangePricing, vehicle) {
     }
     return totalCost;
 }
-
-module.exports = function (models) {
-    return new BillingCalculations(models);
-};

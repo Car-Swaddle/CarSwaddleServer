@@ -2,7 +2,7 @@
     "watch": ["src"],
     "ext": ".ts,.js",
     "ignore": [],
-    "exec": "node --inspect -r ts-node/register ./src/server.js | pino-pretty",
+    "exec": "node --inspect -r ts-node/register ./src/start.ts | pino-pretty",
     "env": {
       "LOCAL_S3": "true",
       "STRIPE_LIVE": "NO",

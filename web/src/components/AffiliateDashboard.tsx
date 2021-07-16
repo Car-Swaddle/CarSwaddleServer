@@ -12,7 +12,7 @@ import TransactionListView from './transactions/TransactionListView'
 
 export default function AffiliateDashboard() {
 
-    const [referrer, setReferrer] = useState<Referrer | null>(UserContext.getCurrentReferrer());
+    const [referrer] = useState<Referrer | null>(UserContext.getCurrentReferrer());
     const [vanityLink, setVanityLink] = useState<string>("");
     const [requestingDashboard, setRequestingDashboard] = useState<boolean>(false);
     const [stripeDashboardLink, setStripeDashboardLink] = useState<string | null>();
@@ -21,7 +21,7 @@ export default function AffiliateDashboard() {
     const [didCopyLink, setDidCopyLink] = useState<boolean>(false);
 
     useEffect(() => {
-        if (referrer && referrer.vanityID) {
+        if (referrer && referrer.vanityID && !requestingDashboard) {
             const linkBase = process.env.REACT_APP_ENV === "production" ? "go.carswaddle.com/" : "carswaddle.test-app.link/";
             setVanityLink(`${linkBase}${referrer.vanityID}`)
             if (!stripeDashboardLink && !requestingDashboard) {
@@ -38,7 +38,7 @@ export default function AffiliateDashboard() {
                 importTransactions()
             }
         }
-    }, [referrer, transactions])
+    }, [referrer, vanityLink, requestingDashboard, stripeDashboardLink, transactions])
 
     async function importTransactions() {
         const transactionsJSON = await ReferrerService.getTransactions(referrer?.id ?? "")
@@ -109,7 +109,11 @@ export default function AffiliateDashboard() {
             </Row>
             <Row className="my-2">
                 <Col>
-                <h4 className="text-center"><a href={stripeDashboardLink ?? ""}>Stripe dashboard <i className="fas fa-arrow-right"></i></a></h4>
+                {stripeDashboardLink ?
+                    <h4 className="text-center"><a href={stripeDashboardLink}>Stripe dashboard <i className="fas fa-arrow-right"></i></a></h4>
+                    :
+                    <div></div>
+                }
                 </Col>
             </Row>
         </Container>
