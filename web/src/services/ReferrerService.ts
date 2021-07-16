@@ -1,4 +1,5 @@
 import { handleResponse, handleTextResponse, verifyAuthentication } from './handleResponse'
+import { Transaction } from '../models/index'
 
 export const ReferrerService = {
     getCurrentUserReferrer,
@@ -27,9 +28,9 @@ async function getSummary(referrerID: string) {
 
 async function getTransactions(referrerID: string) {
     return fetch(`api/referrers/${referrerID}/transactions`)
-    .then(handleTextResponse)
-        .then(data => {
-            return data;
+        .then(handleResponse)
+        .then((transactions: Transaction[]) => {
+            return transactions
         });
 }
 

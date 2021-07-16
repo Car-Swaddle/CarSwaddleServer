@@ -3,6 +3,7 @@ import React from 'react';
 import querystring from 'querystring';
 import { UserContext } from '../services/user-context';
 import { ReferrerService } from '../services/ReferrerService';
+import CarSwaddleAffiliateLogo from './CarSwaddleAffiliateLogo';
 
 export type StripeLandingProps = {
     finishedAuth: () => void,
@@ -65,6 +66,7 @@ export default function StripeLanding({finishedAuth}: StripeLandingProps) {
 
     return (
         <Container>
+            <CarSwaddleAffiliateLogo />
             <Row>
                 <Col sm={{span: 8, offset: 2}} lg={{span: 6, offset: 3}}>By clicking the link below, you’ll be directed to Stripe. We use Stripe to process all payments you’ll receive from our referral program.</Col>
             </Row>

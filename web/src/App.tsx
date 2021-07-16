@@ -8,6 +8,9 @@ import AffiliateDashboard from './components/AffiliateDashboard';
 import StripeLanding from './components/StripeLanding';
 import { UserContext } from './services/user-context';
 import { Referrer } from "./models"
+import AuthenticatedNavigation from './components/AuthenticatedNavigation';
+import CarSwaddleAffiliateView from './components/CarSwaddleAffiliateLogo'
+import AuthenticatedPage from './components/AuthenticatedPage';
 
 export default function App() {
     const [authenticated, setAuthenticated] = React.useState(AuthenticationService.isAuthenticated());
@@ -19,42 +22,31 @@ export default function App() {
     }
 
     return (
-    <Container>
-        <Row>
-            <Col>
-                <div className="mt-4 mb-3 text-center"><img src={`/img/cs-logo.png`} style={{maxWidth: "300px"}}/></div>
-            </Col>
-        </Row>
-        <Row>
-            <Col className="mb-3 text-center"><h1><b>Affiliate</b></h1></Col>
-        </Row>
-        <Row>
-        <BrowserRouter>
-            {!authenticated
-                ? <>
-                <Route path="/login">
-                    <LoginPage finishedAuth={finishedAuth}/>
-                </Route>
-                <Redirect to="/login" />
-                </>
-                : ((!referrer || !referrer.stripeExpressAccountID) ?
-                    <>
-                    <Route path="/affiliate/stripe">
-                        <StripeLanding finishedAuth={finishedAuth} />
-                    </Route>
-                    <Redirect from="*" to={`/affiliate/stripe${window.location.search}`} />
-                    </>
-                    :
-                    <>
-                    <Route path="/affiliate">
-                        <AffiliateDashboard /> 
-                    </Route>
-                    <Redirect from="*" to="/affiliate" />
-                    </>
-                )
-            }
-        </BrowserRouter>
-        </Row>
-    </Container>
+        <Container>
+            <Row>
+                <BrowserRouter>
+                    {!authenticated
+                        ? <>
+                            <Route path="/login">
+                                <LoginPage finishedAuth={finishedAuth} />
+                            </Route>
+                            <Redirect to="/login" />
+                        </>
+                        : ((!referrer || !referrer.stripeExpressAccountID) ?
+                            <>
+                                <Route path="/affiliate/stripe">
+                                    <StripeLanding finishedAuth={finishedAuth} />
+                                </Route>
+                                <Redirect from="*" to={`/affiliate/stripe${window.location.search}`} />
+                            </>
+                            :
+                            <>
+                                <AuthenticatedPage/>
+                            </>
+                        )
+                    }
+                </BrowserRouter>
+            </Row>
+        </Container>
     );
 }

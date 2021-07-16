@@ -3,11 +3,12 @@ import { UserContext } from '../services/user-context';
 import { ReferrerService } from '../services/ReferrerService';
 import { Referrer } from '../models';
 import { Transaction } from '../models';
-import React, { useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import { OverlayTrigger, Overlay, Tooltip, Button } from 'react-bootstrap';
 // import { ReactComponent as CopySVG } from '../resources/copy.svg'
 import Colors from '../resources/Colors'
 import CopySVG from './CopySVG'
+import TransactionListView from './transactions/TransactionListView'
 
 export default function AffiliateDashboard() {
 
@@ -33,13 +34,18 @@ export default function AffiliateDashboard() {
                 requestLink();
                 setRequestingDashboard(true);
             }
-            importTransactions()
+            if ((transactions?.length ?? 0) == 0) {
+                importTransactions()
+            }
         }
     }, [referrer, transactions])
 
     async function importTransactions() {
-        const transactionsJSON = (await ReferrerService.getTransactions(referrer?.id ?? "") as unknown) as Transaction[]
-        var transactions: Array<Transaction> = []
+        const transactionsJSON = await ReferrerService.getTransactions(referrer?.id ?? "")
+        // let d: Transaction[] = transactionsJSON.map{(json) => 
+        //     JSON.parse(json) as Transaction
+        // }
+        // let transactions: Transaction[] = JSON.parse(transactionsJSON)
         setTransactions(transactionsJSON)
     }
 
@@ -61,9 +67,6 @@ export default function AffiliateDashboard() {
         button: {
             backgroundColor: Colors.background,
             borderWidth: 0,
-        },
-        tooltip: {
-
         }
     }
 
@@ -108,13 +111,6 @@ export default function AffiliateDashboard() {
                 <Col>
                 <h4 className="text-center"><a href={stripeDashboardLink ?? ""}>Stripe dashboard <i className="fas fa-arrow-right"></i></a></h4>
                 </Col>
-            </Row>
-            <Row>
-            {(transactions?.length ?? 0) > 0 ?
-                        <h4 className="text-center">true thing</h4>
-                        :
-                        <h4 className="text-center">false thing</h4>
-                    }
             </Row>
         </Container>
     )

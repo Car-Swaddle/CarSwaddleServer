@@ -3,6 +3,7 @@ import React from 'react';
 import { AuthenticationService } from '../services/authenticationService';
 import { Container, Row, Col, Form, Button } from 'react-bootstrap';
 import ErrorLabel from './ErrorLabel';
+import CarSwaddleAffiliateLogo from './CarSwaddleAffiliateLogo';
 
 export type LoginPageProps = {
     finishedAuth: () => void,
@@ -43,6 +44,7 @@ export default function LoginPage({ finishedAuth }: LoginPageProps) {
 
     return (
         <Container>
+            <CarSwaddleAffiliateLogo/>
             <Row>
                 <Col sm={{ span: 6, offset: 3 }} lg={{ span: 4, offset: 4 }}>
                     <Form onSubmit={handleSubmit}>
