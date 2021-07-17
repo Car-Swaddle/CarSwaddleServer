@@ -21,10 +21,6 @@ export default function TransactionsPage() {
 
     async function importTransactions() {
         const transactionsJSON = await ReferrerService.getTransactions(referrer?.id ?? "")
-        // let d: Transaction[] = transactionsJSON.map{(json) => 
-        //     JSON.parse(json) as Transaction
-        // }
-        // let transactions: Transaction[] = JSON.parse(transactionsJSON)
         setTransactions(transactionsJSON)
     }
 
