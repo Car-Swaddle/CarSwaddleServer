@@ -1,58 +1,7 @@
 import { AuthenticationService } from './authenticationService';
 
 export function handleResponse(response: any) {
-    return response
-    .json()
-    .then((data: any) => {
-        if (!response.ok) {
-            if (401 === response.status) {
-                // auto logout if 401 Unauthorized response returned from api
-                AuthenticationService.logout();
-            }
-
-            const error = (data && data.message) || response.statusText;
-            return Promise.reject(error);
-        }
-
-        return data;
-    });
-}
-
-export function handleTextResponse(response: any) {
-    return response
-    .text()
-    .then((data: any) => {
-        if (!response.ok) {
-            if (401 === response.status) {
-                // auto logout if 401 Unauthorized response returned from api
-                AuthenticationService.logout();
-            }
-
-            const error = (data && data.message) || response.statusText;
-            return Promise.reject(error);
-        }
-
-        return data;
-    });
-}
-
-function verifyAuthenticated(response: any, data: any) {
-    if (!response.ok) {
-        if (401 === response.status) {
-            // auto logout if 401 Unauthorized response returned from api
-            AuthenticationService.logout();
-        }
-
-        const error = (data && data.message) || response.statusText;
-        return Promise.reject(error);
-    }
-
-    return data;
-}
-
-export function verifyAuthentication(response: any) {
-    return response
-    .then((data: any) => {
+    return response.json().then((data: any) => {
         if (!response.ok) {
             if (401 === response.status) {
                 // auto logout if 401 Unauthorized response returned from api

@@ -1,4 +1,4 @@
-import { handleResponse, handleTextResponse, verifyAuthentication } from './handleResponse'
+import { handleResponse } from './handleResponse'
 import { Transaction } from '../models/index'
 
 export const ReferrerService = {
