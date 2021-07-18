@@ -16,6 +16,8 @@ const acceptURL = domain + '/authority/approve';
 const rejectURL = domain + '/authority/reject';
 const unsubscribeURL = domain + '/email-unsubscribe';
 
+
+const allowEmail = !process.env.NO_EMAIL || process.env.NO_EMAIL === 'false';
 class Emailer {
 
     constructor(models) {
@@ -23,6 +25,9 @@ class Emailer {
     }
 
     sendMail(mailOptions) {
+        if (!allowEmail) {
+            return new Promise(() => {});
+        }
         if (mailOptions.TemplateId) {
             return client.sendEmailWithTemplate(mailOptions);
         } else {
@@ -42,6 +47,12 @@ class Emailer {
     }
 
     sendUserOilChangeReminderMail(autoService, callback) {
+        if (!allowEmail) {
+            if (callback) {
+                callback('no emails allowed');
+            }
+            return;
+        }
         const self = this;
         this.emailsAllowed(autoService.user, function (emailsAllowed) {
             if (!emailsAllowed) {
