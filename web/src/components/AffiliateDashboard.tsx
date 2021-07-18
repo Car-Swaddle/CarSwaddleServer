@@ -2,9 +2,8 @@ import { Container, Row, Col } from 'react-bootstrap';
 import { UserContext } from '../services/user-context';
 import { ReferrerService } from '../services/ReferrerService';
 import { Referrer } from '../models';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { OverlayTrigger, Overlay, Tooltip, Button } from 'react-bootstrap';
-// import { ReactComponent as CopySVG } from '../resources/copy.svg'
 import Colors from '../resources/Colors'
 import CopySVG from './CopySVG'
 

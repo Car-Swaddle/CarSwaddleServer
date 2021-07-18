@@ -1,4 +1,4 @@
-import { Container, Row, Col } from 'react-bootstrap';
+import { Container } from 'react-bootstrap';
 import Colors from '../../resources/Colors'
 import { Transaction } from '../../models/index'
 import NumberFormat from 'react-number-format';

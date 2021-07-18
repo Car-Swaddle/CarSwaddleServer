@@ -34,12 +34,6 @@ export default function LoginPage({ finishedAuth }: LoginPageProps) {
             });
     }
 
-    const styles = {
-        error: {
-            margin: '16px'
-        }
-    }
-
     const errorMessage = 'Car Swaddle was unable to log you in. You will need to create an account using the iOS or Android customer app.If you\'ve already done that, please make sure your email and password are correct and try again';
 
     return (

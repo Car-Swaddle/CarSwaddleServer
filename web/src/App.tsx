@@ -4,12 +4,9 @@ import { Container, Row, Col } from 'react-bootstrap';
 
 import { AuthenticationService } from './services/authenticationService';
 import LoginPage from './components/LoginPage';
-import AffiliateDashboard from './components/AffiliateDashboard';
 import StripeLanding from './components/StripeLanding';
 import { UserContext } from './services/user-context';
 import { Referrer } from "./models"
-import AuthenticatedNavigation from './components/AuthenticatedNavigation';
-import CarSwaddleAffiliateView from './components/CarSwaddleAffiliateLogo'
 import AuthenticatedPage from './components/AuthenticatedPage';
 
 export default function App() {

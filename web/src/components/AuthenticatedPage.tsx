@@ -2,8 +2,6 @@ import { Redirect, Route, Switch } from "react-router-dom";
 import AffiliateDashboard from "./AffiliateDashboard";
 import AuthenticatedNavigation from "./AuthenticatedNavigation";
 import TransactionsPage from "./TransactionsPage";
-import { Container, Row, Col } from 'react-bootstrap';
-import React, { useEffect, useState } from 'react';
 
 export enum Tab {
     affiliate = 'affiliate',

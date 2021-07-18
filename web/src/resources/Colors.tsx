@@ -1,4 +1,3 @@
-import React from 'react';
 
 /// Static color resources. Not meant to change based on a theme, meant to be used in a theme.
 const Colors = {

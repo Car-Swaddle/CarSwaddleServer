@@ -14,6 +14,6 @@ export default function CarSwaddleLogo({ width, height }: CarSwaddleLogoProps) {
     }
     
     return (
-        <div className="mt-4 mb-3 text-center"><img src={`/img/cs-logo.png`} style={styles.logoImage} /></div>
+        <div className="mt-4 mb-3 text-center"><img src={`/img/cs-logo.png`} style={styles.logoImage} alt='Car Swaddle Logo'/></div>
     )
 }
