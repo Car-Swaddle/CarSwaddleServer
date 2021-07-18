@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Container, Row, Col } from 'react-bootstrap';
+import { Container, Row } from 'react-bootstrap';
 import { UserContext } from '../services/user-context';
 import { ReferrerService } from '../services/ReferrerService';
 import { Referrer } from '../models';

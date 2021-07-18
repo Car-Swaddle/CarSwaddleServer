@@ -3,7 +3,7 @@ import { UserContext } from '../services/user-context';
 import { ReferrerService } from '../services/ReferrerService';
 import { Referrer } from '../models';
 import { useEffect, useState } from 'react';
-import { OverlayTrigger, Overlay, Tooltip, Button } from 'react-bootstrap';
+import { OverlayTrigger, Tooltip, Button } from 'react-bootstrap';
 import Colors from '../resources/Colors'
 import CopySVG from './CopySVG'
 

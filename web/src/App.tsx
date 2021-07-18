@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter, Route, Redirect } from 'react-router-dom';
-import { Container, Row, Col } from 'react-bootstrap';
+import { Container, Row } from 'react-bootstrap';
 
 import { AuthenticationService } from './services/authenticationService';
 import LoginPage from './components/LoginPage';
