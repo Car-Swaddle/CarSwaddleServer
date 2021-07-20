@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const rateLimit = require('express-rate-limit');
 const accountCreationFile = require('../controllers/account-creation.js');
 const express = require('express');
 const ReferrerController = require("../controllers/referrer");
@@ -17,7 +18,17 @@ module.exports = function (app, models, passport) {
         }
     }
 
-    app.post('/login', express.urlencoded({ extended: true }), function (req, res, next) {
+    const loginAccountLimiter = rateLimit({
+        windowMs: 15 * 60 * 1000, // 1 hour window
+        max: 50, // start blocking after 50 requests
+      });
+
+    const createAccountLimiter = rateLimit({
+        windowMs: 15 * 60 * 1000, // 15 minute window
+        max: 15, // start blocking after 15 requests
+      });
+
+    app.post('/login', loginAccountLimiter, express.urlencoded({ extended: true }), function (req, res, next) {
         passport.authenticate('local-login', { session: false }, (err, user, info) => {
             if (err || !user) {
                 return res.status(400).json({
@@ -47,7 +58,7 @@ module.exports = function (app, models, passport) {
         })(req, res);
     });
 
-    app.post('/signup', express.urlencoded({ extended: true }), function (req, res, next) {
+    app.post('/signup', createAccountLimiter, express.urlencoded({ extended: true }), function (req, res, next) {
         passport.authenticate('local-signup', { session: false }, (err, user, info) => {
             if (err || !user) {
                 return res.status(400).json({
@@ -89,7 +100,7 @@ module.exports = function (app, models, passport) {
     });
 
 
-    app.post('/api/request-reset-password', express.urlencoded({ extended: true }), function (req, res) {
+    app.post('/api/request-reset-password', loginAccountLimiter, express.urlencoded({ extended: true }), function (req, res) {
         const email = req.body.email;
         const appName = req.body.appName || 'car-swaddle';
         if (!email) {
@@ -106,7 +117,7 @@ module.exports = function (app, models, passport) {
         });
     });
 
-    app.post('/api/reset-password', express.urlencoded({ extended: true }), function (req, res) {
+    app.post('/api/reset-password', loginAccountLimiter, express.urlencoded({ extended: true }), function (req, res) {
         const newPassword = req.body.newPassword;
         const token = req.body.token;
         if (!newPassword || !token) {
