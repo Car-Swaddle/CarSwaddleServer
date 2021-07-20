@@ -7,8 +7,8 @@ module.exports = function (app, models, passport) {
     require('./email.js')(app, models);
 
     const apiLimiter = rateLimit({
-        windowMs: 5 * 60 * 1000, // 15 minute window
-        max: 100, // start blocking after 200 requests
+        windowMs: 5 * 60 * 1000, // 5 minute window
+        max: 100, // start blocking after 100 requests
     });
 
     var api = require('./api')(app, models);

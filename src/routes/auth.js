@@ -19,7 +19,7 @@ module.exports = function (app, models, passport) {
     }
 
     const loginAccountLimiter = rateLimit({
-        windowMs: 15 * 60 * 1000, // 1 hour window
+        windowMs: 15 * 60 * 1000, // 15 minute window
         max: 50, // start blocking after 50 requests
       });
 
