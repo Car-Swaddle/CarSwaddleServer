@@ -62,7 +62,3 @@ export enum OilType {
   SYNTHETIC = "SYNTHETIC",
   HIGH_MILEAGE = "HIGH_MILEAGE"
 }
-
-export interface UserRequest<P, Q, R, S> extends Request<P, Q, R, S> {
-  user: any // Change type when ready
-}

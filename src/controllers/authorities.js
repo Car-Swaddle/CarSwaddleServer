@@ -154,7 +154,7 @@ AuthoritiesController.prototype.fetchAuthorityForUser = function (userID, author
 AuthoritiesController.prototype.checkAuthority = async function(req, res, authority) {
     const hasAuthority = await this.hasAuthority(req.user.id, authority);
     if (!hasAuthority) {
-        res.status(403).send(`Missing required authority: ${authority}`);
+        res.status(403).send({error: `Missing required authority: ${authority}`});
         // Throw so we don't attempt to continue processing the request
         throw Error(`Missing required authority: ${authority}`);
     }
