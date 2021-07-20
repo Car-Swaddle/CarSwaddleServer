@@ -24,7 +24,7 @@ require('./authorities.js')(router, models);
 require('./coupons')(router, models);
 
 router.get('/gift-cards/:id', getGiftCardByID);
-router.get('/gift-cards/code/:id', getGiftCardByCode)
+router.get('/gift-cards/code/:code', getGiftCardByCode)
 router.post('/gift-cards', json(), createGiftCard)
 router.delete('/gift-cards/:id', json(), deleteGiftCard);
 

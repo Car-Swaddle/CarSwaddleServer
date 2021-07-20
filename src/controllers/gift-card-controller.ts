@@ -29,10 +29,13 @@ function handleValidationErrors(req: Request) {
 
 export async function getGiftCardByID(req: Request<{id: string}, GiftCardModel | null>, res: Response, next: NextFunction) {
     try {
-        await param("id").isInt().run(req);
+        await param("id").isUUID().run(req);
         handleValidationErrors(req);
 
         const giftCard = await GiftCard.findByPk(req.params.id);
+        if (!giftCard) {
+            return res.sendStatus(404);
+        }
         return res.json(giftCard);
     } catch (e) {
         next(e);
@@ -41,10 +44,13 @@ export async function getGiftCardByID(req: Request<{id: string}, GiftCardModel |
 
 export async function getGiftCardByCode(req: Request<{code: string}, GiftCardModel | null>, res: Response, next: NextFunction) {
     try {
-        await param("code").isInt().run(req);
+        await param("code").isString().run(req);
         handleValidationErrors(req);
 
         const giftCard = await GiftCard.findOne({where: {code: req.params.code}})
+        if (!giftCard) {
+            return res.sendStatus(404);
+        }
         return res.json(giftCard);
     } catch (e) {
         next(e);
@@ -75,19 +81,19 @@ export async function createGiftCard(req: Request<{}, GiftCardModel, GiftCardMod
 
 export async function deleteGiftCard(req: Request<{id: string}>, res: Response, next: NextFunction) {
     try {
-        await param("id").isInt().run(req);
+        await param("id").isUUID().run(req);
         handleValidationErrors(req);
 
         await checkEditAuthority(req, res);
 
         const giftCard = await GiftCard.findByPk(req.params.id);
         if (!giftCard) {
-            return next("Invalid gift card id");
+            return res.sendStatus(404);
         }
         if (giftCard?.remainingBalance > 0) {
             console.info(`Deleting gift card ${giftCard?.id} with remaining balance $${giftCard?.remainingBalance / 100.0}`);
         }
-        await GiftCard.destroy()
+        await giftCard.destroy();
         return res.sendStatus(204);
     } catch (e) {
         next(e);
