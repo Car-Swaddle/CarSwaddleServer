@@ -42,4 +42,15 @@ app.get('/*', (_, res) => {
     res.sendFile(basePath + '/index.html');
 })
 
+// Catch-all error handler
+app.use(function (error, req, res, next) {
+    if (process.env.NODE_ENV === 'production') {
+        res.status(500).send({error: "Unknown error"})
+        return next(error);
+    }
+    console.error(error?.stack ?? error.message);
+    res.status(400).send({ error: error.message, stack: error?.stack });
+    return next(error);
+});
+
 module.exports = { app };

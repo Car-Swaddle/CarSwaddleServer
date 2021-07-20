@@ -5,7 +5,7 @@ module.exports = function (app, models, passport) {
     require('./stripe-webhook.js')(app, models);
     require('./email.js')(app, models);
 
-    var api = require('./api')(app, models);
+    var { router } = require('./api');
     app.use('/api/calendar', calendar)
-    app.use('/api', passport.authenticate('jwt', {session: false}), api)
+    app.use('/api', passport.authenticate('jwt', {session: false}), router)
 }
