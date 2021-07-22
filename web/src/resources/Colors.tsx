@@ -8,7 +8,8 @@ const Colors = {
     text: '#000000',
     error: '#FF1302',
     errorAlpha: '#FF130218',
-    errorContrast: '#FFFFFF'
+    errorContrast: '#FFFFFF',
+    divider: '#BBB'
 }
 
 

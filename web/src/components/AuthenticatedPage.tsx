@@ -1,7 +1,7 @@
 import { Redirect, Route, Switch } from "react-router-dom";
 import AffiliateDashboard from "./AffiliateDashboard";
 import AuthenticatedNavigation from "./AuthenticatedNavigation";
-import TransactionsPage from "./TransactionsPage";
+import TransactionsPage from "./transactions/TransactionsPage";
 
 export enum Tab {
     affiliate = 'affiliate',

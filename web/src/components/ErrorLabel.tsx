@@ -14,11 +14,12 @@ export default function ErrorLabel({ text }: ErrorLabelProps) {
             padding: '8px',
             color: Colors.text,
             borderRadius: '8px',
-            border: `2px solid ${Colors.error}`
+            border: `2px solid ${Colors.error}`,
+            display: 'inline'
         }
     }
 
     return (
-        <p style={styles.text}>{text}</p>
+        <text style={styles.text}>{text}</text>
     )
 }
