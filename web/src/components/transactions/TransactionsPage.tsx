@@ -33,7 +33,7 @@ export default function TransactionsPage() {
         <Container style={styles.container}>
             <Row>
                 <Col md={4}>
-                    You transactions are listed here. The money will get to your bank account as soon as the oil change is completed.
+                    Your transactions are listed here. The money will get to your bank account as soon as the oil change is completed.
                 </Col>
                 <Col md={8}>
                     <TransactionListView transactions={transactions ?? []} />

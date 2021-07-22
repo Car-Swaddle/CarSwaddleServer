@@ -23,7 +23,7 @@ export default function TransactionListView({ transactions }: TransactionListVie
 
     return (
         transactions.length > 0 ?
-        <Table striped bordered hover>
+        <Table striped bordered hover >
             <thead>
                 <tr>
                     <th>Profit</th>
