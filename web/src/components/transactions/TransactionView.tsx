@@ -1,5 +1,3 @@
-import { Container } from 'react-bootstrap';
-import Colors from '../../resources/Colors'
 import { Transaction } from '../../models/index'
 import NumberFormat from 'react-number-format';
 import Moment from 'moment';
@@ -10,13 +8,6 @@ export type TransactionViewProps = {
 }
 
 export default function TransactionView({ transaction }: TransactionViewProps) {
-
-    const styles = {
-        text: {
-            padding: '8px',
-            color: Colors.text,
-        }
-    }
 
     return (
         <tr>

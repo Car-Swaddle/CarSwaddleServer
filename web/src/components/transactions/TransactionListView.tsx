@@ -20,7 +20,7 @@ export default function TransactionListView({ transactions }: TransactionListVie
             </>
         );
     }
-    
+
     return (
         transactions.length > 0 ?
         <Table striped bordered hover>
@@ -57,7 +57,7 @@ function EmptyTransactionListView() {
 
     return (
         <Container style={styles.content}>
-            <a>You don't have any transactions at the moment. When you do, they will be listed here.<br/><br/> Share your <a href='/affiliate'>affiliate link</a>. Once someone purchases an oil change using your link, you'll see transactions here</a>
+            <p>You don't have any transactions at the moment. When you do, they will be listed here.<br/><br/> Share your <a href="/affiliate">affiliate link</a>. Once someone purchases an oil change using your link, you'll see transactions here</p>
         </Container>
     )
 }
