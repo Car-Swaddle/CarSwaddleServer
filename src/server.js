@@ -15,6 +15,7 @@ stripe.setAppInfo({
 const app = express();
 app.use(pino);
 app.use(cookieParser())
+app.set('trust proxy', 1); // Enable rate limiter to work with heroku
 if(process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'staging') {
     // Redirect all non-http heroku traffic to https
     app.use((req, res, next) => {
