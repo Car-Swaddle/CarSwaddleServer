@@ -2,11 +2,13 @@ import Hashids from 'hashids';
 
 // Lowercase alphanumeric except confusing characters - 0/o 1/l
 const fiveCharacterHashids = new Hashids('5character', 5, "23456789abcdefghjkmnpqrstuvwxyz")
+
 export class Util {
 
     static generateFiveCharacterReadableID(): string {
-        // Use current time and random number 0-1000
-        return fiveCharacterHashids.encode([Date.now(), Math.round(Math.random() * 1000)]);
+        // Use current time and random number 0-100
+        const encoded = fiveCharacterHashids.encode([Date.now(), Math.round(Math.random() * 100)]);
+        return encoded.substring(0, 5);
     }
 
     static isString (obj: any | null): boolean {
