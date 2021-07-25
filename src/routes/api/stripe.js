@@ -66,9 +66,11 @@ module.exports = function (router, models) {
 
             // Manual payout schedule
             await stripe.accounts.update(stripeAccountID, {
-                payouts: {
-                    schedule: {
-                        interval: "manual"
+                settings: {
+                    payouts: {
+                        schedule: {
+                            interval: "manual"
+                        }
                     }
                 }
             });
