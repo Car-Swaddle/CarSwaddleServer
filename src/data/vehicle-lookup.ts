@@ -16,21 +16,21 @@ class VehicleSpecs {
 
 export class VehicleLookup {
 
-    static listYears(make?: string, model?: string): number[] {
+    static listYears(make?: string | null, model?: string): number[] {
         const prep = this.queryPrep(make, model);
         const stmt = db.prepare("SELECT DISTINCT v.year FROM vehicle v WHERE v.id IN (SELECT docid FROM vehicle_fts " + prep.whereClause + ") ORDER BY v.year DESC");
 
         return stmt.all(prep.params).map((x: VehicleSpecs) => x.year);
     }
 
-    static listMakes(make?: string, year?: number): string[] {
+    static listMakes(make?: string | null, year?: number): string[] {
         const prep = this.queryPrep(make, null, year);
         const stmt = db.prepare("SELECT DISTINCT v.make FROM vehicle v WHERE v.id IN (SELECT docid FROM vehicle_fts " + prep.whereClause + ") ORDER BY v.make");
 
         return stmt.all(prep.params).map((x: VehicleSpecs) => x.make);
     }
 
-    static listModels(make: string, model?: string, year?: number): string[] {
+    static listModels(make: string, model?: string | null, year?: number): string[] {
         const prep = this.queryPrep(make, model, year);
         const stmt = db.prepare("SELECT DISTINCT v.model FROM vehicle v WHERE v.id IN (SELECT docid FROM vehicle_fts " + prep.whereClause + ") ORDER BY v.model");
 
@@ -51,20 +51,20 @@ export class VehicleLookup {
         return stmt.get(prep.params);
     }
 
-    private static queryPrep(make?: string, model?: string | null, year?: number, engine?: string): any {
+    private static queryPrep(make?: string | null, model?: string | null, year?: number, engine?: string): any {
         var ftsMatchTokens = [];
         if (year) {
             ftsMatchTokens.push("year:" +year)
         }
-        if (make) {
+        if (make?.length) {
             // Match any as prefix or suffix
             // For token queries, values must be lower: https://www.sqlite.org/fts3.html#full_text_index_queries
             ftsMatchTokens.push("make:*" + make.toLowerCase() + "*")
         }
-        if (model) {
+        if (model?.length) {
             ftsMatchTokens.push("model:*" + model.toLowerCase() + "*")
         }
-        if (engine) {
+        if (engine?.length) {
             console.log(engine);
             ftsMatchTokens.push("engine:*" + engine.toLowerCase() + "*")
         }
