@@ -63,6 +63,15 @@ module.exports = function (router, models) {
                 throw "Missing data in stripe response";
             }
             const stripeAccountID = response.data.stripe_user_id;
+
+            // Manual payout schedule
+            await stripe.accounts.update(stripeAccountID, {
+                payouts: {
+                    schedule: {
+                        interval: "manual"
+                    }
+                }
+            });
             
             const referrer = await referrerController.createReferrerForUserWithExistingStripeAccount(req.user.id, stripeAccountID);
             res.json(referrer);

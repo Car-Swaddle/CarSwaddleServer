@@ -106,7 +106,11 @@ module.exports = class ReferrerController {
         referrer.stripeExpressAccountID = stripeAccountID;
         await referrer.save();
 
-        await this.createBranchDeepLink(referrer);
+        try {
+            await this.createBranchDeepLink(referrer);
+        } catch (e) {
+            console.warn(`Failed to create branch link for ${referrer.id}`, e);
+        }
 
         return referrer;
     }
@@ -133,8 +137,12 @@ module.exports = class ReferrerController {
         const updated = allUpdated[0];
 
         // Update after persist attempt to ensure we check for duplicates
-        if (referrer.vanityID != existing.vanityID) {
-            await this.deleteBranchDeepLink(existing.vanityID);
+        const expectedURL = this.generateBranchURL(referrer.vanityID);
+        const existingURL = await this.getBranchExistingDeepLink(existing);
+        if (expectedURL != existingURL) {
+            if (existingURL != null) {
+                await this.deleteBranchDeepLink(existing.vanityID);
+            }
             await this.createBranchDeepLink(updated);
         }
 
@@ -172,6 +180,21 @@ module.exports = class ReferrerController {
         return payStructure ? payStructure.destroy() : Promise.reject();
     }
 
+    async getBranchExistingDeepLink(referrer: ReferrerModel): Promise<string | null>  {
+        try {
+            const resp = await axios.get(`https://api2.branch.io/v1/url`,{
+                params: {
+                    url: this.generateBranchURL(referrer.vanityID),
+                    branch_key: process.env.BRANCH_API_KEY
+                },
+            });
+            return resp.data?.data?.url as string;
+        } catch (e) {
+            console.warn(`No branch deep link found for ${referrer.vanityID}`)
+            return null;
+        }
+    }
+
     async createBranchDeepLink(referrer: ReferrerModel) {
         var displayName = `${referrer.sourceType}:${referrer.externalID}`
         if (referrer.userID) {
@@ -204,8 +227,12 @@ module.exports = class ReferrerController {
         return process.env.NODE_ENV === "production" ? "go.carswaddle.com/" : "carswaddle.test-app.link/"
     }
 
-    async deleteBranchDeepLink(vanityID: string) {
-        return axios.delete(`https://api2.branch.io/v1/url?url=https://${this.getBranchLinkBase()}${vanityID}`,{
+    generateBranchURL(vanityID: string): string {
+        return `https://${this.getBranchLinkBase()}${vanityID}`
+    }
+
+    async deleteBranchDeepLink(existingURL: string) {
+        return axios.delete(`https://api2.branch.io/v1/url?url=${existingURL}`,{
             params: {
                 app_id: process.env.BRANCH_APP_ID
             },
