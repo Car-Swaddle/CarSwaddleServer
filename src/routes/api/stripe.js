@@ -72,6 +72,22 @@ module.exports = function (router, models) {
                 console.log(err)
                 return res.sendStatus(err.status || 400);
             }
+            
+            const stripeAccountID = response.data.stripe_user_id;
+
+            // Manual payout schedule
+            await stripe.accounts.update(stripeAccountID, {
+                settings: {
+                    payouts: {
+                        schedule: {
+                            interval: "manual"
+                        }
+                    }
+                }
+            });
+            
+            const referrer = await referrerController.createReferrerForUserWithExistingStripeAccount(req.user.id, stripeAccountID);
+            res.json(referrer);
         } else {
             // Unhandled, might use for mechanic in the future
             res.sendStatus(400);

@@ -15,6 +15,7 @@ stripe.setAppInfo({
 const app = express();
 app.use(pino);
 app.use(cookieParser())
+app.set('trust proxy', 1); // Enable rate limiter to work with heroku
 if(process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'staging') {
     // Redirect all non-http heroku traffic to https
     app.use((req, res, next) => {
@@ -41,5 +42,16 @@ app.use(express.static(basePath));
 app.get('/*', (_, res) => {
     res.sendFile(basePath + '/index.html');
 })
+
+// Catch-all error handler
+app.use(function (error, req, res, next) {
+    if (process.env.NODE_ENV === 'production') {
+        res.status(500).send({error: "Unknown error"})
+        return next(error);
+    }
+    console.error(error?.stack ?? error.message);
+    res.status(400).send({ error: error.message, stack: error?.stack });
+    return next(error);
+});
 
 module.exports = { app };
