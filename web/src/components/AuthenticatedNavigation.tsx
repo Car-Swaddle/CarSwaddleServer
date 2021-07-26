@@ -1,4 +1,4 @@
-import { Navbar, Container, Nav } from 'react-bootstrap'
+import { Navbar, Container, Nav, NavLink } from 'react-bootstrap'
 import CarSwaddleLogo from './CarSwaddleLogo'
 
 type AuthenticatedNavigationProps = {
@@ -8,27 +8,36 @@ type AuthenticatedNavigationProps = {
 
 export default function AuthenticatedNavigation({ tab, onTabSelect }: AuthenticatedNavigationProps) {
 
+    const styles = {
+        tab: {
+
+        },
+        brand: {
+            paddingRight: '28px'
+        }
+    }
+
     return (
-        <Container>
-            <Navbar bg="white" expand="sm">
-                <Container>
-                    <Navbar.Brand href="/affiliate">
-                        <CarSwaddleLogo height='50px' />
-                    </Navbar.Brand>
-                    <Navbar.Toggle aria-controls="basic-navbar-nav" />
-                    <Navbar.Collapse id="basic-navbar-nav">
-                        <Nav activeKey={tab} onSelect={(selectedKey) => {
-                            if (onTabSelect) {
-                                onTabSelect(selectedKey);
-                            }
-                        }}>
-                            <Nav.Link href="/affiliate">Affilate</Nav.Link>
-                            <Nav.Link href="/transactions">Transactions</Nav.Link>
-                        </Nav>
-                    </Navbar.Collapse>
-                </Container>
-            </Navbar>
-        </Container>
+        <Navbar expand="xl" bg="white">
+            <Container>
+                <Navbar.Brand href="/affiliate" style={styles.brand}>
+                    <CarSwaddleLogo height='35px' />
+                </Navbar.Brand>
+                <Navbar.Toggle aria-controls="basic-navbar-nav" />
+                <Navbar.Collapse id="basic-navbar-nav">
+                    <Nav activeKey={tab} onSelect={(selectedKey) => {
+                        if (onTabSelect) {
+                            onTabSelect(selectedKey);
+                        }
+                    }}>
+                        <NavLink style={{ fontWeight: tab == '/affiliate' ? 'bold' : 'normal' }} href="/affiliate" >Affilate</NavLink>
+                        <NavLink style={{ fontWeight: tab == '/transactions' ? 'bold' : 'normal' }} href="/transactions">Transactions</NavLink>
+                    </Nav>
+                </Navbar.Collapse>
+            </Container>
+        </Navbar>
     )
 
 }
+
+

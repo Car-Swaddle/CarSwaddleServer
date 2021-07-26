@@ -19,8 +19,6 @@ export default function App() {
     }
 
     return (
-        <Container>
-            <Row>
                 <BrowserRouter>
                     {!authenticated
                         ? <>
@@ -41,7 +39,5 @@ export default function App() {
                         )
                     }
                 </BrowserRouter>
-            </Row>
-        </Container>
     );
 }

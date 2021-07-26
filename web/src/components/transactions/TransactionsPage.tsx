@@ -10,13 +10,25 @@ import TransactionListView from './TransactionListView'
 export default function TransactionsPage() {
 
     const [referrer] = useState<Referrer | null>(UserContext.getCurrentReferrer());
-    const [transactions, setTransactions] = useState<Array<Transaction> | null>();
+    const [transactions, setTransactions] = useState<Array<Transaction> | null>(null);
+    const [stripeDashboardLink, setStripeDashboardLink] = useState<string | null>();
+    const [requestingDashboard, setRequestingDashboard] = useState<boolean>(false);
 
     useEffect(() => {
         if (!transactions) {
             importTransactions()
         }
-    })
+        if (!stripeDashboardLink && !requestingDashboard) {
+            const requestLink = async () => {
+                const link = await ReferrerService.generateExpressLoginLink(referrer?.id ?? "", window.location.pathname);
+                if (link && link.link) {
+                    setStripeDashboardLink(link.link);
+                }
+            }
+            requestLink();
+            setRequestingDashboard(true);
+        }
+    }, [stripeDashboardLink])
 
     async function importTransactions() {
         const transactionsJSON = await ReferrerService.getTransactions(referrer?.id ?? "")
@@ -32,11 +44,14 @@ export default function TransactionsPage() {
     return (
         <Container style={styles.container}>
             <Row>
-                <Col md={4}>
-                    Your transactions are listed here. The money will get to your bank account as soon as the oil change is completed.
-                </Col>
-                <Col md={8}>
-                    <TransactionListView transactions={transactions ?? []} />
+                <Col style={{ paddingTop: '38px' }}>
+                    <div>Your transactions are listed here. The money will be available when the oil change is completed.</div>
+                    <br/>
+                    <a style={{ textAlign: 'right'}} href={stripeDashboardLink ?? ""}>View previous payouts in Stripe</a>
+                    <hr/>
+                    <h4 style={{ textAlign: 'center', paddingBottom: '8px' }}>Transactions</h4>
+                    <TransactionListView transactions={transactions} />
+
                 </Col>
             </Row>
         </Container>

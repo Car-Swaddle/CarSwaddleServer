@@ -15,11 +15,10 @@ export default function ErrorLabel({ text }: ErrorLabelProps) {
             color: Colors.text,
             borderRadius: '8px',
             border: `2px solid ${Colors.error}`,
-            display: 'inline'
         }
     }
 
     return (
-        <text style={styles.text}>{text}</text>
+        <p style={styles.text}>{text}</p>
     )
 }

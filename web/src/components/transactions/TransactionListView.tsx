@@ -5,7 +5,7 @@ import Colors from '../../resources/Colors';
 
 
 export type TransactionListViewProps = {
-    transactions: Transaction[],
+    transactions: Transaction[] | null,
 }
 
 export default function TransactionListView({ transactions }: TransactionListViewProps) {
@@ -21,22 +21,29 @@ export default function TransactionListView({ transactions }: TransactionListVie
         );
     }
 
+    function view(transactions: Array<Transaction> | null) {
+        if (transactions == null) {
+            return <div/>
+        } else if (transactions?.length == 0) {
+            return <EmptyTransactionListView />
+        } else {
+            return <Table striped bordered hover >
+                <thead>
+                    <tr>
+                        <th>Proceeds</th>
+                        <th>Service date</th>
+                        <th>Current status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {list(transactions ?? [])}
+                </tbody>
+            </Table>
+        }
+    }
+
     return (
-        transactions.length > 0 ?
-        <Table striped bordered hover >
-            <thead>
-                <tr>
-                    <th>Profit</th>
-                    <th>Service date</th>
-                    <th>Current status</th>
-                </tr>
-            </thead>
-            <tbody>
-                {list(transactions)}
-            </tbody>
-        </Table>
-        :
-        <EmptyTransactionListView />
+        view(transactions)
     )
 }
 
@@ -57,7 +64,7 @@ function EmptyTransactionListView() {
 
     return (
         <Container style={styles.content}>
-            <p>You don't have any transactions at the moment. When you do, they will be listed here.<br/><br/> Share your <a href="/affiliate">affiliate link</a>. Once someone purchases an oil change using your link, you'll see transactions here</p>
+            <p>You don't have any transactions at the moment. When you do, they will be listed here.<br /><br /> Share your <a href="/affiliate">affiliate link</a>. Once someone purchases an oil change using your link, you'll see transactions here</p>
         </Container>
     )
 }
