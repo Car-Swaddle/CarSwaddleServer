@@ -1,6 +1,5 @@
 import { Container, Row, Col } from 'react-bootstrap';
 import { UserContext } from '../services/user-context';
-import { ReferrerService } from '../services/ReferrerService';
 import { Referrer } from '../models';
 import { useEffect, useState } from 'react';
 import { OverlayTrigger, Tooltip, Button } from 'react-bootstrap';
@@ -11,8 +10,6 @@ export default function AffiliateDashboard() {
 
     const [referrer] = useState<Referrer | null>(UserContext.getCurrentReferrer());
     const [vanityLink, setVanityLink] = useState<string>("");
-    const [requestingDashboard, setRequestingDashboard] = useState<boolean>(false);
-    const [hasLoadedVanityLink, setHasLoadedVanityLink] = useState<boolean>(false);
 
     const [didCopyLink, setDidCopyLink] = useState<boolean>(false);
 
@@ -21,7 +18,7 @@ export default function AffiliateDashboard() {
             const linkBase = process.env.REACT_APP_ENV === "production" ? "go.carswaddle.com/" : "carswaddle.test-app.link/";
             setVanityLink(`${linkBase}${referrer.vanityID}`)
         }
-    }, [referrer, vanityLink, hasLoadedVanityLink])
+    }, [referrer, vanityLink])
 
     const styles = {
         header: {

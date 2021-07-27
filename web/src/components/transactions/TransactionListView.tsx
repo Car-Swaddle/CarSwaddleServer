@@ -24,7 +24,7 @@ export default function TransactionListView({ transactions }: TransactionListVie
     function view(transactions: Array<Transaction> | null) {
         if (transactions == null) {
             return <div/>
-        } else if (transactions?.length == 0) {
+        } else if (transactions?.length === 0) {
             return <EmptyTransactionListView />
         } else {
             return <Table striped bordered hover >

@@ -30,8 +30,8 @@ export default function AuthenticatedNavigation({ tab, onTabSelect }: Authentica
                             onTabSelect(selectedKey);
                         }
                     }}>
-                        <NavLink style={{ fontWeight: tab == '/affiliate' ? 'bold' : 'normal' }} href="/affiliate" >Affilate</NavLink>
-                        <NavLink style={{ fontWeight: tab == '/transactions' ? 'bold' : 'normal' }} href="/transactions">Transactions</NavLink>
+                        <NavLink style={{ fontWeight: tab === '/affiliate' ? 'bold' : 'normal' }} href="/affiliate" >Affilate</NavLink>
+                        <NavLink style={{ fontWeight: tab === '/transactions' ? 'bold' : 'normal' }} href="/transactions">Transactions</NavLink>
                     </Nav>
                 </Navbar.Collapse>
             </Container>

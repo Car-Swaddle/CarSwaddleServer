@@ -16,7 +16,11 @@ export default function TransactionsPage() {
 
     useEffect(() => {
         if (!transactions) {
-            importTransactions()
+            const importTransactionsLocal = async () => {
+                const transactionsJSON = await ReferrerService.getTransactions(referrer?.id ?? "")
+                setTransactions(transactionsJSON)
+            }
+            importTransactionsLocal()
         }
         if (!stripeDashboardLink && !requestingDashboard) {
             const requestLink = async () => {
@@ -25,15 +29,11 @@ export default function TransactionsPage() {
                     setStripeDashboardLink(link.link);
                 }
             }
+            
             requestLink();
             setRequestingDashboard(true);
         }
-    }, [stripeDashboardLink])
-
-    async function importTransactions() {
-        const transactionsJSON = await ReferrerService.getTransactions(referrer?.id ?? "")
-        setTransactions(transactionsJSON)
-    }
+    }, [stripeDashboardLink, referrer, requestingDashboard, transactions])
 
     const styles = {
         container: {
@@ -51,7 +51,6 @@ export default function TransactionsPage() {
                     <hr/>
                     <h4 style={{ textAlign: 'center', paddingBottom: '8px' }}>Transactions</h4>
                     <TransactionListView transactions={transactions} />
-
                 </Col>
             </Row>
         </Container>
