@@ -16,8 +16,8 @@ const acceptURL = domain + '/authority/approve';
 const rejectURL = domain + '/authority/reject';
 const unsubscribeURL = domain + '/email-unsubscribe';
 
-const allowEmail = !process.env.NO_EMAIL || process.env.NO_EMAIL === 'false';
 
+const allowEmail = !process.env.NO_EMAIL || process.env.NO_EMAIL === 'false';
 class Emailer {
 
     constructor(models) {
@@ -28,7 +28,6 @@ class Emailer {
         if (!allowEmail) {
             return new Promise(() => {});
         }
-
         if (mailOptions.TemplateId) {
             return client.sendEmailWithTemplate(mailOptions);
         } else {

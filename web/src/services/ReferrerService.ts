@@ -1,4 +1,5 @@
 import { handleResponse } from './handleResponse'
+import { Transaction } from '../models/index'
 
 export const ReferrerService = {
     getCurrentUserReferrer,
@@ -26,10 +27,10 @@ async function getSummary(referrerID: string) {
 }
 
 async function getTransactions(referrerID: string) {
-    return fetch(`/referrers/${referrerID}/transactions`)
+    return fetch(`api/referrers/${referrerID}/transactions`)
         .then(handleResponse)
-        .then(data => {
-            return data;
+        .then((transactions: Transaction[]) => {
+            return transactions
         });
 }
 
@@ -49,8 +50,8 @@ async function finishStripeOauthFlow(code: string) {
         });
 }
 
-async function generateExpressLoginLink(referrerID: string): Promise<any> {
-    return fetch(`/api/stripe/express-login-link?redirect=/affiliate/dashboard&referrerID=${referrerID}`)
+async function generateExpressLoginLink(referrerID: string, redirectPath?: string): Promise<any> {
+    return fetch(`/api/stripe/express-login-link?redirect=${ redirectPath ?? "/affiliate/dashboard" }&referrerID=${referrerID}`)
         .then(handleResponse)
         .then(data => {
             return data;
