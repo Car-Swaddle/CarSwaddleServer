@@ -47,7 +47,7 @@ export default function TransactionsPage() {
                 <Col style={{ paddingTop: '38px' }}>
                     <div>Your transactions are listed here. The money will be available when the oil change is completed.</div>
                     <br/>
-                    <a style={{ textAlign: 'right'}} href={stripeDashboardLink ?? ""}>View previous payouts in Stripe</a>
+                    <a href={stripeDashboardLink ?? ""}>View previous payouts in Stripe <i className="fas fa-arrow-right"></i></a>
                     <hr/>
                     <h4 style={{ textAlign: 'center', paddingBottom: '8px' }}>Transactions</h4>
                     <TransactionListView transactions={transactions} />
